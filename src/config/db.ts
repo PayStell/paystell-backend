@@ -11,10 +11,10 @@ const AppDataSource = new DataSource({
     password: process.env.POSTGRES_PASSWORD,
     database: process.env.POSTGRES_DATABASE,
     synchronize: true,
-    logging: false,
-    entities: [__dirname + '/../entities/*.ts'],
-    migrations: [__dirname + '/../migrations/*.ts'],
+    logging: process.env.NODE_ENV === 'development',  // Solo loguea en desarrollo
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,  // Usa SSL solo en producción
+    entities: [__dirname + '/../entities/*.{ts,js}'],
+    migrations: [__dirname + '/../migrations/*.{ts,js}'],
 });
-
 
 export default AppDataSource;

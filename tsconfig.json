@@ -9,12 +9,15 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "strict": true,
     "strictPropertyInitialization": false,
     "skipLibCheck": true,
     "sourceMap": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*"],                            /* Incluye todos los archivos dentro de 'src'. */
+  "exclude": ["node_modules", "dist"]                 /* Excluye 'node_modules' y 'dist' de la compilación. */
 }

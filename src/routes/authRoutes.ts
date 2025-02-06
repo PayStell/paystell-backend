@@ -1,7 +1,8 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { AuthController } from "../controllers/AuthController";
-import { authMiddleware } from "../middlewares/authMiddleware";
+import { disableTwoFactorAuthentication, enableTwoFactorAuthentication } from "../controllers/twoFactorAuthController";
 import { validateRequest } from "../middlewares/validateRequest";
+import { authMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 const authController = new AuthController();
@@ -16,6 +17,12 @@ const registerSchema = {
 const loginSchema = {
     email: { type: 'string', required: true },
     password: { type: 'string', required: true }
+};
+
+const login2FASchema = {
+    email: { type: 'string', required: true },
+    password: { type: 'string', required: true },
+    token: { type: 'string', required: true, minLength: 6 }
 };
 
 // Helper function to wrap async route handlers
@@ -42,6 +49,16 @@ router.post(
     })
 );
 
+
+router.post(
+    "/login-2fa",
+    validateRequest(login2FASchema),
+    asyncHandler(async (req, res) => {
+        await authController.loginWith2FA(req, res);
+    })
+);
+
+
 router.post(
     "/refresh-token",
     asyncHandler(async (req, res) => {
@@ -56,5 +73,34 @@ router.get(
         await authController.getProfile(req, res);
     })
 );
+
+router.post(
+    "/enable-2fa",
+    authMiddleware,
+    async (req: Request, res: Response) => {
+        try {
+            const { id } = req.user!;
+            const result = await enableTwoFactorAuthentication(id);
+            res.json(result);
+        } catch (error) {
+            res.status(400).json({ message: error instanceof Error ? error.message : "Error enabling 2FA" });
+        }
+    }
+);
+
+router.post(
+    "/disable-2fa",
+    authMiddleware,
+    async (req: Request, res: Response) => {
+        try {
+            const { id } = req.user!;
+            const result = await disableTwoFactorAuthentication(id);
+            res.json(result);
+        } catch (error) {
+            res.status(400).json({ message: error instanceof Error ? error.message : "Error disabling 2FA" });
+        }
+    }
+);
+
 
 export default router;

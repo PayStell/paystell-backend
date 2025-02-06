@@ -1,7 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BeforeInsert } from "typeorm";
-import { hash } from "bcrypt";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BeforeInsert, OneToOne, OneToMany } from "typeorm";
 import { Session } from "./Session";
 import { EmailVerification } from "./emailVerification"
+import { hash } from "bcryptjs";
+import { TwoFactorAuth } from "./TwoFactorAuth";
 
 @Entity('users')
 export class User {
@@ -16,6 +17,9 @@ export class User {
 
     @Column({ type: 'varchar', length: 255 })
     password: string;
+
+    @OneToOne(() => TwoFactorAuth, (tfa) => tfa.user, { cascade: true, eager: true })
+    twoFactorAuth: TwoFactorAuth;
 
     @CreateDateColumn({ type: 'timestamp' })
     createdAt: Date;

@@ -1,6 +1,6 @@
 import { Repository } from "typeorm";
 import { User } from "../entities/User";
-import { compare } from "bcrypt";
+import { compare, hash } from "bcryptjs";
 import { sign, verify } from "jsonwebtoken";
 import AppDataSource from "../config/db";
 
@@ -16,6 +16,11 @@ interface UserResponse {
     email: string;
     createdAt: Date;
     updatedAt: Date;
+    twoFactorAuth?: {
+
+        isEnabled: boolean;
+
+    };
 }
 
 interface TokenResponse {
@@ -59,15 +64,17 @@ export class AuthService {
         const userExists = await this.userRepository.findOne({
             where: { email: userData.email }
         });
-
+    
         if (userExists) {
+            console.error("Correo ya registrado:", userData.email);
             throw new Error("Email already registered");
         }
-
+    
+    
         const user = this.userRepository.create(userData);
-        await user.hashPassword();
+    
         const savedUser = await this.userRepository.save(user);
-
+    
         return {
             id: savedUser.id,
             name: savedUser.name,
@@ -76,23 +83,27 @@ export class AuthService {
             updatedAt: savedUser.updatedAt
         };
     }
+    
 
     async login(email: string, password: string): Promise<LoginResponse> {
         const user = await this.userRepository.findOne({
             where: { email }
         });
-
+    
         if (!user) {
             throw new Error("Invalid credentials");
         }
-
-        const isValidPassword = await compare(password, user.password);
+    
+        const isValidPassword = await compare(password, user.password);  // Direct comparison
+    
+        console.log("¿Contraseña válida?:", isValidPassword);
+    
         if (!isValidPassword) {
             throw new Error("Invalid credentials");
         }
-
+    
         const tokens = this.generateTokens(user.id, user.email);
-
+    
         return {
             user: {
                 id: user.id,
@@ -104,6 +115,8 @@ export class AuthService {
             tokens
         };
     }
+    
+    
 
     async refresh(refreshToken: string): Promise<TokenResponse> {
         try {
