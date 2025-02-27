@@ -83,9 +83,9 @@ describe('WebhookController', () => {
             json: responseJson
         };
 
-        webhookController = new WebhookController();
         merchantAuthService = new MerchantAuthService();
         webhookService = new WebhookService();
+        webhookController = new WebhookController(webhookService, merchantAuthService);
 
         (merchantAuthService.getMerchantById as jest.Mock).mockResolvedValue(mockMerchant);
         (webhookService.getMerchantWebhook as jest.Mock).mockResolvedValue(mockMerchantWebhook);
@@ -106,13 +106,16 @@ describe('WebhookController', () => {
                 asset: mockStellarPayload.payload.transaction.amount_in?.asset,
                 merchantId: mockStellarPayload.payload.customer.id,
                 timestamp: expect.any(String),
-                eventType: `${mockStellarPayload.payload.transaction.type}.${mockStellarPayload.payload.transaction.status}`
+                eventType: `${mockStellarPayload.payload.transaction.type}.${mockStellarPayload.payload.transaction.status}`,
+                reqMethod: 'POST'
             };
 
             expect(responseStatus).toHaveBeenCalledWith(200);
             expect(responseJson).toHaveBeenCalledWith({
-                message: 'Webhook processed successfully'
+                message: 'Webhook processed successfully',
+                status: 'success'
             });
+            expect(webhookService.notifyWithRetry).toHaveBeenCalledWith(mockMerchantWebhook, expectedWebhookPayload)
         });
 
         it('should handle different transaction statuses', async () => {
@@ -149,7 +152,9 @@ describe('WebhookController', () => {
 
             expect(responseStatus).toHaveBeenCalledWith(404);
             expect(responseJson).toHaveBeenCalledWith({
-                error: 'Merchant not found'
+                code: 'MERCHANT_NOT_FOUND',
+                message: 'Merchant not found',
+                status: 'error'
             });
         });
 
@@ -163,7 +168,9 @@ describe('WebhookController', () => {
 
             expect(responseStatus).toHaveBeenCalledWith(404);
             expect(responseJson).toHaveBeenCalledWith({
-                error: 'Webhook not found'
+                code: 'WEBHOOK_NOT_FOUND',
+                message: 'Webhook not found',
+                status: 'error'
             });
         });
 

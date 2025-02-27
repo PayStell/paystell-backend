@@ -10,6 +10,9 @@ jest.mock('axios');
 jest.mock('crypto');
 jest.mock('../../services/merchant.service');
 jest.mock('../../validators/webhook.validators');
+jest.spyOn(crypto, 'randomBytes').mockImplementation((size: number) => {
+    return Buffer.from(Array.from({ length: size }, () => Math.floor(Math.random() * 256)));
+});
 
 describe('WebhookService', () => {
     let webhookService: WebhookService;
@@ -40,7 +43,8 @@ describe('WebhookService', () => {
         asset: 'USDC',
         merchantId: 'merchant123',
         timestamp: new Date().toISOString(),
-        eventType: 'payment.success'
+        eventType: 'payment.success',
+        reqMethod: 'POST'
     };
 
     const mockMerchantWebhook: MerchantWebhook = {
@@ -122,7 +126,7 @@ describe('WebhookService', () => {
 
     describe('getMerchantWebhook', () => {
         it('should return a merchant webhook if it is active', async () => {
-            (webhookService.getMerchantWebhook as jest.Mock).mockResolvedValue(mockMerchantWebhook);
+            jest.spyOn(webhookService, 'getMerchantWebhook').mockResolvedValue(mockMerchantWebhook);
 
             const result = await webhookService.getMerchantWebhook(mockMerchant.id);
 
@@ -130,14 +134,13 @@ describe('WebhookService', () => {
         });
 
         it('should throw an error if webhook is inactive', async () => {
-            (webhookService.getMerchantWebhook as jest.Mock).mockImplementation(async (merchantId: string) => {
+            jest.spyOn(webhookService, 'getMerchantWebhook').mockImplementation(async (merchantId: string) => {
                 const merchantWebhook = { ...mockMerchantWebhook, isActive: false };
                 if (!merchantWebhook.isActive) {
                     throw new Error('Merchant web hook not found');
                 }
-
                 return merchantWebhook;
-            })
+            });
 
             await expect(webhookService.getMerchantWebhook(mockMerchant.id)).rejects.toThrow(
                 'Merchant web hook not found'

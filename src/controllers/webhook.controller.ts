@@ -3,10 +3,20 @@ import { MerchantAuthService } from "../services/merchant.service";
 import { WebhookService } from "../services/webhook.service";
 import { Request, Response } from 'express'
 
-const webhookService = new WebhookService();
-const merchantAuthService = new MerchantAuthService()
+const defaultWebhookService = new WebhookService();
+const defaultMerchantAuthService = new MerchantAuthService()
 
 export class WebhookController {
+
+    private webhookService: WebhookService;
+    private merchantAuthService: MerchantAuthService;
+
+    // adding this constructor to simplify testing
+    // Also it is a good practice to use dependency injection instead of initiating services in consts
+    constructor(webhookService?: WebhookService, merchantAuthService?: MerchantAuthService) {
+        this.webhookService = webhookService ?? defaultWebhookService
+        this.merchantAuthService = merchantAuthService ?? defaultMerchantAuthService
+    }
 
     async handleWebhook(
         req: Request, res: Response
@@ -15,7 +25,7 @@ export class WebhookController {
         try {
             const { payload }: StellarWebhookPayload = req.body
 
-            const merchant = await merchantAuthService.getMerchantById(payload.customer.id)
+            const merchant = await this.merchantAuthService.getMerchantById(payload.customer.id)
 
             if (!merchant || !merchant.isActive) {
                 return res.status(404).json({
@@ -25,7 +35,7 @@ export class WebhookController {
                 })
             }
             
-            const merchantWebhook = await webhookService.getMerchantWebhook(merchant.id)
+            const merchantWebhook = await this.webhookService.getMerchantWebhook(merchant.id)
 
             if (!merchantWebhook) {
                 return res.status(404).json({
@@ -48,7 +58,7 @@ export class WebhookController {
             }
             
 
-            await webhookService.notifyWithRetry(merchantWebhook, webhookPayload)
+            await this.webhookService.notifyWithRetry(merchantWebhook, webhookPayload)
 
             return res.status(200).json({
                 status: 'success',
