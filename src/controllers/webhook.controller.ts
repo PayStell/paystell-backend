@@ -1,21 +1,25 @@
-import { Merchant, MerchantWebhook, StellarWebhookPayload, WebhookPayload } from "../interfaces/webhook.interfaces";
+import { WebhookNotificationService } from "../services/webhookNotification.service";
+import { StellarWebhookPayload, WebhookPayload } from "../interfaces/webhook.interfaces";
 import { MerchantAuthService } from "../services/merchant.service";
 import { WebhookService } from "../services/webhook.service";
 import { Request, Response } from 'express'
+import { CryptoGeneratorService } from "../services/cryptoGenerator.service";
 
+// TODO: this initialization needs to be moved to dependency injection
 const defaultWebhookService = new WebhookService();
 const defaultMerchantAuthService = new MerchantAuthService()
-
+const defaultCryptoGeneratorService = new CryptoGeneratorService()
+const defaultWebhookNotificationService = new WebhookNotificationService(defaultMerchantAuthService, defaultCryptoGeneratorService)
 export class WebhookController {
 
     private webhookService: WebhookService;
+    private webhookNotificationService: WebhookNotificationService;
     private merchantAuthService: MerchantAuthService;
 
-    // adding this constructor to simplify testing
-    // Also it is a good practice to use dependency injection instead of initiating services in consts
-    constructor(webhookService?: WebhookService, merchantAuthService?: MerchantAuthService) {
+    constructor(webhookService?: WebhookService, merchantAuthService?: MerchantAuthService, webhookNotificationService?: WebhookNotificationService) {
         this.webhookService = webhookService ?? defaultWebhookService
         this.merchantAuthService = merchantAuthService ?? defaultMerchantAuthService
+        this.webhookNotificationService = webhookNotificationService ?? defaultWebhookNotificationService
     }
 
     async handleWebhook(
@@ -58,7 +62,7 @@ export class WebhookController {
             }
             
 
-            await this.webhookService.notifyWithRetry(merchantWebhook, webhookPayload)
+            await this.webhookNotificationService.notifyWithRetry(merchantWebhook, webhookPayload)
 
             return res.status(200).json({
                 status: 'success',
