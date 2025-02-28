@@ -9,6 +9,12 @@ jest.mock("typeorm", () => ({
   Column: jest.fn(),
 }))
 
+describe('Payment Service Tests', () => {
+  test('should create a payment successfully', async () => {
+    // Implement test
+  });
+});
+
 describe("PaymentService", () => {
   let paymentService: PaymentService
   let mockRepository: any
