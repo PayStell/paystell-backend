@@ -10,3 +10,8 @@ module.exports = {
     "nodemailer": "<rootDir>/src/__mocks__/nodemailer.ts",
   },
 };
+module.exports = {
+  collectCoverage: true,
+  coverageDirectory: 'coverage',
+  testEnvironment: 'node',
+};
