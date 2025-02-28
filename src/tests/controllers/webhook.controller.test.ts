@@ -3,11 +3,14 @@ import { WebhookController } from '../../controllers/webhook.controller';
 import { WebhookService } from '../../services/webhook.service';
 import { MerchantAuthService } from '../../services/merchant.service';
 import { Merchant, MerchantWebhook, StellarWebhookPayload, WebhookPayload, TransactionStatus } from '../../interfaces/webhook.interfaces';
-import axios from 'axios';
+import { WebhookNotificationService } from '../../services/webhookNotification.service';
+import { CryptoGeneratorService } from '../../services/cryptoGenerator.service';
 
 // Mock external dependencies
 jest.mock('../../services/merchant.service');
 jest.mock('../../services/webhook.service');
+jest.mock('../../services/webhookNotification.service')
+jest.mock('../../services/cryptoGenerator.service')
 jest.mock('axios');
 
 describe('WebhookController', () => {
@@ -18,6 +21,8 @@ describe('WebhookController', () => {
     let responseStatus: jest.Mock;
     let merchantAuthService: MerchantAuthService;
     let webhookService: WebhookService;
+    let cryptoGeneratorService: CryptoGeneratorService;
+    let webhookNotificationService: WebhookNotificationService;
 
     const mockStellarPayload: StellarWebhookPayload = {
         id: 'webhook-123',
@@ -83,9 +88,11 @@ describe('WebhookController', () => {
             json: responseJson
         };
 
-        webhookController = new WebhookController();
         merchantAuthService = new MerchantAuthService();
         webhookService = new WebhookService();
+        cryptoGeneratorService = new CryptoGeneratorService()
+        webhookNotificationService = new WebhookNotificationService(merchantAuthService, cryptoGeneratorService)
+        webhookController = new WebhookController(webhookService, merchantAuthService, webhookNotificationService);
 
         (merchantAuthService.getMerchantById as jest.Mock).mockResolvedValue(mockMerchant);
         (webhookService.getMerchantWebhook as jest.Mock).mockResolvedValue(mockMerchantWebhook);
@@ -106,13 +113,16 @@ describe('WebhookController', () => {
                 asset: mockStellarPayload.payload.transaction.amount_in?.asset,
                 merchantId: mockStellarPayload.payload.customer.id,
                 timestamp: expect.any(String),
-                eventType: `${mockStellarPayload.payload.transaction.type}.${mockStellarPayload.payload.transaction.status}`
+                eventType: `${mockStellarPayload.payload.transaction.type}.${mockStellarPayload.payload.transaction.status}`,
+                reqMethod: 'POST'
             };
 
             expect(responseStatus).toHaveBeenCalledWith(200);
             expect(responseJson).toHaveBeenCalledWith({
-                message: 'Webhook processed successfully'
+                message: 'Webhook processed successfully',
+                status: 'success'
             });
+            expect(webhookNotificationService.notifyWithRetry).toHaveBeenCalledWith(mockMerchantWebhook, expectedWebhookPayload)
         });
 
         it('should handle different transaction statuses', async () => {
@@ -149,7 +159,9 @@ describe('WebhookController', () => {
 
             expect(responseStatus).toHaveBeenCalledWith(404);
             expect(responseJson).toHaveBeenCalledWith({
-                error: 'Merchant not found'
+                code: 'MERCHANT_NOT_FOUND',
+                message: 'Merchant not found',
+                status: 'error'
             });
         });
 
@@ -163,7 +175,9 @@ describe('WebhookController', () => {
 
             expect(responseStatus).toHaveBeenCalledWith(404);
             expect(responseJson).toHaveBeenCalledWith({
-                error: 'Webhook not found'
+                code: 'WEBHOOK_NOT_FOUND',
+                message: 'Webhook not found',
+                status: 'error'
             });
         });
 
