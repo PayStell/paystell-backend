@@ -69,5 +69,23 @@ describe("PaymentService", () => {
     const url = paymentService.getPaymentUrl(paymentId)
     expect(url).toBe(`https://buy.paystell.com/${paymentId}`)
   })
+  it("should change the status of a payment", async () => {
+    const mockPayment = {
+      id: "mock-uuid",
+      status: "pending",
+      paymentLink: mockPaymentLink
+    };
+    
+    mockRepository.findOne.mockResolvedValue(mockPayment);
+    mockRepository.save.mockResolvedValue({ ...mockPayment, status: "completed" });
+
+    const payment = await paymentService.updatePaymentStatus("mock-uuid", "completed");
+    
+    expect(mockRepository.findOne).toHaveBeenCalledWith({
+      relations: ["paymentLink"],
+      where: { paymentId: "mock-uuid" }
+    });
+    expect(payment.status).toBe("completed");
+  })
 })
 
