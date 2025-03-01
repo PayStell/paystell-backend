@@ -6,8 +6,13 @@ export class PaymentService {
   private paymentRepository = getRepository(Payment)
 
   async createPayment(paymentData: Partial<Payment>): Promise<Payment> {
+    if (!paymentData.paymentLink) {
+      throw new Error("Payment link is required")
+    }
+
     const payment = new Payment()
     Object.assign(payment, paymentData)
+    payment.amount = paymentData.paymentLink.amount
 
     let isUnique = false
     while (!isUnique) {
