@@ -1,4 +1,4 @@
-name: PayStell CI/CD Pipeline
+name: CI Pipeline
 
 on:
   push:
@@ -10,14 +10,25 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: 1234
+          POSTGRES_DB: paystell
+        ports:
+          - 5432:5432
+        options: --health-cmd "pg_isready -U postgres -d paystell" --health-interval 5s --health-timeout 5s --health-retries 5
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
-          node-version: "latest"
+          node-version: "18"
           cache: "npm"
 
       - name: Install dependencies
@@ -32,8 +43,14 @@ jobs:
       - name: Compile TypeScript
         run: npm run build
 
-      - name: Run Tests
-        run: npm test
+      - name: Build Docker Image
+        run: docker build -t paystell-backend .
 
-      - name: Generate Coverage Report
-        run: npm run test:coverage
+      - name: Run Docker Containers
+        run: docker-compose up -d
+
+      - name: Run Tests in Docker
+        run: docker exec paystell-backend npm test
+
+      - name: Stop and Remove Docker Containers
+        run: docker-compose down
