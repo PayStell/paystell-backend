@@ -29,5 +29,24 @@ export class PaymentService {
   getPaymentUrl(paymentId: string): string {
     return `https://buy.paystell.com/${paymentId}`
   }
+
+  async getPaymentById(paymentId: string): Promise<Payment | null> {
+    return this.paymentRepository.findOne({ 
+      where: { paymentId },
+      relations: ['paymentLink']
+    });
+  }
+
+  async updatePaymentStatus(
+    paymentId: string, 
+    status: "pending" | "completed" | "failed"
+  ): Promise<Payment> {
+    const payment = await this.getPaymentById(paymentId);
+    if (!payment) {
+      throw new Error("Payment not found");
+    }
+    payment.status = status;
+    return this.paymentRepository.save(payment);
+  }
 }
 
