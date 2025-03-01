@@ -1,0 +1,36 @@
+services:
+  backend:
+    build: .
+    container_name: paystell-backend
+    ports:
+      - "3000:3000"
+    env_file: .env.local
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: ["sh", "-c", "npm run migration:run && node dist/index.js"]
+  
+  postgres:
+    image: postgres:latest
+    container_name: paystell-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: paystell
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d paystell"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
