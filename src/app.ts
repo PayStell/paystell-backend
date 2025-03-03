@@ -7,6 +7,7 @@ import PaymentRoute from './routes/ParymentLink.routes';
 import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
 import healthRouter from "./routes/health.routes";
+import walletVerificationRoutes from './routes/wallet-verification.routes';
 
 import { globalRateLimiter } from "./middlewares/globalRateLimiter.middleware";
 import { validateIpAddress } from "./middlewares/ipValidation.middleware";
@@ -42,8 +43,8 @@ logger.info('Application started successfully');
 app.use("/session", sessionRouter);
 app.use("/email-verification", emailVerification);
 app.use("/paymentlink", PaymentRoute);
-app.use('/auth', authRoutes);
-
+// app.use('/auth', authRoutes);
+app.use('/wallet-verification', walletVerificationRoutes);
 app.use("/users", userRoutes);
 app.use('/health', healthRouter);
 

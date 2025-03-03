@@ -7,7 +7,7 @@ export class WalletVerification {
     id: string;
 
     @Column()
-    userId: string;
+    userId: number;
 
     @Column()
     walletAddress: string;
