@@ -44,8 +44,8 @@ class WalletVerificationService {
 
         await this.emailService.sendWalletVerificationEmail(
             user.email,
+            verification.walletAddress,
             verification.verificationCode,
-            verification.walletAddress
         );
 
         return verification;

@@ -24,6 +24,7 @@ export class UserController {
       
       res.status(201).json(userWithoutPassword);
     } catch (error) {
+      console.error(error);
       this.handleError(res, error);
     }
   }

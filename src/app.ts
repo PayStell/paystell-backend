@@ -29,7 +29,7 @@ app.use(morgan("dev"));
 app.use(cors());
 app.use(express.json());
 app.use(validateIpAddress);
-app.use(RateLimitMonitoringService.createRateLimitMonitoringMiddleware());
+// app.use(RateLimitMonitoringService.createRateLimitMonitoringMiddleware());
 app.use(globalRateLimiter);
 app.use(requestLogger);
 
@@ -40,9 +40,9 @@ startExpiredSessionCleanupCronJobs();
 logger.info('Application started successfully');
 
 // Define routes
-app.use("/session", sessionRouter);
-app.use("/email-verification", emailVerification);
-app.use("/paymentlink", PaymentRoute);
+// app.use("/session", sessionRouter);
+// app.use("/email-verification", emailVerification);
+// app.use("/paymentlink", PaymentRoute);
 // app.use('/auth', authRoutes);
 app.use('/wallet-verification', walletVerificationRoutes);
 app.use("/users", userRoutes);

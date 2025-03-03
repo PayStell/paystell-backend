@@ -3,6 +3,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 import { UserRole } from "../enums/UserRole";
 import { Session } from "./Session";
 import { EmailVerification } from "./emailVerification";
+import { WalletVerification } from "./WalletVerification";
 import { TwoFactorAuth } from "./TwoFactorAuth";
 import { hash } from "bcryptjs";
 
@@ -55,6 +56,9 @@ export class User {
 
     @OneToMany(() => EmailVerification, (emailVerification) => emailVerification.user)
     emailVerifications!: EmailVerification[];
+
+    @OneToMany(() => WalletVerification, (WalletVerification) => WalletVerification.user)
+    walletVerifications!: WalletVerification[];
 
     @OneToMany(() => Session, (session) => session.user)
     sessions!: Session[];

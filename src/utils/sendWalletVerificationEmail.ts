@@ -12,7 +12,7 @@ export const sendWalletVerificationEmail = async (email: string, verificationCod
   const token = generateVerificationToken(walletAddress);
   const verifyUrl = `https://paystell.com/verify-wallet?token=${token}`;
 
-  const emailBody = walletVerificationEmailTemplate(email, verificationCode, walletAddress, verifyUrl);
+  const emailBody = walletVerificationEmailTemplate(verificationCode, walletAddress, verifyUrl);
 
   await sendEmail({
     to: email,

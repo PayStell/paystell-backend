@@ -14,6 +14,7 @@ class WalletVerificationController {
             const verification = await this.walletVerificationService.initiateVerification(userId, walletAddress);
             return res.status(200).json(verification);
         } catch (error: any) {
+            console.error(error);
             return res.status(400).json({ message: error.message });
         }
     }
