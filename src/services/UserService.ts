@@ -20,7 +20,7 @@ export class UserService {
     if (errors.length > 0) {
       throw new Error(errors.map(err => Object.values(err.constraints || {})).join(', '));
     }
-    
+
     const existingUser = await this.userRepository.findOneBy({ email: data.email });
     if (existingUser) {
       throw new Error('Email already exists');
@@ -34,23 +34,28 @@ export class UserService {
     return await this.userRepository.findOneBy({ id });
   }
 
+
+  async getAllUsers(): Promise<User[]> {
+    return await this.userRepository.find();
+  }
+
   async updateUser(id: number, data: UpdateUserDTO): Promise<User> {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
       throw new Error('User not found');
     }
-  
+
     if (data.email && (data.email !== user.email)) {
       const existingUser = await this.userRepository.findOneBy({ email: data.email });
       if (existingUser) {
         throw new Error('Email already exists');
       }
     }
-  
+
     if (data.password) {
       data.password = await hash(data.password, 10);
     }
-  
+
     Object.assign(user, data);
     return await this.userRepository.save(user);
   }

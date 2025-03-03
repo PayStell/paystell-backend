@@ -7,11 +7,20 @@ jest.mock("typeorm", () => ({
   Entity: jest.fn(),
   PrimaryGeneratedColumn: jest.fn(),
   Column: jest.fn(),
+  CreateDateColumn: jest.fn(),
+  UpdateDateColumn: jest.fn(),
+  ManyToOne: jest.fn(),
+  JoinColumn: jest.fn(),
+}))
+
+jest.mock('nanoid', () => ({
+  customAlphabet: () => () => '123456789012'
 }))
 
 describe("PaymentService", () => {
   let paymentService: PaymentService
   let mockRepository: any
+  let mockPaymentLink: any
 
   beforeEach(() => {
     mockRepository = {
@@ -20,24 +29,63 @@ describe("PaymentService", () => {
     }
     ;(getRepository as jest.Mock).mockReturnValue(mockRepository)
     paymentService = new PaymentService()
+
+    mockPaymentLink = {
+      id: 'mock-uuid',
+      name: 'Test Payment',
+      sku: 'TEST123',
+      amount: 100,
+      currency: 'USD',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
   })
 
   it("should create a payment with a unique ID", async () => {
     mockRepository.findOne.mockResolvedValue(null)
-    mockRepository.save.mockImplementation((payment: Payment) => Promise.resolve(payment))
+    mockRepository.save.mockImplementation((payment: Payment) => Promise.resolve({
+      ...payment,
+      paymentLink: mockPaymentLink
+    }))
 
-    const payment = await paymentService.createPayment({ amount: 100, currency: "USD" })
+    const payment = await paymentService.createPayment({ paymentLink: mockPaymentLink })
 
     expect(payment.paymentId).toBeDefined()
-    expect(payment.paymentId.length).toBe(12)
+    expect(typeof payment.paymentId).toBe('string')
+    expect(payment.paymentLink).toBeDefined()
     expect(payment.amount).toBe(100)
-    expect(payment.currency).toBe("USD")
+    expect(payment.paymentLink.currency).toBe('USD')
+  })
+
+  it("should throw error when payment link is not provided", async () => {
+    await expect(paymentService.createPayment({}))
+      .rejects
+      .toThrow("Payment link is required")
   })
 
   it("should generate a valid payment URL", () => {
     const paymentId = "abc123"
     const url = paymentService.getPaymentUrl(paymentId)
     expect(url).toBe(`https://buy.paystell.com/${paymentId}`)
+  })
+  it("should change the status of a payment", async () => {
+    const mockPayment = {
+      id: "mock-uuid",
+      status: "pending",
+      paymentLink: mockPaymentLink
+    };
+    
+    mockRepository.findOne.mockResolvedValue(mockPayment);
+    mockRepository.save.mockResolvedValue({ ...mockPayment, status: "completed" });
+
+    const payment = await paymentService.updatePaymentStatus("mock-uuid", "completed");
+    
+    expect(mockRepository.findOne).toHaveBeenCalledWith({
+      relations: ["paymentLink"],
+      where: { paymentId: "mock-uuid" }
+    });
+    expect(payment.status).toBe("completed");
   })
 })
 

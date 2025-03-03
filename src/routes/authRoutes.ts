@@ -79,8 +79,12 @@ router.post(
     authMiddleware,
     async (req: Request, res: Response) => {
         try {
-            const { id } = req.user!;
-            const result = await enableTwoFactorAuthentication(id);
+            const userId = req.user?.id;
+            if (userId === undefined) {
+                res.status(401).json({ message: "User ID not found" });
+                return;
+            }
+            const result = await enableTwoFactorAuthentication(userId);
             res.json(result);
         } catch (error) {
             res.status(400).json({ message: error instanceof Error ? error.message : "Error enabling 2FA" });
@@ -93,8 +97,12 @@ router.post(
     authMiddleware,
     async (req: Request, res: Response) => {
         try {
-            const { id } = req.user!;
-            const result = await disableTwoFactorAuthentication(id);
+            const userId = req.user?.id;
+            if (userId === undefined) {
+                res.status(401).json({ message: "User ID not found" });
+                return;
+            }
+            const result = await disableTwoFactorAuthentication(userId);
             res.json(result);
         } catch (error) {
             res.status(400).json({ message: error instanceof Error ? error.message : "Error disabling 2FA" });

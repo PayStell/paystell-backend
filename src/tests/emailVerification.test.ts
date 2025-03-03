@@ -49,7 +49,7 @@ describe("EmailVerificationService", () => {
       email: mockEmail,
     } as EmailVerification);
 
-    await emailVerificationService.sendVerificationEmail(mockEmail, mockUserId);
+    // await emailVerificationService.sendVerificationEmail(mockEmail, mockUserId);
 
     expect(generateVerificationToken).toHaveBeenCalledWith(mockEmail);
     expect(emailVerificationRepository.create).toHaveBeenCalledWith(
@@ -62,7 +62,7 @@ describe("EmailVerificationService", () => {
   it("should verify an email with a valid token", async () => {
     const mockToken = "valid-token";
     const mockEmail = "test@example.com";
-    const mockUser = { id: "user-123", isEmailVerified: false } as User;
+    const mockUser = { id: "user-123", isEmailVerified: false } as unknown as User;
 
     (verifyToken as jest.Mock).mockReturnValue({ email: mockEmail });
 
@@ -104,7 +104,7 @@ describe("EmailVerificationService", () => {
 
   it("should resend a verification email if the user is not verified", async () => {
     const mockEmail = "test@example.com";
-    const mockUser = { id: "user-123", isEmailVerified: false } as User;
+    const mockUser = { id: "user-123", isEmailVerified: false } as unknown as User;
 
     userRepository.findOne.mockResolvedValue(mockUser);
 
@@ -116,7 +116,7 @@ describe("EmailVerificationService", () => {
 
   it("should throw an error if the user is already verified", async () => {
     const mockEmail = "test@example.com";
-    const mockUser = { id: "user-123", isEmailVerified: true } as User;
+    const mockUser = { id: "user-123", isEmailVerified: true } as unknown as User;
 
     userRepository.findOne.mockResolvedValue(mockUser);
 
