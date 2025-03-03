@@ -40,10 +40,10 @@ startExpiredSessionCleanupCronJobs();
 logger.info('Application started successfully');
 
 // Define routes
-// app.use("/session", sessionRouter);
-// app.use("/email-verification", emailVerification);
-// app.use("/paymentlink", PaymentRoute);
-// app.use('/auth', authRoutes);
+app.use("/session", sessionRouter);
+app.use("/email-verification", emailVerification);
+app.use("/paymentlink", PaymentRoute);
+app.use('/auth', authRoutes);
 app.use('/wallet-verification', walletVerificationRoutes);
 app.use("/users", userRoutes);
 app.use('/health', healthRouter);
