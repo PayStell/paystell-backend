@@ -65,3 +65,9 @@ describe("Auth System", () => {
         });
     });
 });
+
+describe('Authentication Tests', () => {
+    test('should return a token on successful login', async () => {
+      // Implement test
+    });
+  });
