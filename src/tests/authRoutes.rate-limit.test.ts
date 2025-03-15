@@ -1,5 +1,5 @@
 import request from 'supertest';
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { AuthController } from '../controllers/AuthController';
 import { 
     loginRateLimiter, 
@@ -8,39 +8,55 @@ import {
     twoFactorRateLimiter 
 } from '../middlewares/authRateLimiter.middleware';
 
+// Define types for request with user
+interface RequestWithUser extends Request {
+    user?: {
+        id: number;
+        email: string;
+    };
+}
+
+// Define mock AuthController type
+type MockAuthController = {
+    register: jest.Mock<Promise<void>>;
+    login: jest.Mock<Promise<void>>;
+    loginWith2FA: jest.Mock<Promise<void>>;
+    forgotPassword: jest.Mock<Promise<void>>;
+    refreshToken: jest.Mock<Promise<void>>;
+    getProfile: jest.Mock<Promise<void>>;
+};
+
 // Mock the AuthController
 jest.mock('../controllers/AuthController', () => {
     return {
-        AuthController: jest.fn().mockImplementation(() => {
-            return {
-                register: jest.fn().mockImplementation((req, res) => {
-                    res.status(201).json({ message: 'User registered successfully' });
-                }),
-                login: jest.fn().mockImplementation((req, res) => {
-                    if (req.body.email === 'fail@example.com') {
-                        res.status(401).json({ message: 'Invalid credentials' });
-                    } else {
-                        res.status(200).json({ message: 'Login successful' });
-                    }
-                }),
-                loginWith2FA: jest.fn().mockImplementation((req, res) => {
-                    if (req.body.token === 'invalid') {
-                        res.status(401).json({ message: 'Invalid 2FA token' });
-                    } else {
-                        res.status(200).json({ message: '2FA login successful' });
-                    }
-                }),
-                forgotPassword: jest.fn().mockImplementation((req, res) => {
-                    res.status(200).json({ message: 'Password reset email sent' });
-                }),
-                refreshToken: jest.fn().mockImplementation((req, res) => {
-                    res.status(200).json({ message: 'Token refreshed' });
-                }),
-                getProfile: jest.fn().mockImplementation((req, res) => {
-                    res.status(200).json({ id: 1, email: 'test@example.com' });
-                })
-            };
-        })
+        AuthController: jest.fn().mockImplementation(() => ({
+            register: jest.fn().mockImplementation((req: Request, res: Response) => {
+                res.status(201).json({ message: 'User registered successfully' });
+            }),
+            login: jest.fn().mockImplementation((req: Request, res: Response) => {
+                if (req.body.email === 'fail@example.com') {
+                    res.status(401).json({ message: 'Invalid credentials' });
+                } else {
+                    res.status(200).json({ message: 'Login successful' });
+                }
+            }),
+            loginWith2FA: jest.fn().mockImplementation((req: Request, res: Response) => {
+                if (req.body.token === 'invalid') {
+                    res.status(401).json({ message: 'Invalid 2FA token' });
+                } else {
+                    res.status(200).json({ message: '2FA login successful' });
+                }
+            }),
+            forgotPassword: jest.fn().mockImplementation((req: Request, res: Response) => {
+                res.status(200).json({ message: 'Password reset email sent' });
+            }),
+            refreshToken: jest.fn().mockImplementation((req: Request, res: Response) => {
+                res.status(200).json({ message: 'Token refreshed' });
+            }),
+            getProfile: jest.fn().mockImplementation((req: Request, res: Response) => {
+                res.status(200).json({ id: 1, email: 'test@example.com' });
+            })
+        }))
     };
 });
 
@@ -57,12 +73,12 @@ jest.mock('../controllers/twoFactorAuthController', () => ({
 
 // Mock validateRequest middleware
 jest.mock('../middlewares/validateRequest', () => ({
-    validateRequest: () => (req: any, res: any, next: any) => next()
+    validateRequest: () => (req: Request, res: Response, next: NextFunction) => next()
 }));
 
 // Mock authMiddleware
 jest.mock('../middlewares/authMiddleware', () => ({
-    authMiddleware: (req: any, res: any, next: any) => {
+    authMiddleware: (req: RequestWithUser, res: Response, next: NextFunction) => {
         req.user = { id: 1, email: 'test@example.com' };
         next();
     }
@@ -70,23 +86,22 @@ jest.mock('../middlewares/authMiddleware', () => ({
 
 describe('Auth Routes with Rate Limiting', () => {
     let app: express.Application;
-    let authController: any;
+    let authController: MockAuthController;
     
     beforeEach(() => {
         app = express();
         app.use(express.json());
         
-        // Create a new instance of AuthController
-        authController = new (AuthController as any)();
+        // Create a new instance of AuthController with proper typing
+        authController = new (AuthController as jest.MockedClass<typeof AuthController>)() as unknown as MockAuthController;
         
         // Create routes with rate limiters manually instead of using the authRoutes
-        // This ensures we have control over the rate limiters in the test
         const router = express.Router();
         
-        router.post('/login', loginRateLimiter, (req, res) => authController.login(req, res));
-        router.post('/register', registerRateLimiter, (req, res) => authController.register(req, res));
-        router.post('/login-2fa', twoFactorRateLimiter, (req, res) => authController.loginWith2FA(req, res));
-        router.post('/forgot-password', passwordResetRateLimiter, (req, res) => authController.forgotPassword(req, res));
+        router.post('/login', loginRateLimiter, (req: Request, res: Response) => authController.login(req, res));
+        router.post('/register', registerRateLimiter, (req: Request, res: Response) => authController.register(req, res));
+        router.post('/login-2fa', twoFactorRateLimiter, (req: Request, res: Response) => authController.loginWith2FA(req, res));
+        router.post('/forgot-password', passwordResetRateLimiter, (req: Request, res: Response) => authController.forgotPassword(req, res));
         
         app.use('/auth', router);
     });

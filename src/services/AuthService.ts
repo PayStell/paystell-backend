@@ -1,6 +1,6 @@
 import { Repository } from "typeorm";
 import { User } from "../entities/User";
-import { compare, hash } from "bcryptjs";
+import { compare } from "bcryptjs";
 import { sign, verify } from "jsonwebtoken";
 import AppDataSource from "../config/db";
 
@@ -17,9 +17,7 @@ interface UserResponse {
     createdAt: Date;
     updatedAt: Date;
     twoFactorAuth?: {
-
         isEnabled: boolean;
-
     };
 }
 
@@ -31,6 +29,13 @@ interface TokenResponse {
 interface LoginResponse {
     user: UserResponse;
     tokens: TokenResponse;
+}
+
+interface JWTPayload {
+    id: number;
+    email: string;
+    iat?: number;
+    exp?: number;
 }
 
 export class AuthService {
@@ -70,9 +75,7 @@ export class AuthService {
             throw new Error("Email already registered");
         }
     
-    
         const user = this.userRepository.create(userData);
-    
         const savedUser = await this.userRepository.save(user);
     
         return {
@@ -83,7 +86,6 @@ export class AuthService {
             updatedAt: savedUser.updatedAt
         };
     }
-    
 
     async login(email: string, password: string): Promise<LoginResponse> {
         const user = await this.userRepository.findOne({
@@ -94,7 +96,7 @@ export class AuthService {
             throw new Error("Invalid credentials");
         }
     
-        const isValidPassword = await compare(password, user.password);  // Direct comparison
+        const isValidPassword = await compare(password, user.password);
     
         console.log("¿Contraseña válida?:", isValidPassword);
     
@@ -115,12 +117,10 @@ export class AuthService {
             tokens
         };
     }
-    
-    
 
     async refresh(refreshToken: string): Promise<TokenResponse> {
         try {
-            const decoded = verify(refreshToken, this.JWT_REFRESH_SECRET) as any;
+            const decoded = verify(refreshToken, this.JWT_REFRESH_SECRET) as JWTPayload;
             const user = await this.userRepository.findOne({
                 where: { id: decoded.id }
             });
@@ -130,7 +130,10 @@ export class AuthService {
             }
 
             return this.generateTokens(user.id, user.email);
-        } catch (error) {
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                console.error("Token refresh error:", error.message);
+            }
             throw new Error("Invalid refresh token");
         }
     }

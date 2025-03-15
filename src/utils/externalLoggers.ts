@@ -5,12 +5,20 @@ import logger from './logger';
  * This file provides adapters for popular logging services
  */
 
+/**
+ * Type for structured logging metadata
+ * Allows for nested objects and common primitive types
+ */
+type LogMetadata = {
+    [key: string]: string | number | boolean | null | undefined | Date | LogMetadata | Array<LogMetadata | string | number | boolean | null | undefined | Date>;
+};
+
 // Base interface for external logger adapters
 interface ExternalLoggerAdapter {
-    error(message: string, metadata?: Record<string, any>): void;
-    warn(message: string, metadata?: Record<string, any>): void;
-    info(message: string, metadata?: Record<string, any>): void;
-    debug(message: string, metadata?: Record<string, any>): void;
+    error(message: string, metadata?: LogMetadata): void;
+    warn(message: string, metadata?: LogMetadata): void;
+    info(message: string, metadata?: LogMetadata): void;
+    debug(message: string, metadata?: LogMetadata): void;
 }
 
 /**
@@ -64,7 +72,7 @@ export class SentryLogger implements ExternalLoggerAdapter {
         }
     }
 
-    public error(message: string, metadata?: Record<string, any>): void {
+    public error(message: string, metadata?: LogMetadata): void {
         if (!this.initialized) {
             logger.warn('Sentry not initialized. Falling back to default logger');
             logger.error(message, metadata);
@@ -82,7 +90,7 @@ export class SentryLogger implements ExternalLoggerAdapter {
         }
     }
 
-    public warn(message: string, metadata?: Record<string, any>): void {
+    public warn(message: string, metadata?: LogMetadata): void {
         if (!this.initialized) {
             logger.warn(message, metadata);
             return;
@@ -100,7 +108,7 @@ export class SentryLogger implements ExternalLoggerAdapter {
         }
     }
 
-    public info(message: string, metadata?: Record<string, any>): void {
+    public info(message: string, metadata?: LogMetadata): void {
         if (!this.initialized) {
             logger.info(message, metadata);
             return;
@@ -118,7 +126,7 @@ export class SentryLogger implements ExternalLoggerAdapter {
         }
     }
 
-    public debug(message: string, metadata?: Record<string, any>): void {
+    public debug(message: string, metadata?: LogMetadata): void {
         if (!this.initialized) {
             logger.debug(message, metadata);
             return;
@@ -192,7 +200,7 @@ export class DatadogLogger implements ExternalLoggerAdapter {
         }
     }
 
-    public error(message: string, metadata?: Record<string, any>): void {
+    public error(message: string, metadata?: LogMetadata): void {
         if (!this.initialized) {
             logger.warn('DataDog not initialized. Falling back to default logger');
             logger.error(message, metadata);
@@ -203,7 +211,7 @@ export class DatadogLogger implements ExternalLoggerAdapter {
         logger.error(message, { ...metadata, datadog: true });
     }
 
-    public warn(message: string, metadata?: Record<string, any>): void {
+    public warn(message: string, metadata?: LogMetadata): void {
         if (!this.initialized) {
             logger.warn(message, metadata);
             return;
@@ -212,7 +220,7 @@ export class DatadogLogger implements ExternalLoggerAdapter {
         logger.warn(message, { ...metadata, datadog: true });
     }
 
-    public info(message: string, metadata?: Record<string, any>): void {
+    public info(message: string, metadata?: LogMetadata): void {
         if (!this.initialized) {
             logger.info(message, metadata);
             return;
@@ -221,7 +229,7 @@ export class DatadogLogger implements ExternalLoggerAdapter {
         logger.info(message, { ...metadata, datadog: true });
     }
 
-    public debug(message: string, metadata?: Record<string, any>): void {
+    public debug(message: string, metadata?: LogMetadata): void {
         if (!this.initialized) {
             logger.debug(message, metadata);
             return;

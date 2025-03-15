@@ -4,7 +4,6 @@ import { validateTwoFactorAuthentication } from "./validateTwoFactorAuthenticati
 import AppDataSource from "../config/db";
 import { User } from "../entities/User";
 import { compare } from "bcryptjs";
-import { Mock } from "node:test";
 
 export class AuthController {
     public authService: AuthService;

@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { Repository, DeleteResult, UpdateResult } from 'typeorm';
 import { PaymentLink } from '../../entities/PaymentLink';
 import { PaymentLinkService } from '../../services/PaymentLink.services';
 
@@ -73,7 +73,8 @@ describe('PaymentLinkService', () => {
             amount: 150.00 
         };
 
-        paymentLinkRepository.update.mockResolvedValue({ affected: 1 } as any);
+        const mockUpdateResult: UpdateResult = { affected: 1, raw: [], generatedMaps: [] };
+        paymentLinkRepository.update.mockResolvedValue(mockUpdateResult);
         paymentLinkRepository.findOne.mockResolvedValue(mockData as PaymentLink);
 
         const result = await paymentLinkService.updatePaymentLink('1', { name: 'Updated Payment', amount: 150.00 });
@@ -82,7 +83,8 @@ describe('PaymentLinkService', () => {
     });
 
     it('should return null when updating a non-existent payment link', async () => {
-        paymentLinkRepository.update.mockResolvedValue({ affected: 0 } as any);
+        const mockUpdateResult: UpdateResult = { affected: 0, raw: [], generatedMaps: [] };
+        paymentLinkRepository.update.mockResolvedValue(mockUpdateResult);
         paymentLinkRepository.findOne.mockResolvedValue(null);
 
         const result = await paymentLinkService.updatePaymentLink('1', { name: 'Nonexistent Payment' });
@@ -91,7 +93,8 @@ describe('PaymentLinkService', () => {
     });
 
     it('should delete a payment link successfully', async () => {
-        paymentLinkRepository.delete.mockResolvedValue({ affected: 1 } as any);
+        const mockDeleteResult: DeleteResult = { affected: 1, raw: [] };
+        paymentLinkRepository.delete.mockResolvedValue(mockDeleteResult);
 
         const result = await paymentLinkService.deletePaymentLink('1');
         expect(paymentLinkRepository.delete).toHaveBeenCalledWith('1');
@@ -99,7 +102,8 @@ describe('PaymentLinkService', () => {
     });
 
     it('should return false when trying to delete a non-existent payment link', async () => {
-        paymentLinkRepository.delete.mockResolvedValue({ affected: 0 } as any);
+        const mockDeleteResult: DeleteResult = { affected: 0, raw: [] };
+        paymentLinkRepository.delete.mockResolvedValue(mockDeleteResult);
 
         const result = await paymentLinkService.deletePaymentLink('1');
         expect(paymentLinkRepository.delete).toHaveBeenCalledWith('1');

@@ -2,7 +2,7 @@ import { MerchantWebhook } from '../interfaces/webhook.interfaces'
 import { Repository } from "typeorm";
 import AppDataSource from "../config/db";
 import { MerchantWebhookEntity } from "./../entities/MerchantWebhook.entity";
-import { MerchantWebhookQueueService } from "./MerchantWebhookQueue.service";
+import { MerchantWebhookQueueService } from "./merchantWebhookQueue.service";
 
 export class WebhookService {
   private merchantWebhookrepository: Repository<MerchantWebhookEntity>;

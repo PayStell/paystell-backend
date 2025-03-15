@@ -15,8 +15,8 @@ export const sendVerificationEmail = async (req: Request, res: Response): Promis
   try {
     await emailVerificationService.sendVerificationEmail(email, userId);
     res.status(200).json({ message: 'Verification email sent successfully' });
-  } catch (error:any) {
-    res.status(500).json({ message: error.message });
+  } catch (error) {
+    res.status(500).json({ message: (error as Error).message });
   }
 };
 
@@ -32,8 +32,8 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
   try {
     await emailVerificationService.verifyEmail(token as string);
     res.status(200).json({ message: 'Email verified successfully' });
-  } catch (error:any) {
-    res.status(400).json({ message: error.message });
+  } catch (error) {
+    res.status(400).json({ message: (error as Error).message });
   }
 };
 
@@ -49,7 +49,7 @@ export const resendVerificationEmail = async (req: Request, res: Response): Prom
   try {
     await emailVerificationService.resendVerificationEmail(email);
     res.status(200).json({ message: 'Verification email resent successfully' });
-  } catch (error:any) {
-    res.status(400).json({ message: error.message });
+  } catch (error) {
+    res.status(400).json({ message: (error as Error).message });
   }
 };

@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { MerchantWebhookQueueController } from "../controllers/merchantWebhookQueue.controller";
 import { UserRole } from "../enums/UserRole";
 import {
@@ -9,32 +9,37 @@ import {
 const router = express.Router();
 const merchantWebhookQueueController = new MerchantWebhookQueueController();
 
+const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) => 
+  (req: Request, res: Response, next: NextFunction) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+
 router.get(
   "/failed",
   authMiddleware,
   isUserAuthorized([UserRole.ADMIN]),
-  merchantWebhookQueueController.getFailedWebhooks
+  asyncHandler(merchantWebhookQueueController.getFailedWebhooks.bind(merchantWebhookQueueController))
 );
 
 router.get(
   "/pending",
   authMiddleware,
   isUserAuthorized([UserRole.ADMIN]),
-  merchantWebhookQueueController.getPendingWebhooks
+  asyncHandler(merchantWebhookQueueController.getPendingWebhooks.bind(merchantWebhookQueueController))
 );
 
 router.post(
   "/retry/:jobId",
   authMiddleware,
   isUserAuthorized([UserRole.ADMIN]),
-  merchantWebhookQueueController.retryWebhook
+  asyncHandler(merchantWebhookQueueController.retryWebhook.bind(merchantWebhookQueueController))
 );
 
 router.get(
   "/metrics",
   authMiddleware,
   isUserAuthorized([UserRole.ADMIN]),
-  merchantWebhookQueueController.getQueueMetrics
+  asyncHandler(merchantWebhookQueueController.getQueueMetrics.bind(merchantWebhookQueueController))
 );
 
 export default router;

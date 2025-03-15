@@ -1,5 +1,3 @@
-
-
 export type WebhookPayload = {
     transactionId: string,
     transactionType: string | undefined,
@@ -10,7 +8,7 @@ export type WebhookPayload = {
     timestamp: string,
     nonce?: string,
     paymentMethod?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
     eventType: string// 'payment.success' | 'payment.failure' | 'payment.pending'
     reqMethod: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 }
@@ -35,8 +33,8 @@ export type Merchant = {
     updatedAt: Date;
 }
 
-const transactionStatusValues = ['incomplete', 'completed', 'refunded', 'expired', 'error', 'pending_stellar', 'pending_external', 'pending_user_transfer_start', 'pending_user_transfer_complete', 'pending_anchor', 'pending_trust', 'pending_user', 'no_market', 'too_small', 'too_large'] as const
-export type TransactionStatus = (typeof transactionStatusValues)[number]
+const _transactionStatusValues = ['incomplete', 'completed', 'refunded', 'expired', 'error', 'pending_stellar', 'pending_external', 'pending_user_transfer_start', 'pending_user_transfer_complete', 'pending_anchor', 'pending_trust', 'pending_user', 'no_market', 'too_small', 'too_large'] as const
+export type TransactionStatus = (typeof _transactionStatusValues)[number]
 
 export interface StellarWebhookPayload {
     id: string;

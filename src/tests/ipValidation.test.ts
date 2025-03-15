@@ -1,8 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { validateIpAddress } from '../middlewares/ipValidation.middleware';
 
+// Extend the Request type to include validatedIp
+interface RequestWithValidatedIP extends Request {
+    validatedIp?: string;
+}
+
 describe('IP Validation Middleware', () => {
-    let req: Partial<Request>;
+    let req: Partial<RequestWithValidatedIP>;
     let res: Partial<Response>;
     let next: jest.Mock<NextFunction>;
 
@@ -19,7 +24,7 @@ describe('IP Validation Middleware', () => {
         validateIpAddress(req as Request, res as Response, next);
         
         expect(next).toHaveBeenCalled();
-        expect((req as any).validatedIp).toBe(req.ip);
+        expect(req.validatedIp).toBe(req.ip);
     });
 
     it('should use x-forwarded-for header if present', () => {
@@ -29,7 +34,7 @@ describe('IP Validation Middleware', () => {
         
         validateIpAddress(req as Request, res as Response, next);
         
-        expect((req as any).validatedIp).toBe('10.0.0.1');
+        expect(req.validatedIp).toBe('10.0.0.1');
         expect(next).toHaveBeenCalled();
     });
 
@@ -40,7 +45,7 @@ describe('IP Validation Middleware', () => {
         
         validateIpAddress(req as Request, res as Response, next);
         
-        expect((req as any).validatedIp).toBe('10.0.0.3');
+        expect(req.validatedIp).toBe('10.0.0.3');
         expect(next).toHaveBeenCalled();
     });
 
@@ -51,7 +56,7 @@ describe('IP Validation Middleware', () => {
         
         validateIpAddress(req as Request, res as Response, next);
         
-        expect((req as any).validatedIp).toBe('192.168.1.1');
+        expect(req.validatedIp).toBe('192.168.1.1');
         expect(next).toHaveBeenCalled();
     });
 
@@ -63,7 +68,7 @@ describe('IP Validation Middleware', () => {
         validateIpAddress(req as Request, res as Response, next);
         
         // Should fall back to req.ip
-        expect((req as any).validatedIp).toBe(req.ip);
+        expect(req.validatedIp).toBe(req.ip);
         expect(next).toHaveBeenCalled();
     });
 
@@ -78,7 +83,7 @@ describe('IP Validation Middleware', () => {
         validateIpAddress(req as Request, res as Response, next);
         
         expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Suspicious request'));
-        expect((req as any).validatedIp).toBe('10.0.0.1');
+        expect(req.validatedIp).toBe('10.0.0.1');
         expect(next).toHaveBeenCalled();
         
         consoleWarnSpy.mockRestore();

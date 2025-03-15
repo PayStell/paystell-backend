@@ -7,7 +7,7 @@ import {
 import { validateWebhookUrl } from "../validators/webhook.validators";
 import { MerchantAuthService } from "./merchant.service";
 import { CryptoGeneratorService } from "./cryptoGenerator.service";
-import { MerchantWebhookQueueService } from "./MerchantWebhookQueue.service";
+import { MerchantWebhookQueueService } from "./merchantWebhookQueue.service";
 
 const defaultMerchantAuthService = new MerchantAuthService();
 const defaultCryptoGeneratorService = new CryptoGeneratorService();
@@ -18,12 +18,10 @@ export class WebhookNotificationService {
 
   constructor(
     merchantAuthService?: MerchantAuthService,
-    criptoGeneratorService?: CryptoGeneratorService
+    cryptoGeneratorService?: CryptoGeneratorService
   ) {
-    this.merchantAuthService =
-      merchantAuthService ?? defaultMerchantAuthService;
-    this.cryptoGeneratorService =
-      criptoGeneratorService ?? defaultCryptoGeneratorService;
+    this.merchantAuthService = merchantAuthService ?? defaultMerchantAuthService;
+    this.cryptoGeneratorService = cryptoGeneratorService ?? defaultCryptoGeneratorService;
   }
 
   async sendWebhookNotification(
@@ -32,14 +30,18 @@ export class WebhookNotificationService {
     id: string
   ): Promise<boolean> {
     try {
-      const merchant: Merchant | null =
-        await this.merchantAuthService.getMerchantById(id);
-      // if (!merchant) return
-      const signature =
-        await this.cryptoGeneratorService.generateSignatureForWebhookPayload(
-          payload,
-          merchant?.secret!
-        );
+      const merchant = await this.merchantAuthService.getMerchantById(id);
+      
+      if (!merchant || !merchant.secret) {
+        console.error('Invalid merchant or missing secret');
+        return false;
+      }
+
+      const signature = await this.cryptoGeneratorService.generateSignatureForWebhookPayload(
+        payload,
+        merchant.secret
+      );
+
       await axios.post(webhookUrl, payload, {
         headers: {
           "Content-Type": "application/json",
@@ -62,6 +64,12 @@ export class WebhookNotificationService {
     const merchant = await this.merchantAuthService.getMerchantById(
       merchantWebhook.merchantId
     );
+
+    if (!merchant) {
+      console.error('Merchant not found');
+      return false;
+    }
+
     if (!merchantWebhook.isActive || !validateWebhookUrl(merchantWebhook.url)) {
       return false;
     }
@@ -74,7 +82,7 @@ export class WebhookNotificationService {
     return this.sendWebhookNotification(
       merchantWebhook.url,
       webhookPayload,
-      merchant?.secret!
+      merchant.id
     );
   }
 }

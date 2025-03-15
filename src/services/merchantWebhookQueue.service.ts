@@ -7,12 +7,21 @@ import {
 import { MerchantWebhookEventEntity } from "../entities/MerchantWebhookEvent.entity";
 import AppDataSource from "../config/db";
 import { MerchantWebhookEventEntityStatus } from "../enums/MerchantWebhookEventStatus";
-import { NotificationService } from "./inAppNotification.service";
+import { NotificationService } from "./inAppNotificationService";
 import {
   NotificationCategory,
   NotificationType,
 } from "../entities/InAppNotification.entity";
 import { WebhookNotificationService } from "./webhookNotification.service";
+
+interface QueueJobData {
+  merchantWebhook: MerchantWebhook;
+  webhookPayload: WebhookPayload;
+}
+
+interface QueueJobResult {
+  success: boolean;
+}
 
 // Initialize the notification service for alerts
 const notificationService = new NotificationService();
@@ -25,7 +34,7 @@ export class MerchantWebhookQueueService {
   private webhookQueue: Queue.Queue;
   private merchantWebhookEventRepository: Repository<MerchantWebhookEventEntity>;
   private webhookNotificationService: WebhookNotificationService;
-  private MERCHANT_WEBHOOK_QUEUE = "merchant-webhook-queue";
+  private readonly MERCHANT_WEBHOOK_QUEUE = "merchant-webhook-queue";
 
   constructor() {
     // Set up the Bull queue with Redis backing and exponential backoff
@@ -62,8 +71,8 @@ export class MerchantWebhookQueueService {
    * Configures the queue processor to handle webhook delivery attempts
    * Processes each job and handles success/failure scenarios
    */
-  private setupQueueProcessor() {
-    this.webhookQueue.process(async (job: any) => {
+  private setupQueueProcessor(): void {
+    this.webhookQueue.process(async (job: Queue.Job<QueueJobData>): Promise<QueueJobResult> => {
       const { merchantWebhook, webhookPayload } = job.data;
       const attemptsMade = job.attemptsMade;
 
@@ -96,22 +105,19 @@ export class MerchantWebhookQueueService {
         );
 
         return { success: true };
-      } catch (error: any) {
-        // Calculate delay for next retry using exponential backoff
+      } catch (error) {
         const nextRetryDelay = this.calculateNextRetryDelay(attemptsMade);
         const nextRetryDate = new Date(Date.now() + nextRetryDelay);
+        const maxAttempts = job.opts.attempts ?? 5;
+        const isLastAttempt = attemptsMade >= maxAttempts;
 
-        // Determine if this is the final retry attempt
-        const isLastAttempt = attemptsMade >= job.opts.attempts;
-
-        // Update database record with failure information
         await this.merchantWebhookEventRepository.update(
           { jobId: job.id.toString() },
           {
             status: isLastAttempt
-              ? MerchantWebhookEventEntityStatus.FAILED // Final failure
-              : MerchantWebhookEventEntityStatus.PENDING, // Will retry
-            error: error?.message || "Unknown error",
+              ? MerchantWebhookEventEntityStatus.FAILED
+              : MerchantWebhookEventEntityStatus.PENDING,
+            error: error instanceof Error ? error.message : "Unknown error",
             attemptsMade,
             nextRetry: isLastAttempt ? undefined : nextRetryDate,
           }
@@ -119,10 +125,9 @@ export class MerchantWebhookQueueService {
 
         console.error(
           `Webhook delivery attempt ${attemptsMade} failed for ${merchantWebhook.url}:`,
-          error.message
+          error instanceof Error ? error.message : "Unknown error"
         );
 
-        // Rethrow error to trigger Bull's retry mechanism
         throw error;
       }
     });
@@ -132,15 +137,15 @@ export class MerchantWebhookQueueService {
    * Sets up event handlers for the webhook queue
    * Handles failed jobs, creates notifications, and tracks metrics
    */
-  private setupQueueEvents() {
+  private setupQueueEvents(): void {
     // Listen for failed jobs after all retries
-    this.webhookQueue.on("failed", async (job, error) => {
+    this.webhookQueue.on("failed", async (job: Queue.Job<QueueJobData>, error: Error) => {
       const attemptsMade = job.attemptsMade;
       const maxAttempts = job.opts.attempts || 5;
       const { merchantWebhook, webhookPayload } = job.data;
 
       // Calculate next retry time if not the final attempt
-      let nextRetryTimestamp = null;
+      let nextRetryTimestamp: Date | null = null;
       if (attemptsMade < maxAttempts - 1) {
         const nextRetryDelay = this.calculateNextRetryDelay(attemptsMade);
         nextRetryTimestamp = new Date(Date.now() + nextRetryDelay);
@@ -215,7 +220,7 @@ export class MerchantWebhookQueueService {
     });
 
     // Track completed jobs for metrics
-    this.webhookQueue.on("completed", async (job) => {
+    this.webhookQueue.on("completed", async (job: Queue.Job<QueueJobData>) => {
       const { merchantWebhook } = job.data;
       const attemptsMade = job.attemptsMade;
 
@@ -247,22 +252,21 @@ export class MerchantWebhookQueueService {
   async addToQueue(
     merchantWebhook: MerchantWebhook,
     webhookPayload: WebhookPayload
-  ) {
+  ): Promise<void> {
     // Create a unique job ID for tracking
     const uniqueId = `${merchantWebhook.merchantId}-${webhookPayload.transactionId}-${Date.now()}`;
 
     // Add job to the queue with retry configuration
-    const job = await this.webhookQueue.add(
-      { merchantWebhook, webhookPayload },
-      {
-        jobId: uniqueId,
-        attempts: 5, // Maximum retry attempts
-      }
-    );
+    const jobData: QueueJobData = {
+      merchantWebhook,
+      webhookPayload,
+    };
+
+    await this.webhookQueue.add(jobData);
 
     // Create database record to track this webhook delivery attempt
     const webhookEvent = new MerchantWebhookEventEntity();
-    webhookEvent.jobId = job.id.toString();
+    webhookEvent.jobId = uniqueId;
     webhookEvent.merchantId = merchantWebhook.merchantId;
     webhookEvent.webhookUrl = merchantWebhook.url;
     webhookEvent.payload = webhookPayload;
@@ -278,8 +282,6 @@ export class MerchantWebhookQueueService {
       merchantId: merchantWebhook.merchantId,
       transactionId: webhookPayload.transactionId,
     });
-
-    return job;
   }
 
   /**

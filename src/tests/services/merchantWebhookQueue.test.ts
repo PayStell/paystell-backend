@@ -1,6 +1,6 @@
-import { MerchantWebhookQueueService } from "../../services/MerchantWebhookQueue.service";
+import { MerchantWebhookQueueService } from "../../services/merchantWebhookQueue.service";
 import { WebhookService } from "../../services/webhook.service";
-import { NotificationService } from "../../services/inAppNotification.service";
+import { NotificationService } from "../../services/inAppNotificationService";
 import { MerchantWebhookEventEntityStatus } from "../../enums/MerchantWebhookEventStatus";
 import {
   NotificationType,
@@ -12,7 +12,7 @@ import { WebhookPayload } from "src/interfaces/webhook.interfaces";
 // Mocks
 jest.mock("bull");
 jest.mock("../../services/webhook.service");
-jest.mock("../../services/inAppNotification.service");
+jest.mock("../../services/inAppNotificationService");
 jest.mock("../../config/db", () => ({
   getRepository: jest.fn().mockReturnValue({
     update: jest.fn().mockResolvedValue({}),

@@ -12,7 +12,7 @@ export class PaymentLinkController {
         this.paymentLinkService = new PaymentLinkService(paymentLinkRepository);
     }
 
-    async createPaymentLink(req: Request, res: Response): Promise<any> {
+    async createPaymentLink(req: Request, res: Response): Promise<Response> {
         try {
             const paymentLink = await this.paymentLinkService.createPaymentLink(req.body);
             return res.status(201).json(paymentLink);
@@ -21,7 +21,7 @@ export class PaymentLinkController {
         }
     }
 
-    async getPaymentLinkById(req: Request, res: Response): Promise<any> {
+    async getPaymentLinkById(req: Request, res: Response): Promise<Response> {
         try {
             const paymentLink = await this.paymentLinkService.getPaymentLinkById(req.params.id);
             if (!paymentLink) {
@@ -33,7 +33,7 @@ export class PaymentLinkController {
         }
     }
 
-    async updatePaymentLink(req: Request, res: Response): Promise<any> {
+    async updatePaymentLink(req: Request, res: Response): Promise<Response> {
         try {
             const updatedPaymentLink = await this.paymentLinkService.updatePaymentLink(req.params.id, req.body);
             if (!updatedPaymentLink) {
@@ -45,7 +45,7 @@ export class PaymentLinkController {
         }
     }
 
-    async deletePaymentLink(req: Request, res: Response): Promise<any> {
+    async deletePaymentLink(req: Request, res: Response): Promise<Response> {
         try {
             const success = await this.paymentLinkService.deletePaymentLink(req.params.id);
             if (!success) {

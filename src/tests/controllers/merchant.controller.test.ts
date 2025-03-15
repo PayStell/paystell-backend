@@ -1,5 +1,5 @@
 import request from 'supertest';
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { MerchantController } from '../../controllers/merchant.controller';
 import { validateWebhookUrl } from '../../validators/webhook.validators';
 import { MerchantAuthService } from '../../services/merchant.service';
@@ -7,36 +7,55 @@ import { WebhookService } from '../../services/webhook.service';
 import crypto from 'crypto';
 import { asyncHandler } from 'src/middlewares/merchantAuth';
 
+// Define merchant type
+interface Merchant {
+    id: string;
+    [key: string]: unknown;
+}
+
+// Define interfaces for request types
+interface MerchantRequest extends Omit<Request, 'merchant'> {
+    merchant?: Merchant;
+}
+
+// Define type for async handler function
+type AsyncRequestHandler = (req: MerchantRequest, res: Response) => Promise<void>;
+
 jest.mock('../../services/merchant.service');
 jest.mock('../../services/webhook.service');
 jest.mock('../../validators/webhook.validators');
 jest.mock('../../middleware/auth', () => ({
-    asyncHandler: (fn: any) => fn,
-    authenticateMerchant: (req: any, res: any, next: any) => next(),
-    authenticateStellarWebhook: (req: any, res: any, next: any) => next()
+    asyncHandler: (fn: AsyncRequestHandler) => fn,
+    authenticateMerchant: (req: MerchantRequest, res: Response, next: NextFunction) => next(),
+    authenticateStellarWebhook: (req: MerchantRequest, res: Response, next: NextFunction) => next()
 }));
 
 describe('MerchantController', () => {
     let app: express.Application;
     let merchantController: MerchantController;
-    let merchantAuthService: MerchantAuthService;
-    let webhookService: WebhookService;
+    let merchantAuthService: jest.Mocked<MerchantAuthService>;
+    let webhookService: jest.Mocked<WebhookService>;
 
     beforeEach(() => {
         app = express();
         app.use(express.json());
 
-        app.use((req, res, next) => {
-            req.merchant = { id: 'merchant-123' } as any;
+        app.use((req: MerchantRequest, res: Response, next: NextFunction) => {
+            req.merchant = { id: 'merchant-123' };
             next();
         });
 
         merchantController = new MerchantController();
-        merchantAuthService = new MerchantAuthService();
-        webhookService = new WebhookService();
-        app.post('/register-merchant', asyncHandler((req: any, res: any) => merchantController.registerMerchant(req, res)));
-        app.post('/register-webhook', asyncHandler((req: any, res: any) => merchantController.registerWebhook(req, res)));
-        app.put('/update-webhook', asyncHandler((req: any, res: any) => merchantController.updateWebhook(req, res)));
+        merchantAuthService = new MerchantAuthService() as jest.Mocked<MerchantAuthService>;
+        webhookService = new WebhookService() as jest.Mocked<WebhookService>;
+        
+        // Cast the request type to MerchantRequest for the route handlers
+        app.post('/register-merchant', asyncHandler((req: MerchantRequest, res: Response) => 
+            merchantController.registerMerchant(req as Request, res)));
+        app.post('/register-webhook', asyncHandler((req: MerchantRequest, res: Response) => 
+            merchantController.registerWebhook(req as Request, res)));
+        app.put('/update-webhook', asyncHandler((req: MerchantRequest, res: Response) => 
+            merchantController.updateWebhook(req as Request, res)));
     });
 
     describe('registerMerchant', () => {

@@ -24,7 +24,11 @@ export class CryptoGeneratorService {
         const signature = hmac.digest('hex')
 
         if (payload.reqMethod === 'GET' || payload.reqMethod.startsWith('GET_')) {
-            const url = new URL(payload.metadata?.url);
+            const urlString = payload.metadata?.url;
+            if (typeof urlString !== 'string') {
+                throw new Error('URL is required for GET requests');
+            }
+            const url = new URL(urlString);
             url.searchParams.append('signature', signature)
             return url.toString()
         }

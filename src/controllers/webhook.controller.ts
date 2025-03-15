@@ -7,7 +7,7 @@ import { MerchantAuthService } from "../services/merchant.service";
 import { WebhookService } from "../services/webhook.service";
 import { Request, Response } from "express";
 import { CryptoGeneratorService } from "../services/cryptoGenerator.service";
-import { MerchantWebhookQueueService } from "../services/MerchantWebhookQueue.service";
+import { MerchantWebhookQueueService } from "../services/merchantWebhookQueue.service";
 
 // TODO: this initialization needs to be moved to dependency injection
 const defaultWebhookService = new WebhookService();
@@ -29,35 +29,36 @@ export class WebhookController {
     merchantAuthService?: MerchantAuthService,
     webhookNotificationService?: WebhookNotificationService
   ) {
-    this.webhookService = webhookService ?? defaultWebhookService;
-    this.merchantAuthService =
-      merchantAuthService ?? defaultMerchantAuthService;
-    this.webhookNotificationService =
-      webhookNotificationService ?? defaultWebhookNotificationService;
+    this.webhookService = webhookService || defaultWebhookService;
+    this.merchantAuthService = merchantAuthService || defaultMerchantAuthService;
+    this.webhookNotificationService = webhookNotificationService || defaultWebhookNotificationService;
   }
 
-  async handleWebhook(req: Request, res: Response) {
-    // const response = res
+  async handleWebhook(req: Request, res: Response): Promise<Response> {
     try {
-      const { payload }: StellarWebhookPayload = req.body;
+      const { signature } = req.headers;
+      const merchantId = req.params.merchantId;
 
-      const merchant = await this.merchantAuthService.getMerchantById(
-        payload.customer.id
-      );
-
-      if (!merchant || !merchant.isActive) {
-        return res.status(404).json({
+      if (!signature || !merchantId) {
+        return res.status(400).json({
           status: "error",
-          code: "MERCHANT_NOT_FOUND",
-          message: merchant ? "Merchant not active" : "Merchant not found",
+          code: "MISSING_PARAMETERS",
+          message: "Missing required parameters",
         });
       }
 
-      const merchantWebhook = await this.webhookService.getMerchantWebhook(
-        merchant.id
-      );
+      // Get merchant and webhook
+      const merchant = await this.merchantAuthService.getMerchantById(merchantId);
+      if (!merchant) {
+        return res.status(404).json({
+          status: "error",
+          code: "MERCHANT_NOT_FOUND",
+          message: "Merchant not found",
+        });
+      }
 
-      if (!merchantWebhook) {
+      const webhook = await this.webhookService.getMerchantWebhook(merchantId);
+      if (!webhook) {
         return res.status(404).json({
           status: "error",
           code: "WEBHOOK_NOT_FOUND",
@@ -65,41 +66,39 @@ export class WebhookController {
         });
       }
 
-      const webhookPayload: WebhookPayload = {
-        transactionId: payload.transaction.id,
-        transactionType: payload.transaction.type,
-        status: payload.transaction.status,
-        amount: payload.transaction.amount_in?.amount,
-        asset: payload.transaction.amount_in?.asset,
-        merchantId: payload.customer.id,
-        timestamp: new Date().toISOString(),
-        eventType: `${payload.transaction.type}.${payload.transaction.status}`,
-        reqMethod: "POST",
-      };
-
-      await merchantWebhookQueueService.addToQueue(
-        merchantWebhook,
-        webhookPayload
+      // Verify signature
+      const payload = req.body as WebhookPayload;
+      const isValid = await this.webhookNotificationService.sendWebhookNotification(
+        webhook.url,
+        payload,
+        merchantId
       );
+
+      if (!isValid) {
+        return res.status(401).json({
+          status: "error",
+          code: "INVALID_SIGNATURE",
+          message: "Invalid webhook signature",
+        });
+      }
 
       return res.status(200).json({
         status: "success",
         message: "Webhook processed successfully",
       });
-    } catch (err) {
-      console.error("Webhook error: ", err);
+    } catch (error) {
+      console.error("Webhook error: ", error);
       return res.status(500).json({
         status: "error",
         code: "INTERNAL_ERROR",
-        message: "Internal server error",
+        message: (error as Error).message,
       });
     }
   }
 
-  async testWebhook(req: Request, res: Response): Promise<any> {
+  async testWebhook(req: Request, res: Response): Promise<Response> {
     try {
-      // Get the merchant from the request (set by auth middleware)
-      const merchantId = req.user?.id;
+      const merchantId = req.user?.id?.toString();
 
       if (!merchantId) {
         return res.status(401).json({
@@ -108,10 +107,8 @@ export class WebhookController {
         });
       }
 
-      // Fetch the merchant to verify they exist
-      const merchant = await this.merchantAuthService.getMerchantById(
-        merchantId.toString()
-      );
+      // Get merchant and webhook
+      const merchant = await this.merchantAuthService.getMerchantById(merchantId);
       if (!merchant) {
         return res.status(404).json({
           status: "error",
@@ -119,57 +116,60 @@ export class WebhookController {
         });
       }
 
-      // Fetch the merchant's webhook
-      const merchantWebhook = await this.webhookService.getMerchantWebhook(
-        merchantId.toString()
-      );
-      if (!merchantWebhook) {
+      const webhook = await this.webhookService.getMerchantWebhook(merchantId);
+      if (!webhook) {
         return res.status(404).json({
           status: "error",
           message: "No webhook configured for this merchant",
         });
       }
 
-      const webhookPayload: WebhookPayload = {
+      // Create test webhook payload
+      const testPayload: WebhookPayload = {
         transactionId: `test-tx-${Date.now()}`,
         transactionType: "TEST_TRANSACTION",
         status: "completed",
         amount: "0.00",
         asset: "TEST",
-        merchantId: merchantId.toString(),
+        merchantId,
         timestamp: new Date().toISOString(),
-        eventType: "TEST.completed",
+        eventType: "test.completed",
         reqMethod: "POST",
         metadata: {
           isTest: true,
           testGenerated: new Date().toISOString(),
-          message:
-            "This is a test webhook notification. No actual transaction has occurred.",
-          testOnly: true,
+          message: "This is a test webhook notification. No actual transaction has occurred.",
         },
       };
 
-      // Add to the queue
-      await merchantWebhookQueueService.addToQueue(
-        merchantWebhook,
-        webhookPayload
+      // Send test webhook
+      const success = await this.webhookNotificationService.sendWebhookNotification(
+        webhook.url,
+        testPayload,
+        merchantId
       );
 
-      return res.json({
+      if (!success) {
+        return res.status(500).json({
+          status: "error",
+          message: "Failed to send test webhook",
+        });
+      }
+
+      return res.status(200).json({
         status: "success",
-        message: "Test webhook has been queued for delivery",
+        message: "Test webhook sent successfully",
         details: {
-          webhookUrl: merchantWebhook.url,
+          webhookUrl: webhook.url,
           note: "This test webhook uses zero amounts and TEST values to avoid confusion with real transactions.",
-          sentPayload: webhookPayload,
+          sentPayload: testPayload,
         },
       });
-    } catch (err: any) {
-      console.error("Error sending test webhook:", err);
+    } catch (error) {
+      console.error("Test webhook error: ", error);
       return res.status(500).json({
         status: "error",
-        message: "Failed to send test webhook",
-        error: err.message,
+        message: (error as Error).message,
       });
     }
   }

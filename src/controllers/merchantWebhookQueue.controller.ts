@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { MerchantWebhookQueueService } from "../services/MerchantWebhookQueue.service";
+import { MerchantWebhookQueueService } from "../services/merchantWebhookQueue.service";
 
 /**
  * Singleton instance of the queue service for webhook management
@@ -15,7 +15,7 @@ export class MerchantWebhookQueueController {
    * Retrieves failed webhook events with pagination
    * Allows filtering by merchantId
    */
-  async getFailedWebhooks(req: Request, res: Response): Promise<any> {
+  async getFailedWebhooks(req: Request, res: Response): Promise<Response> {
     try {
       // Extract query parameters with type safety
       const merchantId = typeof req.query.merchantId === 'string' 
@@ -45,12 +45,11 @@ export class MerchantWebhookQueueController {
         status: "success",
         data: failedWebhooks,
       });
-    } catch (err: any) {
-      console.error("Error fetching failed webhooks:", err);
+    } catch (error) {
+      console.error("Error fetching failed webhooks:", error);
       return res.status(500).json({
         status: "error",
-        message: "Failed to fetch failed webhooks",
-        error: err.message,
+        message: (error as Error).message,
       });
     }
   }
@@ -59,7 +58,7 @@ export class MerchantWebhookQueueController {
    * Retrieves pending webhook events with pagination
    * Shows webhooks that are scheduled for retry
    */
-  async getPendingWebhooks(req: Request, res: Response): Promise<any> {
+  async getPendingWebhooks(req: Request, res: Response): Promise<Response> {
     try {
       // Extract query parameters with type safety
       const merchantId = typeof req.query.merchantId === 'string' 
@@ -89,12 +88,11 @@ export class MerchantWebhookQueueController {
         status: "success",
         data: pendingWebhooks,
       });
-    } catch (err: any) {
-      console.error("Error fetching pending webhooks:", err);
+    } catch (error) {
+      console.error("Error fetching pending webhooks:", error);
       return res.status(500).json({
         status: "error",
-        message: "Failed to fetch pending webhooks",
-        error: err.message,
+        message: (error as Error).message,
       });
     }
   }
@@ -103,7 +101,7 @@ export class MerchantWebhookQueueController {
    * Manually triggers a retry for a failed webhook
    * Resets the retry counter and updates status
    */
-  async retryWebhook(req: Request, res: Response): Promise<any> {
+  async retryWebhook(req: Request, res: Response): Promise<Response> {
     try {
       // Get job ID from URL parameter
       const { jobId } = req.params;
@@ -123,12 +121,11 @@ export class MerchantWebhookQueueController {
         status: "success",
         message: "Webhook queued for retry",
       });
-    } catch (err: any) {
-      console.error("Error retrying webhook:", err);
+    } catch (error) {
+      console.error("Error retrying webhook:", error);
       return res.status(500).json({
         status: "error",
-        message: "Failed to retry webhook",
-        error: err.message,
+        message: (error as Error).message,
       });
     }
   }
@@ -138,7 +135,7 @@ export class MerchantWebhookQueueController {
    * Shows active, completed, failed, and pending webhooks
    * Includes success rate calculations
    */
-  async getQueueMetrics(req: Request, res: Response): Promise<any> {
+  async getQueueMetrics(req: Request, res: Response): Promise<Response> {
     try {
       // Extract merchantId for filtering metrics
       const merchantId = typeof req.query.merchantId === 'string' 
@@ -152,12 +149,11 @@ export class MerchantWebhookQueueController {
         status: "success",
         data: metrics,
       });
-    } catch (err: any) {
-      console.error("Error fetching queue metrics:", err);
+    } catch (error) {
+      console.error("Error fetching queue metrics:", error);
       return res.status(500).json({
         status: "error",
-        message: "Failed to fetch queue metrics",
-        error: err.message,
+        message: (error as Error).message,
       });
     }
   }

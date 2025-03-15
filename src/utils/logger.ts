@@ -70,10 +70,24 @@ if (process.env.NODE_ENV !== 'production') {
     );
 }
 
+// Define log metadata types
+interface RequestMetadata {
+    requestId: string;
+    userId: string | number;
+    method: string;
+    url: string;
+    ip: string | undefined;
+    userAgent: string | undefined;
+}
+
+interface LogMetadata {
+    [key: string]: string | number | boolean | null | undefined | Date | LogMetadata | Array<LogMetadata | string | number | boolean | null | undefined | Date>;
+}
+
 // Extract request metadata for logging
-export const extractRequestMetadata = (req: Request) => {
-    const requestId = req.headers['x-request-id'] || uuidv4();
-    const userId = (req as any).user?.id || 'anonymous';
+export const extractRequestMetadata = (req: Request): RequestMetadata => {
+    const requestId = req.headers['x-request-id'] as string || uuidv4();
+    const userId = (req as { user?: { id: string | number } }).user?.id || 'anonymous';
 
     return {
         requestId,
@@ -86,7 +100,7 @@ export const extractRequestMetadata = (req: Request) => {
 };
 
 // Helper function to log errors with request context
-export const logError = (error: Error, req?: Request, additionalInfo?: Record<string, any>) => {
+export const logError = (error: Error, req?: Request, additionalInfo?: LogMetadata) => {
     const metadata = req ? extractRequestMetadata(req) : {};
 
     logger.error({
@@ -98,7 +112,7 @@ export const logError = (error: Error, req?: Request, additionalInfo?: Record<st
 };
 
 // Helper function to log warnings with request context
-export const logWarn = (message: string, req?: Request, additionalInfo?: Record<string, any>) => {
+export const logWarn = (message: string, req?: Request, additionalInfo?: LogMetadata) => {
     const metadata = req ? extractRequestMetadata(req) : {};
 
     logger.warn({
@@ -109,7 +123,7 @@ export const logWarn = (message: string, req?: Request, additionalInfo?: Record<
 };
 
 // Helper function to log info with request context
-export const logInfo = (message: string, req?: Request, additionalInfo?: Record<string, any>) => {
+export const logInfo = (message: string, req?: Request, additionalInfo?: LogMetadata) => {
     const metadata = req ? extractRequestMetadata(req) : {};
 
     logger.info({
@@ -120,7 +134,7 @@ export const logInfo = (message: string, req?: Request, additionalInfo?: Record<
 };
 
 // Helper function to log debug with request context
-export const logDebug = (message: string, req?: Request, additionalInfo?: Record<string, any>) => {
+export const logDebug = (message: string, req?: Request, additionalInfo?: LogMetadata) => {
     const metadata = req ? extractRequestMetadata(req) : {};
 
     logger.debug({

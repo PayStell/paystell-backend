@@ -70,7 +70,7 @@ export class InAppNotificationEntity {
   link: string;
 
   @Column({ type: "json", nullable: true })
-  metadata: any;
+  metadata: Record<string, unknown>;
 
   @Column({ default: 0 })
   priority: number;
