@@ -18,6 +18,6 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true
   },
-  "include": ["src/**/*"],                            /* Incluye todos los archivos dentro de 'src'. */
-  "exclude": ["node_modules", "dist"]                 /* Excluye 'node_modules' y 'dist' de la compilación. */
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/tests", "**/*.test.ts"]
 }
