@@ -31,7 +31,7 @@ type AsyncRequestHandler = (
 jest.mock("../../services/merchant.service");
 jest.mock("../../services/webhook.service");
 jest.mock("../../validators/webhook.validators");
-jest.mock("../../middleware/auth", () => ({
+jest.mock("../../middlewares/authMiddleware", () => ({
   asyncHandler: (fn: AsyncRequestHandler) => fn,
   authenticateMerchant: (
     req: MerchantRequest,
