@@ -6,7 +6,14 @@ import AppDataSource from "../config/db";
 import { randomBytes, createHash } from "crypto";
 import { v4 as uuidv4 } from "uuid";
 import { redisClient } from "../config/redisConfig";
-import { Auth0Profile, JWTPayload, LoginResponse, TokenResponse, UserRegistrationData, UserResponse } from "src/interfaces/auth.interfaces";
+import {
+  Auth0Profile,
+  JWTPayload,
+  LoginResponse,
+  TokenResponse,
+  UserRegistrationData,
+  UserResponse,
+} from "src/interfaces/auth.interfaces";
 
 export class AuthService {
   private userRepository: Repository<User>;

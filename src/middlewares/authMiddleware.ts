@@ -63,7 +63,7 @@ export const authMiddleware = async (
       });
       return;
     }
-    
+
     // Check if token is blacklisted
     const isBlacklisted = await redisClient.get(`blacklist:${decoded.jti}`);
     if (isBlacklisted) {
@@ -75,8 +75,8 @@ export const authMiddleware = async (
       return;
     }
 
-    console.log(decoded.jti, "8888")
-    console.log(isBlacklisted, "xccc")
+    console.log(decoded.jti, "8888");
+    console.log(isBlacklisted, "xccc");
 
     req.user = {
       id: decoded.id,
@@ -125,7 +125,7 @@ export const refreshTokenMiddleware = async (
   try {
     // Get refresh token from cookie
     const refreshToken = req.cookies.refreshToken;
-    
+
     if (!refreshToken) {
       res.status(401).json({
         status: "error",
@@ -134,13 +134,13 @@ export const refreshTokenMiddleware = async (
       });
       return;
     }
-    
+
     // Verify the refresh token
     const decoded = verify(
       refreshToken,
-      process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key"
+      process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key",
     ) as JwtPayload;
-    
+
     // Check if token has jti
     if (!decoded.jti) {
       res.status(401).json({
@@ -150,7 +150,7 @@ export const refreshTokenMiddleware = async (
       });
       return;
     }
-    
+
     // Check if token is blacklisted
     const isBlacklisted = await redisClient.get(`blacklist:${decoded.jti}`);
     if (isBlacklisted) {
@@ -159,7 +159,7 @@ export const refreshTokenMiddleware = async (
         message: "Refresh token is no longer valid",
         code: "TOKEN_REVOKED",
       });
-      
+
       // Clear the invalid cookie
       res.clearCookie("refreshToken", {
         httpOnly: true,
@@ -167,10 +167,10 @@ export const refreshTokenMiddleware = async (
         sameSite: "strict",
         path: "/api/v1/auth/refresh-token",
       });
-      
+
       return;
     }
-    
+
     // Add user info to request
     req.user = {
       id: decoded.id,
@@ -178,7 +178,7 @@ export const refreshTokenMiddleware = async (
       tokenExp: decoded.exp,
       jti: decoded.jti,
     };
-    
+
     next();
   } catch (error) {
     // Clear the invalid cookie
@@ -188,7 +188,7 @@ export const refreshTokenMiddleware = async (
       sameSite: "strict",
       path: "/api/v1/auth/refresh-token",
     });
-    
+
     if (error instanceof TokenExpiredError) {
       res.status(401).json({
         status: "error",
