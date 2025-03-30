@@ -15,6 +15,7 @@ describe("UserController", () => {
   beforeEach(() => {
     userService = new UserService() as jest.Mocked<UserService>;
     userController = new UserController();
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (userController as any).userService = userService;
 
