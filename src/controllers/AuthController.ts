@@ -5,6 +5,7 @@ import { validateTwoFactorAuthentication } from "./validateTwoFactorAuthenticati
 import AppDataSource from "../config/db";
 import { User } from "../entities/User";
 import { compare } from "bcryptjs";
+import { Auth0Profile } from "src/interfaces/auth.interfaces";
 
 export class AuthController {
   public authService: AuthService;
@@ -148,13 +149,13 @@ export class AuthController {
   auth0Callback = async (req: Request, res: Response): Promise<void> => {
     try {
       // req.user will contain Auth0 profile when using express-openid-connect
-      console.log(req.user, "xxx")
+
       if (!req.user) {
         res.status(401).json({ message: "Authentication failed" });
         return;
       }
 
-      const auth0Profile = req.user;
+      const auth0Profile: Auth0Profile = req.user;
       const result = await this.authService.loginWithAuth0(auth0Profile);
 
       // Set refresh token in HTTP-only cookie
@@ -167,9 +168,7 @@ export class AuthController {
       });
 
       // Redirect to frontend with access token
-      const redirectUrl = new URL(
-        "http://localhost:3000",
-      );
+      const redirectUrl = new URL("http://localhost:3000");
       redirectUrl.searchParams.append("accessToken", result.tokens.accessToken);
       redirectUrl.searchParams.append(
         "expiresIn",

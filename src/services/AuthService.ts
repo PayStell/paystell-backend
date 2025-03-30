@@ -6,42 +6,7 @@ import AppDataSource from "../config/db";
 import { randomBytes, createHash } from "crypto";
 import { v4 as uuidv4 } from "uuid";
 import { redisClient } from "../config/redisConfig";
-
-interface UserRegistrationData {
-  name: string;
-  email: string;
-  password: string;
-}
-
-interface UserResponse {
-  id: number;
-  name: string;
-  email: string;
-  createdAt: Date;
-  updatedAt: Date;
-  twoFactorAuth?: {
-    isEnabled: boolean;
-  };
-}
-
-interface TokenResponse {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-}
-
-interface LoginResponse {
-  user: UserResponse;
-  tokens: TokenResponse;
-}
-
-interface JWTPayload {
-  id: number;
-  email: string;
-  jti?: string; // JWT ID for token identification
-  iat?: number;
-  exp?: number;
-}
+import { Auth0Profile, JWTPayload, LoginResponse, TokenResponse, UserRegistrationData, UserResponse } from "src/interfaces/auth.interfaces";
 
 export class AuthService {
   private userRepository: Repository<User>;
@@ -141,7 +106,7 @@ export class AuthService {
     };
   }
 
-  async findOrCreateAuth0User(auth0Profile: any): Promise<User> {
+  async findOrCreateAuth0User(auth0Profile: Auth0Profile): Promise<User> {
     // First try to find user by email
     let user = await this.userRepository.findOne({
       where: { email: auth0Profile.email },
@@ -205,7 +170,7 @@ export class AuthService {
     };
   }
 
-  async loginWithAuth0(auth0Profile: any): Promise<LoginResponse> {
+  async loginWithAuth0(auth0Profile: Auth0Profile): Promise<LoginResponse> {
     const user = await this.findOrCreateAuth0User(auth0Profile);
 
     const tokens = this.generateTokens(user.id, user.email);

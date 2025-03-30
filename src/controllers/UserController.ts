@@ -15,6 +15,7 @@ export class UserController {
   async createUser(req: Request, res: Response): Promise<void> {
     try {
       const userData: CreateUserDTO = req.body;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const newUser = await this.userService.createUser(userData);
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
