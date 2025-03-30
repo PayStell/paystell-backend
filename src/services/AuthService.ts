@@ -1,8 +1,7 @@
-// File: src/services/AuthService.ts
 import { Repository } from "typeorm";
 import { User } from "../entities/User";
 import { compare } from "bcryptjs";
-import { sign, verify, SignOptions, JwtPayload } from "jsonwebtoken";
+import { sign, verify, JwtPayload, SignOptions } from "jsonwebtoken";
 import AppDataSource from "../config/db";
 import { randomBytes, createHash } from "crypto";
 import { v4 as uuidv4 } from "uuid";
@@ -48,8 +47,8 @@ export class AuthService {
   private userRepository: Repository<User>;
   private readonly JWT_SECRET: string;
   private readonly JWT_REFRESH_SECRET: string;
-  private readonly ACCESS_TOKEN_EXPIRY: string = "15m"; // 15 minutes
-  private readonly REFRESH_TOKEN_EXPIRY: string = "7d"; // 7 days
+  private readonly ACCESS_TOKEN_EXPIRY = "15m"; // 15 minutes
+  private readonly REFRESH_TOKEN_EXPIRY = "7d"; // 7 days
 
   constructor() {
     this.userRepository = AppDataSource.getRepository(User);
@@ -58,11 +57,9 @@ export class AuthService {
       process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key";
   }
 
-
   private generateTokenId(): string {
     return uuidv4();
   }
-
 
   private hashToken(token: string): string {
     return createHash("sha256").update(token).digest("hex");
@@ -74,11 +71,11 @@ export class AuthService {
     // Calculate expires in seconds for client-side expiry handling
     const expiresIn = 15 * 60; // 15 minutes in seconds
 
-    const accessTokenOptions: any = {
+    const accessTokenOptions: SignOptions = {
       expiresIn: this.ACCESS_TOKEN_EXPIRY,
     };
 
-    const refreshTokenOptions: any = {
+    const refreshTokenOptions: SignOptions = {
       expiresIn: this.REFRESH_TOKEN_EXPIRY,
     };
 
@@ -370,7 +367,6 @@ export class AuthService {
       console.log("Error invalidating access token:", error);
     }
   }
-
 
   async revokeAllUserSessions(userId: number): Promise<void> {
     // Get all refresh tokens for this user
