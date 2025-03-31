@@ -65,6 +65,15 @@ cp .env.example .env
 npm start
 ```
 
+## 📬 How to Import the Postman Collection
+
+To import the Postman collection (in .json or .postman_collection format), follow these steps:
+
+1. Open Postman.
+2. Click on "Import" in the top left corner of the Postman window.
+3. Select the file you want to import from your computer. You can drag and drop the `.json` file or search for it on your system.
+4. Postman will load your file and add it to your collection, displaying the configured endpoints.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please read our [CONTRIBUTING GUIDE](https://github.com/PayStell/paystell-website/blob/main/CONTRIBUTORS_GUIDE.md) before submitting PRs.

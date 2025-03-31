@@ -1,9 +1,9 @@
-import { customAlphabet } from "nanoid"
+import { customAlphabet } from "nanoid";
 
-const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-const nanoid = customAlphabet(alphabet, 12)
+const alphabet =
+  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+const nanoid = customAlphabet(alphabet, 12);
 
 export function generateUniqueId(): string {
-  return nanoid()
+  return nanoid();
 }
-

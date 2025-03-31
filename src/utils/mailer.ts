@@ -8,7 +8,9 @@ interface EmailOptions {
   html: string;
 }
 
-export const sendEmail = async (options: EmailOptions): Promise<SentMessageInfo> => {
+export const sendEmail = async (
+  options: EmailOptions,
+): Promise<SentMessageInfo> => {
   const transporter = createTransporter();
 
   const mailOptions = {

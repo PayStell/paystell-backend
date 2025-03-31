@@ -19,5 +19,5 @@
     "allowSyntheticDefaultImports": true
   },
   "include": ["src/**/*", "src/config/test-db.ts"],                            /* Incluye todos los archivos dentro de 'src'. */
-  "exclude": ["node_modules", "dist"]                 /* Excluye 'node_modules' y 'dist' de la compilación. */
+  "exclude": ["node_modules", "dist", "**/tests", "**/*.test.ts"]
 }

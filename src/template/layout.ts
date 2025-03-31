@@ -1,4 +1,8 @@
-export const baseEmailLayout = (header: string, content: string, primaryColor = '#079eff'): string => `
+export const baseEmailLayout = (
+  header: string,
+  content: string,
+  primaryColor = "#079eff",
+): string => `
   <!DOCTYPE html>
   <html lang="en">
   <head>

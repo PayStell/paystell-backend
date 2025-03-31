@@ -1,6 +1,6 @@
-import { sendEmail } from './mailer';
-import { verificationEmailTemplate } from '../template/emailVerification';
-import { generateVerificationToken } from './token';
+import { sendEmail } from "./mailer";
+import { verificationEmailTemplate } from "../template/emailVerification";
+import { generateVerificationToken } from "./token";
 
 export const sendVerificationEmail = async (email: string): Promise<void> => {
   const token = generateVerificationToken(email);
@@ -10,7 +10,7 @@ export const sendVerificationEmail = async (email: string): Promise<void> => {
 
   await sendEmail({
     to: email,
-    subject: 'Verify Your Email',
+    subject: "Verify Your Email",
     html: emailBody,
   });
 };

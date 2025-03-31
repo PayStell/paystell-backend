@@ -1,17 +1,26 @@
-import { Repository } from 'typeorm';
-import DataSource from '../config/db';
-import { EmailVerification } from '../entities/emailVerification';
-import { User } from '../entities/User';
-import { sendVerificationEmail } from '../utils/sendVerificationEmail';
-import { verifyToken, generateVerificationToken } from '../utils/token';
+import { Repository } from "typeorm";
+import DataSource from "../config/db";
+import { EmailVerification } from "../entities/emailVerification";
+import { User } from "../entities/User";
+import { sendVerificationEmail } from "../utils/sendVerificationEmail";
+import { verifyToken, generateVerificationToken } from "../utils/token";
+import { sendWalletVerificationEmail } from "../utils/sendWalletVerificationEmail";
 
 class EmailVerificationService {
   private emailVerificationRepository: Repository<EmailVerification>;
   private userRepository: Repository<User>;
 
   constructor() {
-    this.emailVerificationRepository = DataSource.getRepository(EmailVerification);
+    this.emailVerificationRepository =
+      DataSource.getRepository(EmailVerification);
     this.userRepository = DataSource.getRepository(User);
+  }
+  async sendWalletVerificationEmail(
+    email: string,
+    walletAddress: string,
+    verificationCode: string,
+  ): Promise<void> {
+    await sendWalletVerificationEmail(email, verificationCode, walletAddress);
   }
 
   async sendVerificationEmail(email: string, userId: number): Promise<void> {
@@ -21,7 +30,7 @@ class EmailVerificationService {
       token,
       email,
       user: { id: userId },
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), 
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     });
     await this.emailVerificationRepository.save(verificationEntry);
 
@@ -34,14 +43,16 @@ class EmailVerificationService {
 
     const verificationEntry = await this.emailVerificationRepository.findOne({
       where: { token, email },
-      relations: ['user'],
+      relations: ["user"],
     });
 
     if (!verificationEntry || verificationEntry.expiresAt < new Date()) {
-      throw new Error('Invalid or expired token');
+      throw new Error("Invalid or expired token");
     }
 
-    const user = await this.userRepository.findOne({ where: { id: verificationEntry.user.id } });
+    const user = await this.userRepository.findOne({
+      where: { id: verificationEntry.user.id },
+    });
     if (user) {
       user.isEmailVerified = true;
       await this.userRepository.save(user);
@@ -53,11 +64,11 @@ class EmailVerificationService {
     const user = await this.userRepository.findOne({ where: { email } });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new Error("User not found");
     }
 
     if (user.isEmailVerified) {
-      throw new Error('Email is already verified');
+      throw new Error("Email is already verified");
     }
 
     await this.sendVerificationEmail(email, user.id);

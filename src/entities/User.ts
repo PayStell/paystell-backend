@@ -1,70 +1,95 @@
-import { IsEmail, IsNotEmpty, Length, IsEnum } from "class-validator";
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BeforeInsert, OneToOne, OneToMany } from "typeorm";
+import { IsEmail, IsNotEmpty, IsEnum, MinLength } from "class-validator";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  BeforeInsert,
+  OneToOne,
+  OneToMany,
+} from "typeorm";
 import { UserRole } from "../enums/UserRole";
 import { Session } from "./Session";
 import { EmailVerification } from "./emailVerification";
+import { WalletVerification } from "./WalletVerification";
 import { TwoFactorAuth } from "./TwoFactorAuth";
 import { hash } from "bcryptjs";
 
-@Entity('users')
+@Entity("users")
 export class User {
-    @PrimaryGeneratedColumn()
-    id!: number;
+  @PrimaryGeneratedColumn()
+  id!: number;
 
-    @Column()
-    @IsNotEmpty()
-    name!: string;
+  @Column({ nullable: true })
+  @IsNotEmpty()
+  name!: string;
 
-    @Column({ unique: true })
-    @IsEmail()
-    email!: string;
+  @Column({ unique: true, nullable: true })
+  @IsEmail()
+  email!: string;
 
-    @Column()
-    @Length(70) // could vary save a hash
-    password!: string;
+  @Column()
+  @MinLength(8) // minimum length for password
+  password!: string;
 
-    @Column({ 
-        type: 'enum',
-        enum: UserRole,
-        default: UserRole.USER
-    })
-    @IsEnum(UserRole)
-    role!: UserRole;
+  @Column({
+    type: "enum",
+    enum: UserRole,
+    default: UserRole.USER,
+  })
+  @IsEnum(UserRole)
+  role!: UserRole;
 
-    @Column({ nullable: true })
-    description?: string;
+  @Column({ nullable: true })
+  description?: string;
 
-    @OneToOne(() => TwoFactorAuth, (tfa) => tfa.user, { cascade: true, eager: true })
-    twoFactorAuth: TwoFactorAuth;
+  @OneToOne(() => TwoFactorAuth, (tfa) => tfa.user, {
+    cascade: true,
+    eager: true,
+  })
+  twoFactorAuth: TwoFactorAuth;
 
-    @Column({ nullable: true })
-    logoUrl?: string;
+  @Column({ nullable: true })
+  logoUrl?: string;
 
-    @Column({ nullable: true })
-    walletAddress?: string;
+  @Column({ nullable: true })
+  walletAddress?: string;
 
-    @BeforeInsert()
-    async hashPassword() {
-        if (this.password) {
-            this.password = await hash(this.password, 10);
-        }
+  @BeforeInsert()
+  async hashPassword() {
+    if (this.password) {
+      this.password = await hash(this.password, 10);
     }
+  }
 
-    @Column({ default: false })
-    isEmailVerified!: boolean;
+  @Column({ default: false })
+  isEmailVerified!: boolean;
 
-    @OneToMany(() => EmailVerification, (emailVerification) => emailVerification.user)
-    emailVerifications!: EmailVerification[];
+  @OneToMany(
+    () => EmailVerification,
+    (emailVerification) => emailVerification.user,
+  )
+  emailVerifications!: EmailVerification[];
 
-    @OneToMany(() => Session, (session) => session.user)
-    sessions!: Session[];
+  @OneToMany(
+    () => WalletVerification,
+    (WalletVerification) => WalletVerification.user,
+  )
+  walletVerifications!: WalletVerification[];
 
-    @Column({ default: false })
-    isWalletVerified!: boolean;
+  @OneToMany(() => Session, (session) => session.user)
+  sessions!: Session[];
 
-    @CreateDateColumn()
-    createdAt!: Date;
+  @Column({ default: false })
+  isWalletVerified!: boolean;
 
-    @UpdateDateColumn()
-    updatedAt!: Date;
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
+
+  @Column({ nullable: true })
+  tokenExp?: number;
 }

@@ -1,27 +1,35 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { MerchantEntity } from './Merchant.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
+import { MerchantEntity } from "./Merchant.entity";
 
-@Entity('merchant_webhooks')
+@Entity("merchant_webhooks")
 export class MerchantWebhookEntity {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
 
-    @Column('uuid')
-    merchantId: string;
+  @Column("uuid")
+  merchantId: string;
 
-    @Column()
-    url: string;
+  @Column()
+  url: string;
 
-    @Column({ default: true })
-    isActive: boolean;
+  @Column({ default: true })
+  isActive: boolean;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 
-    @ManyToOne(() => MerchantEntity, merchant => merchant.webhooks)
-    @JoinColumn({ name: 'merchantId' })
-    merchant: MerchantEntity;
+  @ManyToOne(() => MerchantEntity, (merchant) => merchant.webhooks)
+  @JoinColumn({ name: "merchantId" })
+  merchant: MerchantEntity;
 }

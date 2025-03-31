@@ -1,6 +1,9 @@
-import { baseEmailLayout } from './layout';
+import { baseEmailLayout } from "./layout";
 
-export const verificationEmailTemplate = (email: string, verifyUrl: string): string => {
+export const verificationEmailTemplate = (
+  email: string,
+  verifyUrl: string,
+): string => {
   const header = `
     <div class="header">
       <h1>Verify Your Email</h1>

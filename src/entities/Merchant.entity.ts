@@ -1,35 +1,44 @@
 // src/entities/Merchant.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
-import { MerchantWebhookEntity } from './MerchantWebhook.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from "typeorm";
+import { MerchantWebhookEntity } from "./MerchantWebhook.entity";
 
-@Entity('merchants')
+@Entity("merchants")
 export class MerchantEntity {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
 
-    @Column({ unique: true })
-    apiKey: string;
+  @Column({ unique: true })
+  apiKey: string;
 
-    @Column()
-    secret: string;
+  @Column()
+  secret: string;
 
-    @Column()
-    name: string;
+  @Column()
+  name: string;
 
-    @Column()
-    email: string;
+  @Column()
+  email: string;
 
-    @Column({ default: true })
-    isActive: boolean;
+  @Column({ default: true })
+  isActive: boolean;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 
-    @OneToMany(() => MerchantWebhookEntity, webhook => webhook.merchant, { cascade: true })
-    webhooks: MerchantWebhookEntity[];
+  @OneToMany(() => MerchantWebhookEntity, (webhook) => webhook.merchant, {
+    cascade: true,
+  })
+  webhooks: MerchantWebhookEntity[];
 }
 
 // src/entities/MerchantWebhook.entity.ts

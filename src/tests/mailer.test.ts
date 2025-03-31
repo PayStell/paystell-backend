@@ -22,14 +22,16 @@ describe("Mailer Utility", () => {
   it("should throw an error if email fails to send", async () => {
     const transport = nodemailer.createTransport();
 
-    (transport.sendMail as jest.Mock).mockRejectedValueOnce(new Error("Send failed"));
+    (transport.sendMail as jest.Mock).mockRejectedValueOnce(
+      new Error("Send failed"),
+    );
 
     await expect(
       sendEmail({
         to: "test@example.com",
         subject: "Test Email",
         html: "<p>Hello, World!</p>",
-      })
+      }),
     ).rejects.toThrow("Send failed");
   });
 });

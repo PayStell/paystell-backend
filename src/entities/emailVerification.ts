@@ -1,6 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn } from "typeorm";
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
 import { User } from "./User";
-
 
 //
 @Entity()
@@ -20,7 +26,9 @@ export class EmailVerification {
   @Column({ default: false })
   isVerified!: boolean;
 
-  @ManyToOne(() => User, (user) => user.emailVerifications, { onDelete: "CASCADE" })
+  @ManyToOne(() => User, (user) => user.emailVerifications, {
+    onDelete: "CASCADE",
+  })
   user!: User;
 
   @CreateDateColumn()
