@@ -7,6 +7,7 @@ import {
 } from "jsonwebtoken";
 import { UserRole } from "../enums/UserRole";
 import { UserService } from "../services/UserService";
+import { redisClient } from "../config/redisConfig";
 
 declare module "express" {
   interface Request {
@@ -14,16 +15,17 @@ declare module "express" {
       id: number;
       email: string;
       tokenExp?: number;
+      jti?: string;
       role?: UserRole;
     };
   }
 }
 
-export const authMiddleware = (
+export const authMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
@@ -52,10 +54,35 @@ export const authMiddleware = (
       process.env.JWT_SECRET || "your-secret-key",
     ) as JwtPayload;
 
+    // Check if token has jti
+    if (!decoded.jti) {
+      res.status(401).json({
+        status: "error",
+        message: "Invalid token format",
+        code: "INVALID_FORMAT",
+      });
+      return;
+    }
+
+    // Check if token is blacklisted
+    const isBlacklisted = await redisClient.get(`blacklist:${decoded.jti}`);
+    if (isBlacklisted) {
+      res.status(401).json({
+        status: "error",
+        message: "Token is no longer valid",
+        code: "TOKEN_REVOKED",
+      });
+      return;
+    }
+
+    console.log(decoded.jti, "8888");
+    console.log(isBlacklisted, "xccc");
+
     req.user = {
       id: decoded.id,
       email: decoded.email,
       tokenExp: decoded.exp,
+      jti: decoded.jti,
     };
 
     // Token expiration warning (5 minutes before expiration)
@@ -90,6 +117,100 @@ export const authMiddleware = (
   }
 };
 
+export const refreshTokenMiddleware = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    // Get refresh token from cookie
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      res.status(401).json({
+        status: "error",
+        message: "No refresh token provided",
+        code: "NO_REFRESH_TOKEN",
+      });
+      return;
+    }
+
+    // Verify the refresh token
+    const decoded = verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key",
+    ) as JwtPayload;
+
+    // Check if token has jti
+    if (!decoded.jti) {
+      res.status(401).json({
+        status: "error",
+        message: "Invalid token format",
+        code: "INVALID_FORMAT",
+      });
+      return;
+    }
+
+    // Check if token is blacklisted
+    const isBlacklisted = await redisClient.get(`blacklist:${decoded.jti}`);
+    if (isBlacklisted) {
+      res.status(401).json({
+        status: "error",
+        message: "Refresh token is no longer valid",
+        code: "TOKEN_REVOKED",
+      });
+
+      // Clear the invalid cookie
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/api/v1/auth/refresh-token",
+      });
+
+      return;
+    }
+
+    // Add user info to request
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      tokenExp: decoded.exp,
+      jti: decoded.jti,
+    };
+
+    next();
+  } catch (error) {
+    // Clear the invalid cookie
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/api/v1/auth/refresh-token",
+    });
+
+    if (error instanceof TokenExpiredError) {
+      res.status(401).json({
+        status: "error",
+        message: "Refresh token has expired. Please log in again.",
+        code: "REFRESH_TOKEN_EXPIRED",
+      });
+    } else if (error instanceof JsonWebTokenError) {
+      res.status(401).json({
+        status: "error",
+        message: "Invalid refresh token",
+        code: "INVALID_REFRESH_TOKEN",
+      });
+    } else {
+      res.status(401).json({
+        status: "error",
+        message: "Authentication failed",
+        code: "AUTH_FAILED",
+      });
+    }
+  }
+};
+
 export const isUserAuthorized = (roles: UserRole | UserRole[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     // Ensure user is authenticated first
@@ -102,7 +223,6 @@ export const isUserAuthorized = (roles: UserRole | UserRole[]) => {
       return;
     }
 
-    // Get user role from req.user (you may need to adjust this depending on how your user object is structured)
     const userService = new UserService();
     const user = await userService.getUserById(req?.user?.id);
     if (!user) {

@@ -12,8 +12,13 @@ import {
   verifyTwoFactorAuthentication,
 } from "../controllers/twoFactorAuthController";
 import { validateRequest } from "../middlewares/validateRequest";
-import { authMiddleware } from "../middlewares/authMiddleware";
+import {
+  authMiddleware,
+  refreshTokenMiddleware,
+} from "../middlewares/authMiddleware";
 import { UserRole } from "../enums/UserRole";
+import { auth } from "express-openid-connect";
+import { oauthConfig } from "../config/auth0Config";
 
 // Definir la interfaz CustomRequest para tipar correctamente req.user
 interface CustomRequest extends Request {
@@ -21,12 +26,16 @@ interface CustomRequest extends Request {
     id: number;
     email: string;
     tokenExp?: number;
+    jti?: string;
     role?: UserRole;
   };
 }
 
 const router = Router();
 const authController = new AuthController();
+
+// Auth0 authentication routes
+router.use(auth(oauthConfig));
 
 // Validation schemas
 const registerSchema = {
@@ -63,7 +72,7 @@ const asyncHandler = (
   };
 };
 
-// Routes
+// Routes for email/password authentication
 router.post(
   "/register",
   validateRequest(registerSchema) as RequestHandler,
@@ -88,21 +97,32 @@ router.post(
   }),
 );
 
+// Auth0 callback route
+router.get(
+  "/callback",
+  asyncHandler(async (req, res) => {
+    await authController.auth0Callback(req, res);
+  }),
+);
+
+// Route for refresh token
 router.post(
   "/refresh-token",
+  refreshTokenMiddleware as RequestHandler,
   asyncHandler(async (req, res) => {
     await authController.refreshToken(req, res);
   }),
 );
 
-router.get(
-  "/profile",
-  authMiddleware as RequestHandler,
+// Route for logout
+router.post(
+  "/logout",
   asyncHandler(async (req, res) => {
-    await authController.getProfile(req, res);
+    await authController.logout(req, res);
   }),
 );
 
+// 2FA routes
 router.post(
   "/enable-2fa",
   authMiddleware as RequestHandler,
