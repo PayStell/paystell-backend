@@ -23,6 +23,12 @@ jest.mock("nanoid", () => ({
   customAlphabet: () => () => "123456789012",
 }));
 
+describe('Payment Service Tests', () => {
+  test('should create a payment successfully', async () => {
+    // Implement test
+  });
+});
+
 describe("PaymentService", () => {
   let paymentService: PaymentService;
 

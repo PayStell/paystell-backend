@@ -58,5 +58,12 @@ describe("Auth System", () => {
       expect(response.status).toBe(401);
       expect(response.body).toHaveProperty("message", "Invalid credentials");
     });
+});
+
+describe('Authentication Tests', () => {
+    test('should return a token on successful login', async () => {
+      // Implement test
+    });
+  });
   });
 });

@@ -14,6 +14,12 @@ jest.mock("../utils/token", () => ({
   verifyToken: jest.fn(),
 }));
 
+describe('Email Verification Tests', () => {
+  test('should send a verification email', async () => {
+    // Implement test
+  });
+});
+
 describe("EmailVerificationService", () => {
   let emailVerificationService: EmailVerificationService;
   let emailVerificationRepository: jest.Mocked<Repository<EmailVerification>>;

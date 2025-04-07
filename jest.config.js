@@ -9,5 +9,10 @@ module.exports = {
   moduleNameMapper: {
     "nodemailer": "<rootDir>/src/__mocks__/nodemailer.ts",
   },
+};
+module.exports = {
+  collectCoverage: true,
+  coverageDirectory: 'coverage',
+  testEnvironment: 'node',
   modulePathIgnorePatterns: ["<rootDir>/dist/"],
 };
