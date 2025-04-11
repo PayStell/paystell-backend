@@ -5,7 +5,7 @@ import { Merchant } from "../interfaces/webhook.interfaces";
 import { UserRole } from "../enums/UserRole";
 
 // Extender el tipo Request mediante una extensión de módulo
-interface CustomRequest extends Request {
+export interface CustomRequest extends Request {
   user?: {
     id: number;
     email: string;

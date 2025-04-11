@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "e78995af-7553-4d5a-aa48-e3b19f5a65b2",
+		"_postman_id": "72545c13-e8bd-47d7-9b27-65c534b1a614",
 		"name": "Paystell",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "20151144"
@@ -394,6 +394,248 @@
 								"db"
 							]
 						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "merchant-business-profile",
+			"item": [
+				{
+					"name": "profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "",
+								"value": "",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3001/merchants/profile",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3001",
+							"path": [
+								"merchants",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update-profile",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"business_name\": \"Updated Business Name\",\r\n  \"business_email\": \"new@business.com\",\r\n  \"business_description\": \"Updated description\",\r\n  \"business_address\": \"456 New St\",\r\n  \"business_phone\": \"+1234567890\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:3000/merchants/profile",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"merchants",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "upload-logo",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "logo",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "localhost:3000/merchants/logo",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"merchants",
+								"logo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete-logo",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "localhost:3000/merchants/logo",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"merchants",
+								"logo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "profile",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "   {\r\n     \"name\": \"Mi Negocio\",\r\n     \"email\": \"negocio@ejemplo.com\"\r\n   }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/merchants/profile",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"merchants",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "apikey",
+				"apikey": [
+					{
+						"key": "value",
+						"value": "your-merchant-api-key",
+						"type": "string"
+					},
+					{
+						"key": "key",
+						"value": "x-api-key",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Transaction Reports",
+			"item": [
+				{
+					"name": "Generate Transaction Report",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/reports/transactions?startDate=2023-01-01T00:00:00Z&endDate=2023-12-31T23:59:59Z&status=SUCCESS&paymentMethod=card&format=json",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"reports",
+								"transactions"
+							],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "2023-01-01T00:00:00Z",
+									"description": "Start date for the report (ISO format)"
+								},
+								{
+									"key": "endDate",
+									"value": "2023-12-31T23:59:59Z",
+									"description": "End date for the report (ISO format)"
+								},
+								{
+									"key": "status",
+									"value": "SUCCESS",
+									"description": "Filter by transaction status (SUCCESS, PENDING, FAILED)"
+								},
+								{
+									"key": "paymentMethod",
+									"value": "card",
+									"description": "Filter by payment method (card, bank_transfer, wallet)"
+								},
+								{
+									"key": "format",
+									"value": "json",
+									"description": "Response format (json, csv)"
+								}
+							]
+						},
+						"description": "Generates a transaction report with filters and export options."
 					},
 					"response": []
 				}

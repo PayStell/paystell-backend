@@ -1,0 +1,239 @@
+{
+	"info": {
+		"_postman_id": "e78995af-7553-4d5a-aa48-e3b19f5a65b3",
+		"name": "PayStell Sales Summary",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get Complete Sales Summary",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "key",
+							"value": "X-API-Key",
+							"type": "string"
+						},
+						{
+							"key": "value",
+							"value": "{{merchant_api_key}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/sales-summary?startDate=2023-01-01T00:00:00Z&endDate=2023-12-31T23:59:59Z",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"sales-summary"
+					],
+					"query": [
+						{
+							"key": "startDate",
+							"value": "2023-01-01T00:00:00Z"
+						},
+						{
+							"key": "endDate",
+							"value": "2023-12-31T23:59:59Z"
+						}
+					]
+				},
+				"description": "Retrieves a comprehensive sales summary including total sales, daily and monthly breakdowns, and top-selling products."
+			},
+			"response": []
+		},
+		{
+			"name": "Get Total Sales",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "key",
+							"value": "X-API-Key",
+							"type": "string"
+						},
+						{
+							"key": "value",
+							"value": "{{merchant_api_key}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/sales-summary/total?startDate=2023-01-01T00:00:00Z&endDate=2023-12-31T23:59:59Z",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"sales-summary",
+						"total"
+					],
+					"query": [
+						{
+							"key": "startDate",
+							"value": "2023-01-01T00:00:00Z"
+						},
+						{
+							"key": "endDate",
+							"value": "2023-12-31T23:59:59Z"
+						}
+					]
+				},
+				"description": "Retrieves the total sales amount for a merchant."
+			},
+			"response": []
+		},
+		{
+			"name": "Get Sales by Time Period (Daily)",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "key",
+							"value": "X-API-Key",
+							"type": "string"
+						},
+						{
+							"key": "value",
+							"value": "{{merchant_api_key}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/sales-summary/by-period/daily?startDate=2023-12-25T00:00:00Z&endDate=2023-12-31T23:59:59Z",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"sales-summary",
+						"by-period",
+						"daily"
+					],
+					"query": [
+						{
+							"key": "startDate",
+							"value": "2023-12-25T00:00:00Z"
+						},
+						{
+							"key": "endDate",
+							"value": "2023-12-31T23:59:59Z"
+						}
+					]
+				},
+				"description": "Retrieves sales data broken down by daily time period."
+			},
+			"response": []
+		},
+		{
+			"name": "Get Sales by Time Period (Monthly)",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "key",
+							"value": "X-API-Key",
+							"type": "string"
+						},
+						{
+							"key": "value",
+							"value": "{{merchant_api_key}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/sales-summary/by-period/monthly?startDate=2023-01-01T00:00:00Z&endDate=2023-12-31T23:59:59Z",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"sales-summary",
+						"by-period",
+						"monthly"
+					],
+					"query": [
+						{
+							"key": "startDate",
+							"value": "2023-01-01T00:00:00Z"
+						},
+						{
+							"key": "endDate",
+							"value": "2023-12-31T23:59:59Z"
+						}
+					]
+				},
+				"description": "Retrieves sales data broken down by monthly time period."
+			},
+			"response": []
+		},
+		{
+			"name": "Get Top Selling Products",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "key",
+							"value": "X-API-Key",
+							"type": "string"
+						},
+						{
+							"key": "value",
+							"value": "{{merchant_api_key}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/sales-summary/top-products?limit=3&startDate=2023-01-01T00:00:00Z&endDate=2023-12-31T23:59:59Z",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"sales-summary",
+						"top-products"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "3"
+						},
+						{
+							"key": "startDate",
+							"value": "2023-01-01T00:00:00Z"
+						},
+						{
+							"key": "endDate",
+							"value": "2023-12-31T23:59:59Z"
+						}
+					]
+				},
+				"description": "Retrieves the top-selling products for a merchant."
+			},
+			"response": []
+		}
+	]
+}

@@ -28,6 +28,23 @@ export class MerchantEntity {
 
   @Column({ default: true })
   isActive: boolean;
+  @Column({ nullable: true })
+  business_name: string;
+
+  @Column({ nullable: true })
+  business_description: string;
+
+  @Column({ nullable: true })
+  business_address: string;
+
+  @Column({ nullable: true })
+  business_phone: string;
+
+  @Column({ nullable: true })
+  business_email: string;
+
+  @Column({ nullable: true })
+  business_logo_url: string;
 
   @CreateDateColumn()
   createdAt: Date;

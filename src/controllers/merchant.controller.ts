@@ -1,4 +1,5 @@
-import { Request, Response } from "express";
+import { Response } from "express";
+import { CustomRequest } from "src/middlewares/merchantAuth";
 import { validateWebhookUrl } from "../validators/webhook.validators";
 import crypto from "crypto";
 import { Merchant, MerchantWebhook } from "../interfaces/webhook.interfaces";
@@ -9,7 +10,7 @@ const merchantAuthService = new MerchantAuthService();
 const webhookService = new WebhookService();
 
 export class MerchantController {
-  async registerMerchant(req: Request, res: Response): Promise<Response> {
+  async registerMerchant(req: CustomRequest, res: Response): Promise<Response> {
     try {
       const { name, email } = req.body;
 
@@ -44,7 +45,7 @@ export class MerchantController {
     }
   }
 
-  async registerWebhook(req: Request, res: Response): Promise<Response> {
+  async registerWebhook(req: CustomRequest, res: Response): Promise<Response> {
     try {
       const { url } = req.body;
       const merchantId = req.merchant?.id;
@@ -85,7 +86,7 @@ export class MerchantController {
     }
   }
 
-  async updateWebhook(req: Request, res: Response): Promise<Response> {
+  async updateWebhook(req: CustomRequest, res: Response): Promise<Response> {
     try {
       const { url } = req.body;
       const merchantId = req.merchant?.id;
@@ -127,7 +128,7 @@ export class MerchantController {
     }
   }
 
-  async deleteWebhook(req: Request, res: Response): Promise<Response> {
+  async deleteWebhook(req: CustomRequest, res: Response): Promise<Response> {
     try {
       const merchantId = req.merchant?.id;
 
@@ -156,7 +157,7 @@ export class MerchantController {
     }
   }
 
-  async getWebhook(req: Request, res: Response): Promise<Response> {
+  async getWebhook(req: CustomRequest, res: Response): Promise<Response> {
     try {
       const merchantId = req.merchant?.id ?? "";
 
@@ -172,6 +173,87 @@ export class MerchantController {
       return res.status(200).json(webhook);
     } catch (error) {
       console.error("Webhook retrieval failed:", error);
+      return res.status(500).json({ error: (error as Error).message });
+    }
+  }
+
+  async getProfile(req: CustomRequest, res: Response): Promise<Response> {
+    try {
+      const merchantId = req.merchant?.id ?? "";
+      const merchant: Partial<Merchant> | null =
+        await merchantAuthService.getBusinessProfileById(merchantId);
+
+      if (!merchant) {
+        return res.status(404).json({ error: "Merchant not found" });
+      }
+
+      return res.json(merchant);
+    } catch (error) {
+      return res.status(500).json({ error: (error as Error).message });
+    }
+  }
+
+  async createProfile(req: CustomRequest, res: Response): Promise<Response> {
+    try {
+      const merchantId = req.merchant?.id ?? "";
+      const profileData = req.body;
+
+      const createdMerchant = await merchantAuthService.createMerchantProfile(
+        merchantId,
+        profileData,
+      );
+
+      return res.json(createdMerchant);
+    } catch (error) {
+      return res.status(500).json({ error: (error as Error).message });
+    }
+  }
+
+  async updateProfile(req: CustomRequest, res: Response): Promise<Response> {
+    try {
+      const merchantId = req.merchant?.id ?? "";
+      const profileData = req.body;
+
+      const updatedMerchant = await merchantAuthService.updateMerchantProfile(
+        merchantId,
+        profileData,
+      );
+
+      return res.json(updatedMerchant);
+    } catch (error) {
+      return res.status(500).json({ error: (error as Error).message });
+    }
+  }
+
+  async uploadLogo(req: CustomRequest, res: Response): Promise<Response> {
+    try {
+      const merchantId = req.merchant?.id ?? "";
+      const logoUrl = req.body.fileUrl;
+
+      const updatedMerchant = await merchantAuthService.updateLogo(
+        merchantId ?? "",
+        logoUrl,
+      );
+
+      return res.json({
+        message: "Logo uploaded successfully",
+        business_logo_url: updatedMerchant.business_logo_url,
+      });
+    } catch (error) {
+      return res.status(500).json({ error: (error as Error).message });
+    }
+  }
+
+  async deleteLogo(req: CustomRequest, res: Response): Promise<Response> {
+    try {
+      const merchantId = req.merchant?.id ?? "";
+
+      await merchantAuthService.deleteLogo(merchantId);
+
+      return res.json({
+        message: "Logo deleted successfully",
+      });
+    } catch (error) {
       return res.status(500).json({ error: (error as Error).message });
     }
   }

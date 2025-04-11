@@ -1,3 +1,46 @@
+## 0. Sales Summary Endpoints
+
+These endpoints provide merchants with sales statistics and reporting capabilities. For detailed documentation, see `sales-summary-endpoints.md`. A separate Postman collection has been provided in `sales-summary-collection.json`.
+
+### 0.1. Get Complete Sales Summary
+- **Endpoint**: `GET /api/sales-summary`
+- **Description**: Retrieves a comprehensive sales summary with all metrics
+- **Authentication**: API Key (via X-API-Key header)
+- **Parameters**:
+  - **Query**:
+    - `startDate` (optional): Starting date for the summary period (ISO 8601)
+    - `endDate` (optional): Ending date for the summary period (ISO 8601)
+
+### 0.2. Get Total Sales
+- **Endpoint**: `GET /api/sales-summary/total`
+- **Description**: Retrieves the total sales amount for a merchant
+- **Authentication**: API Key (via X-API-Key header)
+- **Parameters**:
+  - **Query**:
+    - `startDate` (optional): Starting date for the summary period (ISO 8601)
+    - `endDate` (optional): Ending date for the summary period (ISO 8601)
+
+### 0.3. Get Sales by Time Period
+- **Endpoint**: `GET /api/sales-summary/by-period/:timePeriod`
+- **Description**: Retrieves sales data broken down by a specific time period
+- **Authentication**: API Key (via X-API-Key header)
+- **Parameters**:
+  - **Path**:
+    - `timePeriod`: Time period to group by (daily, weekly, monthly)
+  - **Query**:
+    - `startDate` (optional): Starting date for the summary period (ISO 8601)
+    - `endDate` (optional): Ending date for the summary period (ISO 8601)
+
+### 0.4. Get Top Selling Products
+- **Endpoint**: `GET /api/sales-summary/top-products`
+- **Description**: Retrieves the top selling products for a merchant
+- **Authentication**: API Key (via X-API-Key header)
+- **Parameters**:
+  - **Query**:
+    - `limit` (optional): Maximum number of products to return (default: 5)
+    - `startDate` (optional): Starting date for the summary period (ISO 8601)
+    - `endDate` (optional): Ending date for the summary period (ISO 8601)
+
 ## 1. User Authentication Endpoints
 
 ### 1.1. User Registration
@@ -264,3 +307,117 @@
       "message": "2FA is not enabled for this user"
     }
     ```
+
+## 4. Transaction Reports Endpoints
+
+### 4.1. Generate Transaction Report
+
+- **Endpoint**: `GET /reports/transactions`
+- **Description**: Generates a filtered report of transactions with various export options
+- **Headers**:
+  - **Authorization**: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+- **Parameters**:
+  - **Query Parameters**:
+    - `startDate`: (Optional) Start date for the report in ISO format (e.g., "2023-01-01T00:00:00Z")
+    - `endDate`: (Optional) End date for the report in ISO format (e.g., "2023-12-31T23:59:59Z")
+    - `status`: (Optional) Filter by transaction status ("SUCCESS", "PENDING", "FAILED")
+    - `paymentMethod`: (Optional) Filter by payment method ("card", "bank_transfer", "wallet")
+    - `format`: (Optional) Response format ("json" or "csv"), defaults to "json"
+- **Successful Response** (200 OK) - JSON format:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "summary": {
+        "totalTransactions": 123,
+        "totalAmount": 12345.67,
+        "successfulTransactions": 115,
+        "failedTransactions": 8,
+        "averageTransactionAmount": 100.37
+      },
+      "transactions": [
+        {
+          "id": "tx_123abc",
+          "amount": 50.0,
+          "status": "SUCCESS",
+          "paymentMethod": "card",
+          "createdAt": "2023-05-12T09:32:41.021Z",
+          "reference": "INV-001",
+          "description": "Monthly subscription"
+        }
+        // ... more transactions ...
+      ]
+    }
+  }
+  ```
+- **Successful Response** (200 OK) - CSV format:
+  Text file with CSV-formatted data (Content-Type: text/csv)
+- **Error Response** (401 Unauthorized):
+  ```json
+  {
+    "success": false,
+    "message": "Unauthorized"
+  }
+  ```
+- **Error Response** (400 Bad Request):
+  ```json
+  {
+    "success": false,
+    "message": "Invalid date format"
+  }
+  ```
+
+## 5. Merchant Management Endpoints
+
+These endpoints provide functionality for managing merchants, including authentication, profile updates, and logo management.
+
+### 5.1. Merchant Authentication
+
+- **Authentication Mechanism**: Merchants authenticate using an API Key.
+- **Header Requirement**: `x-api-key`
+- **Middleware**: `authenticateMerchant` validates the API Key via `MerchantAuthService`.
+- **Endpoints**:
+  - `GET /merchants/profile`: Retrieves merchant profile details.
+  - `PUT /merchants/profile`: Updates merchant profile information.
+  - `POST /merchants/logo`: Uploads a merchant logo.
+  - `DELETE /merchants/logo`: Deletes the existing merchant logo.
+
+### 5.2. Update Merchant Profile
+- **Endpoint**: `PUT /merchants/profile`
+- **Description**: Updates merchant profile information.
+- **Authentication**: Requires API Key (`x-api-key`).
+- **Process**:
+  - The merchant sends a `PUT` request with updated JSON data.
+  - Data fields: `business_name`, `business_email`, `business_description`, `business_address`, `business_phone`.
+  - The API Key is verified.
+  - The service `updateMerchantProfile` validates data via `UpdateMerchantProfileDTO`.
+  - A database transaction ensures data integrity.
+  - If successful, returns the updated profile.
+
+### 5.3. Upload Merchant Logo
+- **Endpoint**: `POST /merchants/logo`
+- **Description**: Uploads a logo for the merchant profile.
+- **Authentication**: Requires API Key (`x-api-key`).
+- **Process**:
+  - The merchant sends a `POST` request with an image file (`multipart/form-data`).
+  - The API Key is verified.
+  - The file is processed via `fileUploadService.upload.single('logo')`.
+  - Constraints: Maximum size 3MB, allowed formats (`jpg, jpeg, png, gif`).
+  - The file is uploaded to AWS S3.
+  - The controller updates the merchant profile with the logo URL.
+  - A database transaction ensures data integrity.
+  - If successful, returns a confirmation message and logo URL.
+
+### 5.4. Delete Merchant Logo
+- **Endpoint**: `DELETE /merchants/logo`
+- **Description**: Removes the merchant’s logo.
+- **Authentication**: Requires API Key (`x-api-key`).
+- **Process**:
+  - The merchant sends a `DELETE` request.
+  - The API Key is verified.
+  - The controller retrieves the merchant ID.
+  - The service checks for an existing logo in the database.
+  - If a logo exists, it is removed from AWS S3.
+  - The merchant profile is updated to remove the logo URL.
+  - A database transaction ensures data integrity.
+  - If successful, returns a confirmation message.
