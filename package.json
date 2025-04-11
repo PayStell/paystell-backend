@@ -19,10 +19,18 @@
   "description": "",
   "dependencies": {
 <<<<<<< HEAD
+<<<<<<< HEAD
     "@stellar/stellar-sdk": "^13.1.0",
 =======
     "auth0-js": "^9.28.0",
 >>>>>>> feat(app): modify dependencies and secrets
+=======
+ feat/paymentProcessing
+    "@stellar/stellar-sdk": "^13.1.0",
+
+    "auth0-js": "^9.28.0",
+ main
+>>>>>>> 2f27568dfcb6427d1554c0754572518f94f639a0
     "axios": "^1.8.1",
     "bcryptjs": "^2.4.3",
     "bull": "^4.16.5",
@@ -35,10 +43,18 @@
     "express-openid-connect": "^2.18.0",
     "express-rate-limit": "^7.5.0",
 <<<<<<< HEAD
+<<<<<<< HEAD
     "express-validator": "^7.2.1",
 =======
     "ioredis": "^5.6.0",
 >>>>>>> feat(app): modify dependencies and secrets
+=======
+ feat/paymentProcessing
+    "express-validator": "^7.2.1",
+
+    "ioredis": "^5.6.0",
+ main
+>>>>>>> 2f27568dfcb6427d1554c0754572518f94f639a0
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "nanoid": "^5.1.2",

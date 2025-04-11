@@ -963,6 +963,10 @@
   integrity sha512-Uy0+khmZqUrUGm5dmMqVlnvufZRSK0FbYzVgp0UMstm+F5+W2/jnEEQyc9vo1ZR/E5ZI/B1WjjoTqBqwJL6Krw==
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+ feat/paymentProcessing
+>>>>>>> 2f27568dfcb6427d1554c0754572518f94f639a0
 "@stellar/js-xdr@^3.1.2":
   version "3.1.2"
   resolved "https://registry.npmjs.org/@stellar/js-xdr/-/js-xdr-3.1.2.tgz"
@@ -995,14 +999,22 @@
     randombytes "^2.1.0"
     toml "^3.0.0"
     urijs "^1.19.1"
+<<<<<<< HEAD
 =======
+=======
+
+>>>>>>> 2f27568dfcb6427d1554c0754572518f94f639a0
 "@szmarczak/http-timer@^4.0.5":
   version "4.0.6"
   resolved "https://registry.npmjs.org/@szmarczak/http-timer/-/http-timer-4.0.6.tgz"
   integrity sha512-4BAffykYOgO+5nzBWYwE3W90sBgLJoUPRWWcL8wlyiM8IB8ipJz3UMJ9KXQd1RKQXpKp8Tutn80HZtWsu2u76w==
   dependencies:
     defer-to-connect "^2.0.0"
+<<<<<<< HEAD
 >>>>>>> feat(app): modify dependencies and secrets
+=======
+ main
+>>>>>>> 2f27568dfcb6427d1554c0754572518f94f639a0
 
 "@tsconfig/node10@^1.0.7":
   version "1.0.11"
@@ -1607,8 +1619,14 @@ asynckit@^0.4.0:
   integrity sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 axios@^1.7.9, axios@^1.8.1:
 =======
+=======
+ feat/paymentProcessing
+axios@^1.7.9, axios@^1.8.1:
+
+>>>>>>> 2f27568dfcb6427d1554c0754572518f94f639a0
 auth0-js@^9.28.0:
   version "9.28.0"
   resolved "https://registry.npmjs.org/auth0-js/-/auth0-js-9.28.0.tgz"
@@ -1624,7 +1642,11 @@ auth0-js@^9.28.0:
     winchan "^0.2.2"
 
 axios@^1.8.1:
+<<<<<<< HEAD
 >>>>>>> feat(app): modify dependencies and secrets
+=======
+ main
+>>>>>>> 2f27568dfcb6427d1554c0754572518f94f639a0
   version "1.8.1"
   resolved "https://registry.npmjs.org/axios/-/axios-1.8.1.tgz"
   integrity sha512-NN+fvwH/kV01dYUQ3PTOZns4LWtWhOFCAhQ/pHb88WQ1hNe5V/dvFwc4VJcDL11LT9xSX0QtsR8sWUuyOuOq7g==
@@ -2727,6 +2749,10 @@ express-rate-limit@^7.5.0, "express-rate-limit@>= 6":
   integrity sha512-eB5zbQh5h+VenMPM3fh+nw1YExi5nMr6HUCR62ELSP11huvxm/Uir1H1QEyTkk5QX6A58pX6NmaTMceKZ0Eodg==
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+ feat/paymentProcessing
+>>>>>>> 2f27568dfcb6427d1554c0754572518f94f639a0
 express-validator@^7.2.1:
   version "7.2.1"
   resolved "https://registry.npmjs.org/express-validator/-/express-validator-7.2.1.tgz"
@@ -2736,9 +2762,15 @@ express-validator@^7.2.1:
     validator "~13.12.0"
 
 "express@^4.11 || 5 || ^5.0.0-beta.1", express@^4.21.2:
+<<<<<<< HEAD
 =======
 "express@^4.11 || 5 || ^5.0.0-beta.1", express@^4.21.2, "express@>= 4.17.0":
 >>>>>>> feat(app): modify dependencies and secrets
+=======
+
+"express@^4.11 || 5 || ^5.0.0-beta.1", express@^4.21.2, "express@>= 4.17.0":
+ main
+>>>>>>> 2f27568dfcb6427d1554c0754572518f94f639a0
   version "4.21.2"
   resolved "https://registry.npmjs.org/express/-/express-4.21.2.tgz"
   integrity sha512-28HqgMZAmih1Czt9ny7qr6ek2qddF4FclbMzwhCREB6OFfH+rXAnuNCwo1/wFvrtbgsQDb4kSbX9de9lFbrXnA==
@@ -4873,18 +4905,30 @@ queue-microtask@^1.2.2:
   integrity sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+ feat/paymentProcessing
+>>>>>>> 2f27568dfcb6427d1554c0754572518f94f639a0
 randombytes@^2.1.0:
   version "2.1.0"
   resolved "https://registry.npmjs.org/randombytes/-/randombytes-2.1.0.tgz"
   integrity sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==
   dependencies:
     safe-buffer "^5.1.0"
+<<<<<<< HEAD
 =======
+=======
+
+>>>>>>> 2f27568dfcb6427d1554c0754572518f94f639a0
 quick-lru@^5.1.1:
   version "5.1.1"
   resolved "https://registry.npmjs.org/quick-lru/-/quick-lru-5.1.1.tgz"
   integrity sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==
+<<<<<<< HEAD
 >>>>>>> feat(app): modify dependencies and secrets
+=======
+ main
+>>>>>>> 2f27568dfcb6427d1554c0754572518f94f639a0
 
 range-parser@~1.2.1:
   version "1.2.1"
@@ -5674,16 +5718,28 @@ uri-js@^4.2.2:
     punycode "^2.1.0"
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+ feat/paymentProcessing
+>>>>>>> 2f27568dfcb6427d1554c0754572518f94f639a0
 urijs@^1.19.1:
   version "1.19.11"
   resolved "https://registry.npmjs.org/urijs/-/urijs-1.19.11.tgz"
   integrity sha512-HXgFDgDommxn5/bIv0cnQZsPhHDA90NPHD6+c/v21U5+Sx5hoP8+dP9IZXBU1gIfvdRfhG8cel9QNPeionfcCQ==
+<<<<<<< HEAD
 =======
+=======
+
+>>>>>>> 2f27568dfcb6427d1554c0754572518f94f639a0
 url-join@^4.0.1:
   version "4.0.1"
   resolved "https://registry.npmjs.org/url-join/-/url-join-4.0.1.tgz"
   integrity sha512-jk1+QP6ZJqyOiuEI9AEWQfju/nB2Pw466kbA0LEZljHwKeMgd9WrAEgEGxjPDD2+TNbbb37rTyhEfrCXfuKXnA==
+<<<<<<< HEAD
 >>>>>>> feat(app): modify dependencies and secrets
+=======
+ main
+>>>>>>> 2f27568dfcb6427d1554c0754572518f94f639a0
 
 util-deprecate@^1.0.1:
   version "1.0.2"
