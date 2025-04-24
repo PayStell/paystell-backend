@@ -4,8 +4,8 @@ import {
   asyncHandler,
 } from "../middlewares/merchantAuth";
 import { MerchantController } from "../controllers/merchant.controller";
-import { FileUploadService } from "../../src/services/fileUpload.service";
-import { handleFileUpload } from "../../src/middlewares/fileUploadMiddleware";
+import { FileUploadService } from "../services/fileUpload.service";
+import { handleFileUpload } from "../middlewares/fileUploadMiddleware";
 
 const router = Router();
 const merchantController = new MerchantController();

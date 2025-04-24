@@ -3,9 +3,9 @@ import { Repository, DataSource } from "typeorm";
 import { validate } from "class-validator";
 import { MerchantEntity } from "../entities/Merchant.entity";
 import AppDataSource from "../config/db";
-import { CreateMerchantDTO } from "../../src/dtos/CreateMerchantDTO";
-import { UpdateMerchantProfileDTO } from "../../src/dtos/UpdateMerchantProfileDTO";
-import { CreateMerchantProfileDTO } from "../../src/dtos/CreateMerchantProfileDTO";
+import { CreateMerchantDTO } from "../dtos/CreateMerchantDTO";
+import { UpdateMerchantProfileDTO } from "../dtos/UpdateMerchantProfileDTO";
+import { CreateMerchantProfileDTO } from "../dtos/CreateMerchantProfileDTO";
 import { FileUploadService } from "./fileUpload.service";
 
 export class MerchantAuthService {

@@ -30,52 +30,19 @@ export class AuthController {
   login = async (req: Request, res: Response): Promise<void> => {
     try {
       const { email, password } = req.body;
+      console.log("Login attempt for email:", email);
 
-      const user = await AppDataSource.getRepository(User)
-        .createQueryBuilder("user")
-        .leftJoinAndSelect("user.twoFactorAuth", "twoFactorAuth")
-        .where("user.email = :email", { email })
-        .getOne();
+      const result = await this.authService.login(email, password);
+      console.log("Login successful for user:", result.user.id);
 
-      if (!user) {
-        res.status(401).json({ message: "Invalid email or password" });
-        return;
-      }
-
-      const isPasswordValid = await compare(password, user.password);
-      if (!isPasswordValid) {
-        res.status(401).json({ message: "Invalid email or password" });
-        return;
-      }
-
-      if (!user.twoFactorAuth || !user.twoFactorAuth.isEnabled) {
-        const result = await this.authService.login(email, password);
-
-        // Set refresh token in HTTP-only cookie
-        res.cookie("refreshToken", result.tokens.refreshToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-          path: "/",
-        });
-
-        // Send access token in the response
-        res.json({
-          user: result.user,
-          accessToken: result.tokens.accessToken,
-          expiresIn: result.tokens.expiresIn,
-        });
-      } else {
-        res
-          .status(403)
-          .json({ message: "2FA is enabled. Please use /login-2fa instead." });
-      }
+      res.status(200).json(result);
     } catch (error) {
-      res.status(500).json({
-        message:
-          error instanceof Error ? error.message : "Internal server error",
-      });
+      console.error("Login error:", error);
+      if (error instanceof Error) {
+        res.status(401).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
     }
   };
 

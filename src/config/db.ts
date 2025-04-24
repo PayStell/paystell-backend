@@ -21,9 +21,6 @@ const AppDataSource = new DataSource({
   database: process.env.POSTGRES_DATABASE,
   synchronize: true,
   dropSchema: false,
-  ssl: {
-    rejectUnauthorized: false,
-  },
   logging: true,
   entities: [
     User,
@@ -35,6 +32,8 @@ const AppDataSource = new DataSource({
     MerchantWebhookEntity,
     MerchantWebhookEventEntity,
   ],
+  migrations: ["src/migrations/*.ts"],
+  migrationsTableName: "migrations",
 });
 
 export default AppDataSource;

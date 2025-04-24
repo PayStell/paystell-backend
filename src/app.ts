@@ -23,7 +23,6 @@ import merchantRoutes from "./routes/merchantRoutes";
 // Middleware imports
 import { globalRateLimiter } from "./middlewares/globalRateLimiter.middleware";
 import { validateIpAddress } from "./middlewares/ipValidation.middleware";
-import { errorHandler } from "./middlewares/errorHandler";
 import { requestLogger } from "./middlewares/requestLogger.middleware";
 
 // Service imports
@@ -40,7 +39,27 @@ const app = express();
 // Apply global middlewares
 app.use(cookieParser());
 app.use(morgan("dev"));
-app.use(cors());
+
+// CORS configuration
+app.use(
+  cors({
+    origin: true, // Allow all origins in development
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+      "Access-Control-Request-Method",
+      "Access-Control-Request-Headers",
+    ],
+    exposedHeaders: ["Authorization"],
+    maxAge: 86400, // 24 hours
+  }),
+);
+
 app.use(express.json());
 app.use(validateIpAddress as RequestHandler);
 app.use(
@@ -49,15 +68,33 @@ app.use(
 app.use(globalRateLimiter as RequestHandler);
 app.use(requestLogger as RequestHandler);
 
+// Add timeout configurations
+app.use((req, res, next) => {
+  req.setTimeout(30000); // 30 seconds
+  res.setTimeout(30000); // 30 seconds
+  next();
+});
+
 // Start scheduled jobs
 startExpiredSessionCleanupCronJobs();
 
 // Log application startup
 logger.info("Application started successfully");
 
-app.use(auth(oauthConfig));
+// Apply Auth0 middleware to all routes except registration and health check
+app.use((req, res, next) => {
+  console.log("Request path:", req.path);
+  if (req.path === "/auth/register" || req.path === "/health") {
+    console.log("Skipping Auth0 middleware for:", req.path);
+    next();
+  } else {
+    console.log("Applying Auth0 middleware for:", req.path);
+    auth(oauthConfig)(req, res, next);
+  }
+});
 
 // Define routes
+app.use("/health", healthRouter);
 app.use("/session", sessionRouter);
 app.use("/email-verification", emailVerification);
 app.use("/paymentlink", PaymentRoute);
@@ -65,15 +102,26 @@ app.use("/auth", authRoutes);
 app.use("/wallet-verification", walletVerificationRoutes);
 app.use("/users", userRoutes);
 app.use("/merchants", merchantRoutes);
-app.use("/health", healthRouter);
 app.use("/webhook-queue/merchant", merchantWebhookQueueRoutes);
 app.use("/reports/transactions", transactionReportsRoutes);
 
 // Error handling middleware
-app.use(errorHandler as ErrorRequestHandler);
+const customErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({
+    error: "Internal Server Error",
+    message:
+      process.env.NODE_ENV === "development"
+        ? err.message
+        : "Something went wrong",
+  });
+};
+
+app.use(customErrorHandler);
 
 // Handle 404 errors
 app.use(((req: Request, res: Response) => {
+  console.log("404 - Route not found:", req.originalUrl);
   res.status(404).json({
     error: "error",
     message: `Route ${req.originalUrl} not found`,

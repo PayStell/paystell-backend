@@ -8,6 +8,9 @@ export interface UserResponse {
   id: number;
   name: string;
   email: string;
+  role: string;
+  isEmailVerified: boolean;
+  isWalletVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
   twoFactorAuth?: {

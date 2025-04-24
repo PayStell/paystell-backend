@@ -93,24 +93,40 @@ export class AuthService {
   }
 
   async register(userData: UserRegistrationData): Promise<UserResponse> {
-    const userExists = await this.userRepository.findOne({
-      where: { email: userData.email },
-    });
+    try {
+      console.log("Starting user registration process");
 
-    if (userExists) {
-      throw new Error("Email already registered");
+      const userExists = await this.userRepository.findOne({
+        where: { email: userData.email },
+      });
+
+      if (userExists) {
+        console.log("User already exists with email:", userData.email);
+        throw new Error("User with this email already exists");
+      }
+
+      console.log("Creating new user");
+      const user = this.userRepository.create(userData);
+
+      console.log("Saving user to database");
+      const savedUser = await this.userRepository.save(user);
+
+      console.log("User successfully registered:", savedUser.id);
+
+      return {
+        id: savedUser.id,
+        email: savedUser.email,
+        name: savedUser.name,
+        role: savedUser.role,
+        isEmailVerified: savedUser.isEmailVerified,
+        isWalletVerified: savedUser.isWalletVerified,
+        createdAt: savedUser.createdAt,
+        updatedAt: savedUser.updatedAt,
+      };
+    } catch (error) {
+      console.error("Error during user registration:", error);
+      throw error;
     }
-
-    const user = this.userRepository.create(userData);
-    const savedUser = await this.userRepository.save(user);
-
-    return {
-      id: savedUser.id,
-      name: savedUser.name,
-      email: savedUser.email,
-      createdAt: savedUser.createdAt,
-      updatedAt: savedUser.updatedAt,
-    };
   }
 
   async findOrCreateAuth0User(auth0Profile: Auth0Profile): Promise<User> {
@@ -167,6 +183,9 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified,
+        isWalletVerified: user.isWalletVerified,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
         twoFactorAuth: user.twoFactorAuth
@@ -194,6 +213,9 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified,
+        isWalletVerified: user.isWalletVerified,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
         twoFactorAuth: user.twoFactorAuth
@@ -282,6 +304,9 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
+      isEmailVerified: user.isEmailVerified,
+      isWalletVerified: user.isWalletVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       twoFactorAuth: user.twoFactorAuth

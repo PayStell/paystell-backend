@@ -4,6 +4,7 @@ import {
   Response,
   NextFunction,
   RequestHandler,
+  ErrorRequestHandler,
 } from "express";
 import { AuthController } from "../controllers/AuthController";
 import {
@@ -34,8 +35,35 @@ interface CustomRequest extends Request {
 const router = Router();
 const authController = new AuthController();
 
-// Auth0 authentication routes
-router.use(auth(oauthConfig));
+// Auth0 authentication routes - exclude registration and skip in development
+router.use((req, res, next) => {
+  console.log("Auth route middleware - Path:", req.path);
+  console.log("Auth route middleware - Method:", req.method);
+  console.log("Auth route middleware - Headers:", req.headers);
+
+  // Skip Auth0 in development or for registration
+  if (process.env.NODE_ENV === "development") {
+    console.log("Skipping Auth0 middleware");
+    next();
+  } else {
+    console.log("Applying Auth0 middleware");
+    auth(oauthConfig)(req, res, next);
+  }
+});
+
+// Error handling middleware
+const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
+  console.error("Auth route error:", err);
+  res.status(500).json({
+    error: "Internal Server Error",
+    message:
+      process.env.NODE_ENV === "development"
+        ? err.message
+        : "Something went wrong",
+  });
+};
+
+router.use(errorHandler);
 
 // Validation schemas
 const registerSchema = {
@@ -43,13 +71,17 @@ const registerSchema = {
   email: {
     type: "string",
     required: true,
-    pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   },
   password: { type: "string", required: true, minLength: 6 },
 };
 
 const loginSchema = {
-  email: { type: "string", required: true },
+  email: {
+    type: "string",
+    required: true,
+    pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  },
   password: { type: "string", required: true },
 };
 

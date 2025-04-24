@@ -1,22 +1,14 @@
-import express from "express";
+import { Router } from "express";
 import AppDataSource from "../config/db";
 
-const router = express.Router();
+const router = Router();
 
-router.get("/", async (_req, res) => {
-  const healthcheck = {
-    uptime: process.uptime(),
-    message: "OK",
-    timestamp: Date.now(),
-  };
-
-  try {
-    res.status(200).json(healthcheck);
-  } catch (error) {
-    healthcheck.message =
-      error instanceof Error ? error.message : "Unknown error";
-    res.status(503).json(healthcheck);
-  }
+router.get("/", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    message: "Server is running",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 router.get("/db", async (_req, res) => {

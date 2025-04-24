@@ -19,12 +19,15 @@ export const validateRequest = (schema: ValidationSchema) => {
     Object.entries(schema).forEach(([field, rules]) => {
       const value = req.body[field];
 
-      if (rules.required && !value) {
+      if (
+        rules.required &&
+        (value === undefined || value === null || value === "")
+      ) {
         errors.push(`${field} is required`);
         return;
       }
 
-      if (value) {
+      if (value !== undefined && value !== null) {
         if (typeof value !== rules.type) {
           errors.push(`${field} must be a ${rules.type}`);
         }

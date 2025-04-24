@@ -17,41 +17,52 @@ export const validateIpAddress = (
   res: Response,
   next: NextFunction,
 ) => {
-  // Get the real IP by checking various headers in order of trust
-  const forwardedFor = req.headers["x-forwarded-for"];
-  const realIp = req.headers["x-real-ip"];
+  try {
+    // Get the real IP by checking various headers in order of trust
+    const forwardedFor = req.headers["x-forwarded-for"];
+    const realIp = req.headers["x-real-ip"];
 
-  // Store the validated IP in a custom property
-  let validatedIp = req.ip; // Default to Express's req.ip
+    // Store the validated IP in a custom property
+    let validatedIp = req.ip; // Default to Express's req.ip
 
-  if (typeof forwardedFor === "string") {
-    // X-Forwarded-For can be comma-separated list of IPs
-    // The leftmost IP is the original client IP
-    const ips = forwardedFor.split(",").map((ip) => ip.trim());
+    if (typeof forwardedFor === "string") {
+      // X-Forwarded-For can be comma-separated list of IPs
+      // The leftmost IP is the original client IP
+      const ips = forwardedFor.split(",").map((ip) => ip.trim());
 
-    // Validate the leftmost IP
-    if (ips.length > 0 && isValidIp(ips[0])) {
-      validatedIp = ips[0];
+      // Validate the leftmost IP
+      if (ips.length > 0 && isValidIp(ips[0])) {
+        validatedIp = ips[0];
+      }
+    } else if (typeof realIp === "string" && isValidIp(realIp)) {
+      validatedIp = realIp;
     }
-  } else if (typeof realIp === "string" && isValidIp(realIp)) {
-    validatedIp = realIp;
+
+    // Add a custom property to store our validated IP
+    req.validatedIp = validatedIp;
+
+    // In development, allow all requests
+    if (process.env.NODE_ENV === "development") {
+      next();
+      return;
+    }
+
+    // Log suspicious requests with multiple different IP headers
+    if (
+      typeof forwardedFor === "string" &&
+      typeof realIp === "string" &&
+      forwardedFor.split(",")[0].trim() !== realIp
+    ) {
+      console.warn(
+        `Suspicious request with mismatched IP headers: X-Forwarded-For=${forwardedFor}, X-Real-IP=${realIp}`,
+      );
+    }
+
+    next();
+  } catch (error) {
+    console.error("Error in IP validation middleware:", error);
+    next(); // Continue even if there's an error in development
   }
-
-  // Add a custom property to store our validated IP
-  req.validatedIp = validatedIp;
-
-  // Log suspicious requests with multiple different IP headers
-  if (
-    typeof forwardedFor === "string" &&
-    typeof realIp === "string" &&
-    forwardedFor.split(",")[0].trim() !== realIp
-  ) {
-    console.warn(
-      `Suspicious request with mismatched IP headers: X-Forwarded-For=${forwardedFor}, X-Real-IP=${realIp}`,
-    );
-  }
-
-  next();
 };
 
 /**

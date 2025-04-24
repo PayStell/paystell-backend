@@ -3,7 +3,7 @@ services:
     build: .
     container_name: paystell-backend
     ports:
-      - "3000:3000"
+      - "4000:4000"
     env_file: .env.local
     depends_on:
       postgres:
@@ -30,6 +30,18 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: paystell-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
 
   redis:
     image: redis:alpine
