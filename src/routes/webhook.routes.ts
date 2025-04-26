@@ -29,5 +29,9 @@ router.post(
   authenticateStellarWebhook,
   asyncHandler(webhookController.handleWebhook),
 );
+router
+.get("/webhook/logs",
+  authenticateStellarWebhook, 
+  asyncHandler(webhookController.getWebhookLogs),);
 
 export default router;
