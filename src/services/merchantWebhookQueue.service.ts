@@ -108,18 +108,18 @@ export class MerchantWebhookQueueService {
             },
           );
 
-          const response = await axios.post(merchantWebhook.url, webhookPayload);
+          const success = await this.webhookNotificationService.notifyPaymentUpdate(
+                        merchantWebhook,
+                        webhookPayload,
+                   );
 
           this.webhooklogRepository.save(
             {
               merchantId: merchantWebhook.merchantId, // assuming merchantWebhook has merchantId
               webhookUrl: merchantWebhook.url,
-              status:  response?.status && response.status >= 200 && response.status < 300
-              ? 'success'
-              : 'failed',
+              status:  success ? 'success' : 'failed',
               payload: webhookPayload,
-              response: response.data,
-              statusCode:response.status,
+              statusCode:success ? 200 : 500,
               retryCount: attemptsMade,
               
             }
@@ -130,11 +130,22 @@ export class MerchantWebhookQueueService {
           );
 
           return { success: true };
-        } catch (error:any) {
+        } catch (error:unknown) {
           const nextRetryDelay = this.calculateNextRetryDelay(attemptsMade);
           const nextRetryDate = new Date(Date.now() + nextRetryDelay);
           const maxAttempts = job.opts.attempts ?? 5;
           const isLastAttempt = attemptsMade >= maxAttempts;
+
+
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+          let responseData = null;
+          let statusCode = 500;
+        
+          if (axios.isAxiosError(error) && error.response) {
+            responseData = error.response.data;
+            statusCode = error.response.status;
+          }
 
           await this.merchantWebhookEventRepository.update(
             { jobId: job.id.toString() },
@@ -152,9 +163,9 @@ export class MerchantWebhookQueueService {
             webhookUrl: merchantWebhook.url,
             status: 'failed',
             payload: webhookPayload,
-            response:  error.response?.data || null,    // because webhook failed
-            statusCode: error?.response?.status || 500, 
-            errorMessage: error instanceof Error ? error.message : "Unknown error",
+            response:  responseData,    // because webhook failed
+            statusCode,
+            errorMessage,
             retryCount: attemptsMade,
           });
 
