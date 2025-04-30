@@ -1,3 +1,4 @@
+import "newrelic";
 import cookieParser from "cookie-parser";
 import express, {
   Request,
