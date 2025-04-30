@@ -1,10 +1,9 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { WebhookPayload } from 'src/interfaces/webhook.interfaces';
 
 @Entity()
 export class WebhookLog {
-  static createQueryBuilder(arg0: string) {
-    throw new Error("Method not implemented.");
-  }
+  
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -18,10 +17,10 @@ export class WebhookLog {
   status: 'success' | 'failed';
 
   @Column('json')
-  payload: any; // or WebhookPayload interface
+  payload: WebhookPayload; // or WebhookPayload interface
 
   @Column('json', { nullable: true })
-  response?: any;
+  response?: Record<string, unknown> | null;
 
   @Column({ nullable: true })
   statusCode?: number;

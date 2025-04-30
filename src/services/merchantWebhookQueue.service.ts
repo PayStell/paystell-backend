@@ -14,6 +14,9 @@ import {
 } from "../entities/InAppNotification.entity";
 import { WebhookNotificationService } from "./webhookNotification.service";
 import { WebhookLog } from "src/entities/webLog.entity";
+import axios from "axios";
+
+
 
 interface QueueJobData {
   merchantWebhook: MerchantWebhook;
@@ -105,17 +108,20 @@ export class MerchantWebhookQueueService {
             },
           );
 
+          const response = await axios.post(merchantWebhook.url, webhookPayload);
+
           this.webhooklogRepository.save(
             {
               merchantId: merchantWebhook.merchantId, // assuming merchantWebhook has merchantId
               webhookUrl: merchantWebhook.url,
-              status: 'success',
+              status:  response?.status && response.status >= 200 && response.status < 300
+              ? 'success'
+              : 'failed',
               payload: webhookPayload,
-              response: null,
-              statusCode: 200,
+              response: response.data,
+              statusCode:response.status,
               retryCount: attemptsMade,
-              createdAt: new Date(),
-              updatedAt: new Date(),
+              
             }
           );
 
@@ -124,7 +130,7 @@ export class MerchantWebhookQueueService {
           );
 
           return { success: true };
-        } catch (error) {
+        } catch (error:any) {
           const nextRetryDelay = this.calculateNextRetryDelay(attemptsMade);
           const nextRetryDate = new Date(Date.now() + nextRetryDelay);
           const maxAttempts = job.opts.attempts ?? 5;
@@ -146,12 +152,10 @@ export class MerchantWebhookQueueService {
             webhookUrl: merchantWebhook.url,
             status: 'failed',
             payload: webhookPayload,
-            response: null,   // because webhook failed
-            statusCode: 403, // If axios error, else null
+            response:  error.response?.data || null,    // because webhook failed
+            statusCode: error?.response?.status || 500, 
             errorMessage: error instanceof Error ? error.message : "Unknown error",
             retryCount: attemptsMade,
-            createdAt: new Date(),
-            updatedAt: new Date(),
           });
 
           console.error(

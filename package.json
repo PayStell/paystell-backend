@@ -18,9 +18,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "auth0-js": "^9.28.0",
     "@aws-sdk/client-s3": "^3.777.0",
     "@types/multer": "^1.4.12",
+    "auth0-js": "^9.28.0",
     "axios": "^1.8.1",
     "bcryptjs": "^2.4.3",
     "bull": "^4.16.5",

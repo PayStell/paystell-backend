@@ -6,6 +6,16 @@ import {
   asyncHandler,
 } from "../middlewares/merchantAuth";
 import { WebhookController } from "../controllers/webhook.controller";
+import rateLimit from 'express-rate-limit';
+
+
+
+// Allow max 100 requests per 15 minutes
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later.",
+});
 
 const router = express.Router();
 const merchantController = new MerchantController();
@@ -32,6 +42,7 @@ router.post(
 router
 .get("/webhook/logs",
   authenticateStellarWebhook, 
+  limiter,
   asyncHandler(webhookController.getWebhookLogs),);
 
 export default router;
