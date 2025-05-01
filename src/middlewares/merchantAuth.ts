@@ -35,6 +35,7 @@ import "express";
 declare module "express" {
   interface Request {
     merchant?: Merchant; // Haciendo merchant opcional
+    requestId?: string;
   }
 }
 
