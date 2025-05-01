@@ -8,8 +8,9 @@ import {
 import { UserRole } from "../enums/UserRole";
 import { UserService } from "../services/UserService";
 import { redisClient } from "../config/redisConfig";
+import { DataSource } from "typeorm";
 
-declare module "express" {
+declare module "express-serve-static-core" {
   interface Request {
     user?: {
       id: number;
@@ -18,6 +19,18 @@ declare module "express" {
       jti?: string;
       role?: UserRole;
     };
+
+    // adding this for  audit
+    auditContext?: {
+      userId: string;
+      userEmail: string;
+      ipAddress: string;
+      userAgent: string;
+    };
+    preAuditEntity?: any;
+    entityType?: string;
+
+    dataSource: DataSource;
   }
 }
 

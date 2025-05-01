@@ -1,10 +1,11 @@
 import { Repository } from "typeorm";
-import DataSource from "../config/db";
+
 import { EmailVerification } from "../entities/emailVerification";
 import { User } from "../entities/User";
 import { sendVerificationEmail } from "../utils/sendVerificationEmail";
 import { verifyToken, generateVerificationToken } from "../utils/token";
 import { sendWalletVerificationEmail } from "../utils/sendWalletVerificationEmail";
+import { AppDataSource } from "../config/db";
 
 class EmailVerificationService {
   private emailVerificationRepository: Repository<EmailVerification>;
@@ -12,8 +13,8 @@ class EmailVerificationService {
 
   constructor() {
     this.emailVerificationRepository =
-      DataSource.getRepository(EmailVerification);
-    this.userRepository = DataSource.getRepository(User);
+      AppDataSource.getRepository(EmailVerification);
+    this.userRepository = AppDataSource.getRepository(User);
   }
   async sendWalletVerificationEmail(
     email: string,

@@ -1,10 +1,10 @@
-import "newrelic";
 import cookieParser from "cookie-parser";
 import express, {
   Request,
   Response,
   RequestHandler,
   ErrorRequestHandler,
+  NextFunction,
 } from "express";
 import morgan from "morgan";
 import cors from "cors";
@@ -32,6 +32,8 @@ import { startExpiredSessionCleanupCronJobs } from "./utils/schedular";
 import logger from "./utils/logger";
 import { oauthConfig } from "./config/auth0Config";
 import { auth } from "express-openid-connect";
+import { auditMiddleware } from "./middlewares/audit.middleware";
+import { AppDataSource } from "./config/db";
 
 // Initialize express app
 const app = express();
@@ -79,6 +81,21 @@ app.use((req, res, next) => {
 // Start scheduled jobs
 startExpiredSessionCleanupCronJobs();
 
+// Initialize the database connection
+// AppDataSource.initialize()
+//   .then(() => {
+//     logger.info("Data Source has been initialized!");
+//   })
+//   .catch((err) => {
+//     logger.error("Error during Data Source initialization:", err);
+//     process.exit(1); // Exit if we can't connect to the database
+//   });
+
+app.use(((req: Request, res: Response, next: NextFunction) => {
+  req.dataSource = AppDataSource;
+  next();
+}) as RequestHandler);
+
 // Log application startup
 logger.info("Application started successfully");
 
@@ -94,6 +111,9 @@ app.use((req, res, next) => {
   }
 });
 
+// Make dataSource available in request for services
+
+app.use(auditMiddleware as RequestHandler);
 // Define routes
 app.use("/health", healthRouter);
 app.use("/session", sessionRouter);
@@ -130,4 +150,4 @@ app.use(((req: Request, res: Response) => {
 }) as RequestHandler);
 
 // Export app
-export default app;
+export { app };

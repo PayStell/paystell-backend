@@ -1,6 +1,6 @@
 import { verifyTwoFactorCode } from "../services/verifyTwoFactorCode";
 import { User } from "../entities/User";
-import AppDataSource from "../config/db";
+import { AppDataSource } from "../config/db";
 
 export const validateTwoFactorAuthentication = async (
   userId: number,

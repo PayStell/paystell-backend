@@ -2,7 +2,7 @@ import { Repository } from "typeorm";
 import { User } from "../entities/User";
 import { compare } from "bcryptjs";
 import { sign, verify, JwtPayload, SignOptions } from "jsonwebtoken";
-import AppDataSource from "../config/db";
+import { AppDataSource } from "../config/db";
 import { randomBytes, createHash } from "crypto";
 import { v4 as uuidv4 } from "uuid";
 import { redisClient } from "../config/redisConfig";

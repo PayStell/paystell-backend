@@ -1,5 +1,5 @@
 import { Repository } from "typeorm";
-import AppDataSource from "../config/db";
+import { AppDataSource } from "../config/db";
 import { User } from "../entities/User";
 import { validate } from "class-validator";
 import { CreateUserDTO } from "../dtos/CreateUserDTO";
