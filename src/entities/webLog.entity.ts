@@ -1,10 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { WebhookPayload } from 'src/interfaces/webhook.interfaces';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
+import { WebhookPayload } from "src/interfaces/webhook.interfaces";
 
 @Entity()
 export class WebhookLog {
-  
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
@@ -13,13 +18,13 @@ export class WebhookLog {
   @Column()
   webhookUrl: string;
 
-  @Column({ type: 'enum', enum: ['success', 'failed'] })
-  status: 'success' | 'failed';
+  @Column({ type: "enum", enum: ["success", "failed"] })
+  status: "success" | "failed";
 
-  @Column('json')
+  @Column("json")
   payload: WebhookPayload; // or WebhookPayload interface
 
-  @Column('json', { nullable: true })
+  @Column("json", { nullable: true })
   response?: Record<string, unknown> | null;
 
   @Column({ nullable: true })

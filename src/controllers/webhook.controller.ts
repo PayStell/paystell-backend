@@ -180,88 +180,101 @@ export class WebhookController {
   }
 
   // Get webhook logs with optional filters: status, merchantId, date range, pagination
-// Query params: status (success/failed), merchantId (string), startDate (ISO date), endDate (ISO date), page (number), limit (number)
-async getWebhookLogs(req: Request, res: Response): Promise<Response> {
-  try {
-    const { status, merchantId, startDate, endDate, page = 1, limit = 10 } = req.query;
+  // Query params: status (success/failed), merchantId (string), startDate (ISO date), endDate (ISO date), page (number), limit (number)
+  async getWebhookLogs(req: Request, res: Response): Promise<Response> {
+    try {
+      const {
+        status,
+        merchantId,
+        startDate,
+        endDate,
+        page = 1,
+        limit = 10,
+      } = req.query;
 
-    // Validate pagination parameters
-    const pageNum = Math.max(1, Number(page) || 1);  // Ensure page is at least 1
-    const limitNum = Math.min(100, Math.max(1, Number(limit) || 10));  // Ensure limit is between 1 and 100
+      // Validate pagination parameters
+      const pageNum = Math.max(1, Number(page) || 1); // Ensure page is at least 1
+      const limitNum = Math.min(100, Math.max(1, Number(limit) || 10)); // Ensure limit is between 1 and 100
 
-    // Validate date parameters if provided
-    let parsedStartDate: Date | undefined;
-    let parsedEndDate: Date | undefined;
+      // Validate date parameters if provided
+      let parsedStartDate: Date | undefined;
+      let parsedEndDate: Date | undefined;
 
-    if (startDate) {
-      parsedStartDate = new Date(startDate as string);
-      if (isNaN(parsedStartDate.getTime())) {
-        return res.status(400).json({
-          status: "error",
-          message: "Invalid startDate format",
+      if (startDate) {
+        parsedStartDate = new Date(startDate as string);
+        if (isNaN(parsedStartDate.getTime())) {
+          return res.status(400).json({
+            status: "error",
+            message: "Invalid startDate format",
+          });
+        }
+      }
+
+      if (endDate) {
+        parsedEndDate = new Date(endDate as string);
+        if (isNaN(parsedEndDate.getTime())) {
+          return res.status(400).json({
+            status: "error",
+            message: "Invalid endDate format",
+          });
+        }
+      }
+
+      const webhookLogRepository = AppDataSource.getRepository(WebhookLog);
+
+      const queryBuilder =
+        webhookLogRepository.createQueryBuilder("webhook_log");
+
+      if (status) {
+        queryBuilder.andWhere("webhook_log.status = :status", { status });
+      }
+
+      if (merchantId) {
+        queryBuilder.andWhere("webhook_log.merchantId = :merchantId", {
+          merchantId,
         });
       }
-    }
 
-    if (endDate) {
-      parsedEndDate = new Date(endDate as string);
-      if (isNaN(parsedEndDate.getTime())) {
-        return res.status(400).json({
-          status: "error",
-          message: "Invalid endDate format",
+      if (parsedStartDate && parsedEndDate) {
+        queryBuilder.andWhere(
+          "webhook_log.createdAt BETWEEN :startDate AND :endDate",
+          {
+            startDate: parsedStartDate,
+            endDate: parsedEndDate,
+          },
+        );
+      } else if (parsedStartDate) {
+        queryBuilder.andWhere("webhook_log.createdAt >= :startDate", {
+          startDate: parsedStartDate,
+        });
+      } else if (parsedEndDate) {
+        queryBuilder.andWhere("webhook_log.createdAt <= :endDate", {
+          endDate: parsedEndDate,
         });
       }
-    }
 
-    const webhookLogRepository = AppDataSource.getRepository(WebhookLog);
+      // Pagination: skip and take
+      const skip = (pageNum - 1) * limitNum;
+      queryBuilder.skip(skip).take(limitNum);
 
-    const queryBuilder = webhookLogRepository.createQueryBuilder("webhook_log");
+      // Order by latest first
+      queryBuilder.orderBy("webhook_log.createdAt", "DESC");
 
-    if (status) {
-      queryBuilder.andWhere("webhook_log.status = :status", { status });
-    }
+      const [logs, total] = await queryBuilder.getManyAndCount();
 
-    if (merchantId) {
-      queryBuilder.andWhere("webhook_log.merchantId = :merchantId", { merchantId });
-    }
-
-    if (parsedStartDate && parsedEndDate) {
-      queryBuilder.andWhere("webhook_log.createdAt BETWEEN :startDate AND :endDate", {
-        startDate: parsedStartDate,
-        endDate: parsedEndDate,
+      return res.status(200).json({
+        status: "success",
+        page: pageNum,
+        limit: limitNum,
+        total,
+        data: logs,
       });
-    } else if (parsedStartDate) {
-      queryBuilder.andWhere("webhook_log.createdAt >= :startDate", {
-        startDate: parsedStartDate,
-      });
-    } else if (parsedEndDate) {
-      queryBuilder.andWhere("webhook_log.createdAt <= :endDate", {
-        endDate: parsedEndDate,
+    } catch (error) {
+      console.error("Error fetching webhook logs:", error);
+      return res.status(500).json({
+        status: "error",
+        message: (error as Error).message,
       });
     }
-
-    // Pagination: skip and take
-    const skip = (pageNum - 1) * limitNum;
-    queryBuilder.skip(skip).take(limitNum);
-
-    // Order by latest first
-    queryBuilder.orderBy("webhook_log.createdAt", "DESC");
-
-    const [logs, total] = await queryBuilder.getManyAndCount();
-
-    return res.status(200).json({
-      status: "success",
-      page: pageNum,
-      limit: limitNum,
-      total,
-      data: logs,
-    });
-  } catch (error) {
-    console.error("Error fetching webhook logs:", error);
-    return res.status(500).json({
-      status: "error",
-      message: (error as Error).message,
-    });
   }
-}
 }

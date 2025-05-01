@@ -16,8 +16,6 @@ import { WebhookNotificationService } from "./webhookNotification.service";
 import { WebhookLog } from "src/entities/webLog.entity";
 import axios from "axios";
 
-
-
 interface QueueJobData {
   merchantWebhook: MerchantWebhook;
   webhookPayload: WebhookPayload;
@@ -39,7 +37,7 @@ export class MerchantWebhookQueueService {
   private merchantWebhookEventRepository: Repository<MerchantWebhookEventEntity>;
   private webhookNotificationService: WebhookNotificationService;
   private readonly MERCHANT_WEBHOOK_QUEUE = "merchant-webhook-queue";
-  private webhooklogRepository:Repository<WebhookLog>
+  private webhooklogRepository: Repository<WebhookLog>;
 
   constructor() {
     // Set up the Bull queue with Redis backing and exponential backoff
@@ -67,7 +65,6 @@ export class MerchantWebhookQueueService {
 
     // Create webhook notification service for sending webhooks
     this.webhookNotificationService = new WebhookNotificationService();
-    
 
     // Set up queue processing and event handling
     this.setupQueueProcessor();
@@ -108,40 +105,38 @@ export class MerchantWebhookQueueService {
             },
           );
 
-          const success = await this.webhookNotificationService.notifyPaymentUpdate(
-                        merchantWebhook,
-                        webhookPayload,
-                   );
+          const success =
+            await this.webhookNotificationService.notifyPaymentUpdate(
+              merchantWebhook,
+              webhookPayload,
+            );
 
-          this.webhooklogRepository.save(
-            {
-              merchantId: merchantWebhook.merchantId, // assuming merchantWebhook has merchantId
-              webhookUrl: merchantWebhook.url,
-              status:  success ? 'success' : 'failed',
-              payload: webhookPayload,
-              statusCode:success ? 200 : 500,
-              retryCount: attemptsMade,
-              
-            }
-          );
+          this.webhooklogRepository.save({
+            merchantId: merchantWebhook.merchantId, // assuming merchantWebhook has merchantId
+            webhookUrl: merchantWebhook.url,
+            status: success ? "success" : "failed",
+            payload: webhookPayload,
+            statusCode: success ? 200 : 500,
+            retryCount: attemptsMade,
+          });
 
           console.log(
             `Webhook delivered successfully to ${merchantWebhook.url} after ${attemptsMade} attempt(s)`,
           );
 
           return { success: true };
-        } catch (error:unknown) {
+        } catch (error: unknown) {
           const nextRetryDelay = this.calculateNextRetryDelay(attemptsMade);
           const nextRetryDate = new Date(Date.now() + nextRetryDelay);
           const maxAttempts = job.opts.attempts ?? 5;
           const isLastAttempt = attemptsMade >= maxAttempts;
 
-
-          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
 
           let responseData = null;
           let statusCode = 500;
-        
+
           if (axios.isAxiosError(error) && error.response) {
             responseData = error.response.data;
             statusCode = error.response.status;
@@ -161,9 +156,9 @@ export class MerchantWebhookQueueService {
           await this.webhooklogRepository.save({
             merchantId: merchantWebhook.merchantId,
             webhookUrl: merchantWebhook.url,
-            status: 'failed',
+            status: "failed",
             payload: webhookPayload,
-            response:  responseData,    // because webhook failed
+            response: responseData, // because webhook failed
             statusCode,
             errorMessage,
             retryCount: attemptsMade,
@@ -263,7 +258,7 @@ export class MerchantWebhookQueueService {
               attemptsMade: maxAttempts,
               nextRetry: undefined,
               completedAt: new Date(),
-            }, 
+            },
           );
         }
       },
