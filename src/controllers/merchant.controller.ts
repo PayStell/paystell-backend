@@ -1,13 +1,17 @@
 import { Response } from "express";
-import { CustomRequest } from "src/middlewares/merchantAuth";
-import { validateWebhookUrl } from "../validators/webhook.validators";
-import crypto from "crypto";
-import { Merchant, MerchantWebhook } from "../interfaces/webhook.interfaces";
+import { CustomRequest } from "../middlewares/merchantAuth";
 import { MerchantAuthService } from "../services/merchant.service";
 import { WebhookService } from "../services/webhook.service";
+import { validateWebhookUrl } from "../validators/webhook.validators";
+import { WebhookEventType } from "../enums/WebhookEventTypes";
+import { WebhookSubscriptionRequest, Merchant } from "../interfaces/webhook.interfaces";
+import { CryptoGeneratorService } from "../services/cryptoGenerator.service";
+import * as crypto from "crypto";
 
+// Default service initializations
 const merchantAuthService = new MerchantAuthService();
 const webhookService = new WebhookService();
+const cryptoGeneratorService = new CryptoGeneratorService();
 
 export class MerchantController {
   async registerMerchant(req: CustomRequest, res: Response): Promise<Response> {
@@ -47,7 +51,7 @@ export class MerchantController {
 
   async registerWebhook(req: CustomRequest, res: Response): Promise<Response> {
     try {
-      const { url } = req.body;
+      const { url, eventTypes, maxRetries, initialRetryDelay, maxRetryDelay } = req.body;
       const merchantId = req.merchant?.id;
       const merchant = await merchantAuthService.getMerchantById(
         merchantId ?? "",
@@ -64,21 +68,31 @@ export class MerchantController {
         });
       }
 
-      // Create webhook in database
-      const webhook: MerchantWebhook = {
-        id: crypto.randomUUID(),
-        merchantId: merchantId ?? "",
+      // Generate a secret if not provided
+      const secretKey = req.body.secretKey || cryptoGeneratorService.generateSecret();
+
+      // Create webhook data for registration
+      const webhookData: WebhookSubscriptionRequest = {
         url,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        secretKey,
+        eventTypes,
+        maxRetries,
+        initialRetryDelay,
+        maxRetryDelay
       };
 
-      await webhookService.register(webhook);
+      // Register webhook in database
+      const webhook = await webhookService.register(merchantId ?? "", webhookData);
 
       return res.status(201).json({
         message: "Webhook registered successfully",
-        webhookId: webhook.id,
+        webhook: {
+          id: webhook.id,
+          url: webhook.url,
+          secretKey: webhook.secretKey,
+          eventTypes: webhook.eventTypes,
+          createdAt: webhook.createdAt
+        }
       });
     } catch (error) {
       console.error("Webhook registration failed:", error);
@@ -88,11 +102,11 @@ export class MerchantController {
 
   async updateWebhook(req: CustomRequest, res: Response): Promise<Response> {
     try {
-      const { url } = req.body;
+      const { url, eventTypes, secretKey, maxRetries, initialRetryDelay, maxRetryDelay } = req.body;
       const merchantId = req.merchant?.id;
 
-      // Validate webhook URL
-      if (!validateWebhookUrl(url)) {
+      // Validate webhook URL if provided
+      if (url && !validateWebhookUrl(url)) {
         return res.status(400).json({
           error: "Invalid webhook URL",
         });
@@ -101,6 +115,7 @@ export class MerchantController {
       // Get the webhook first to verify it exists
       const existingWebhook = await webhookService.getMerchantWebhook(
         merchantId ?? "",
+        true
       );
 
       if (!existingWebhook) {
@@ -109,18 +124,32 @@ export class MerchantController {
         });
       }
 
-      // Update webhook in database
-      const webhook: MerchantWebhook = {
-        ...existingWebhook,
-        url,
-        updatedAt: new Date(),
-      };
+      // Update webhook data - only include fields that were provided
+      const webhookData: Partial<WebhookSubscriptionRequest> = {};
+      
+      if (url) webhookData.url = url;
+      if (secretKey) webhookData.secretKey = secretKey;
+      if (eventTypes) webhookData.eventTypes = eventTypes;
+      if (maxRetries !== undefined) webhookData.maxRetries = maxRetries;
+      if (initialRetryDelay !== undefined) webhookData.initialRetryDelay = initialRetryDelay;
+      if (maxRetryDelay !== undefined) webhookData.maxRetryDelay = maxRetryDelay;
 
-      const updatedWebhook = await webhookService.update(webhook);
+      // Update webhook in database
+      const updatedWebhook = await webhookService.update(merchantId ?? "", webhookData);
 
       return res.status(200).json({
         message: "Webhook updated successfully",
-        webhook: updatedWebhook,
+        webhook: {
+          id: updatedWebhook.id,
+          url: updatedWebhook.url,
+          secretKey: updatedWebhook.secretKey,
+          eventTypes: updatedWebhook.eventTypes,
+          maxRetries: updatedWebhook.maxRetries,
+          initialRetryDelay: updatedWebhook.initialRetryDelay,
+          maxRetryDelay: updatedWebhook.maxRetryDelay,
+          createdAt: updatedWebhook.createdAt,
+          updatedAt: updatedWebhook.updatedAt
+        }
       });
     } catch (error) {
       console.error("Webhook update failed:", error);
@@ -133,7 +162,7 @@ export class MerchantController {
       const merchantId = req.merchant?.id;
 
       // Get the webhook first to verify it exists
-      const webhook = await webhookService.getMerchantWebhook(merchantId ?? "");
+      const webhook = await webhookService.getMerchantWebhook(merchantId ?? "", true);
 
       if (!webhook) {
         return res.status(404).json({
@@ -141,14 +170,14 @@ export class MerchantController {
         });
       }
 
-      // Delete webhook from database by updating isActive to false
-      const updatedWebhook: MerchantWebhook = {
-        ...webhook,
-        isActive: false,
-        updatedAt: new Date(),
-      };
-
-      await webhookService.update(updatedWebhook);
+      // Delete the webhook (soft delete)
+      const deleted = await webhookService.deleteWebhook(merchantId ?? "");
+      
+      if (!deleted) {
+        return res.status(500).json({
+          error: "Failed to delete webhook"
+        });
+      }
 
       return res.status(204).send();
     } catch (error) {
@@ -162,7 +191,7 @@ export class MerchantController {
       const merchantId = req.merchant?.id ?? "";
 
       // Get webhook from database
-      const webhook = await webhookService.getMerchantWebhook(merchantId);
+      const webhook = await webhookService.getMerchantWebhook(merchantId, true);
 
       if (!webhook) {
         return res.status(404).json({
@@ -170,9 +199,46 @@ export class MerchantController {
         });
       }
 
-      return res.status(200).json(webhook);
+      return res.status(200).json({
+        id: webhook.id,
+        url: webhook.url,
+        secretKey: webhook.secretKey,
+        eventTypes: webhook.eventTypes,
+        maxRetries: webhook.maxRetries,
+        initialRetryDelay: webhook.initialRetryDelay,
+        maxRetryDelay: webhook.maxRetryDelay,
+        isActive: webhook.isActive,
+        createdAt: webhook.createdAt,
+        updatedAt: webhook.updatedAt
+      });
     } catch (error) {
       console.error("Webhook retrieval failed:", error);
+      return res.status(500).json({ error: (error as Error).message });
+    }
+  }
+
+  async getAvailableEventTypes(req: CustomRequest, res: Response): Promise<Response> {
+    try {
+      const eventTypes = await webhookService.getAvailableEventTypes();
+      
+      return res.status(200).json({
+        eventTypes
+      });
+    } catch (error) {
+      console.error("Failed to retrieve event types:", error);
+      return res.status(500).json({ error: (error as Error).message });
+    }
+  }
+
+  async generateWebhookSecret(req: CustomRequest, res: Response): Promise<Response> {
+    try {
+      const secretKey = cryptoGeneratorService.generateSecret();
+      
+      return res.status(200).json({
+        secretKey
+      });
+    } catch (error) {
+      console.error("Failed to generate webhook secret:", error);
       return res.status(500).json({ error: (error as Error).message });
     }
   }
