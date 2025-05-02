@@ -14,6 +14,7 @@ import sessionRouter from "./routes/session.routes";
 import emailVerification from "./routes/emailVerification.routes";
 import PaymentRoute from "./routes/PaymentLink.routes";
 import authRoutes from "./routes/authRoutes";
+import auditLogRoute from "./routes/auditLogRoutes";
 import userRoutes from "./routes/userRoutes";
 import healthRouter from "./routes/health.routes";
 import walletVerificationRoutes from "./routes/wallet-verification.routes";
@@ -125,6 +126,7 @@ app.use("/users", userRoutes);
 app.use("/merchants", merchantRoutes);
 app.use("/webhook-queue/merchant", merchantWebhookQueueRoutes);
 app.use("/reports/transactions", transactionReportsRoutes);
+app.use("/audit-log", auditLogRoute);
 
 // Error handling middleware
 const customErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
