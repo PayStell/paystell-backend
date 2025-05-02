@@ -1,103 +1,94 @@
 // middleware/auth.ts
-import { Request, Response, NextFunction, RequestHandler } from "express";
+import { Request, Response, NextFunction } from "express-serve-static-core";
+import { RequestHandler } from "express";
 import { MerchantAuthService } from "../services/merchant.service";
-import { Merchant } from "../interfaces/webhook.interfaces";
+import { AppError } from "../utils/AppError";
+import logger from "../utils/logger";
 import { UserRole } from "../enums/UserRole";
+import { Merchant } from "../interfaces/webhook.interfaces";
 
-// Extender el tipo Request mediante una extensión de módulo
-export interface CustomRequest extends Request {
-  user?: {
-    id: number;
-    email: string;
-    tokenExp?: number;
-    role?: UserRole;
-  };
-  merchant: Merchant;
+// Extend the Express Request interface through module augmentation
+// This approach aligns with TypeScript best practices
+declare module "express-serve-static-core" {
+  interface Request {
+    merchant?: Merchant;
+    user?: {
+      id: number;
+      email: string;
+      tokenExp?: number;
+      role?: UserRole;
+      jti?: string;
+    };
+  }
 }
 
 const merchantAuthService = new MerchantAuthService();
 
-export const asyncHandler =
-  (
-    fn: (
-      req: CustomRequest,
-      res: Response,
-      next: NextFunction,
-    ) => Promise<void | Response>,
-  ): RequestHandler =>
-  (req, res, next) => {
-    Promise.resolve(fn(req as CustomRequest, res, next)).catch(next);
-  };
+type AsyncRequestHandler<T = unknown> = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<T>;
 
-// Extender los tipos de Express usando la sintaxis moderna
-// en lugar de namespace
+// Utility to wrap async route handlers
+export const asyncHandler = (fn: AsyncRequestHandler): RequestHandler => {
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+};
+
+// Extending Express types
 import "express";
 declare module "express" {
   interface Request {
-    merchant?: Merchant; // Haciendo merchant opcional
+    merchant?: Merchant; // Making merchant optional
     requestId?: string;
   }
 }
 
 export const authenticateMerchant = asyncHandler(
-  async (req: CustomRequest, res: Response, next: NextFunction) => {
-    try {
-      const apiKey = req.headers["x-api-key"] as string;
+  async (req: Request, res: Response, next: NextFunction) => {
+    const apiKey = req.headers["x-api-key"] as string;
 
-      if (!apiKey) {
-        return res.status(401).json({
-          error: "No API key provided",
-        });
-      }
-
-      // Use your MerchantAuthService to find the merchant
-      const merchant = await merchantAuthService.validateApiKey(apiKey);
-
-      if (!merchant) {
-        return res.status(401).json({
-          error: "Invalid API key",
-        });
-      }
-
-      // Attach merchant to request object
-      req.merchant = merchant;
-      next();
-    } catch (error) {
-      console.error("Auth error:", error);
-      res.status(500).json({ error: "Authentication failed" });
+    if (!apiKey) {
+      throw new AppError("API key is required", 401);
     }
+
+    const merchant = await merchantAuthService.validateApiKey(apiKey);
+
+    if (!merchant) {
+      throw new AppError("Invalid API key", 401);
+    }
+
+    req.merchant = merchant;
+    next();
   },
 );
 
 export const authenticateStellarWebhook = asyncHandler(
-  async (req: CustomRequest, res: Response, next: NextFunction) => {
-    try {
-      const token = req.query.token as string;
-      // Use your MerchantAuthService to find the merchant
-      if (!token) {
-        return res.status(401).json({
-          error: "No token provided",
-        });
-      }
+  async (req: Request, res: Response, next: NextFunction) => {
+    const token = req.query.token as string;
 
-      if (token !== process.env.STELLAR_WEBHOOK_TOKEN) {
-        return res.status(401).json({
-          error: "Invalid token",
-        });
-      }
-
-      const ip = req.headers["x-forwarded-for"] as string;
-
-      if (ip !== process.env.STELLAR_WEBHOOK_IP) {
-        return res.status(401).json({
-          error: "Invalid IP address",
-        });
-      }
-      // Attach merchant to request object
-      return next();
-    } catch (error) {
-      console.error("Auth error:", error);
-      return res.status(500).json({ error: "Authentication failed" });
+    if (!token) {
+      throw new AppError("No token provided", 401);
     }
+
+    if (token !== process.env.STELLAR_WEBHOOK_TOKEN) {
+      throw new AppError("Invalid token", 401);
+    }
+
+    // Get the originating IP from the x-forwarded-for header
+    const forwardedFor = req.headers["x-forwarded-for"] as string;
+    const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : null;
+
+    if (ip !== process.env.STELLAR_WEBHOOK_IP) {
+      logger.warn(
+        `Webhook IP validation failed: received ${ip}, expected ${process.env.STELLAR_WEBHOOK_IP}`,
+      );
+      throw new AppError("Invalid IP address", 401);
+    }
+
+    // Attach merchant to request object
+    next();
   },
 );

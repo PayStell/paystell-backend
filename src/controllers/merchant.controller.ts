@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { CustomRequest } from "src/middlewares/merchantAuth";
+import { Request } from "express-serve-static-core";
 import { validateWebhookUrl } from "../validators/webhook.validators";
 import crypto from "crypto";
 import { Merchant, MerchantWebhook } from "../interfaces/webhook.interfaces";
@@ -10,7 +10,7 @@ const merchantAuthService = new MerchantAuthService();
 const webhookService = new WebhookService();
 
 export class MerchantController {
-  async registerMerchant(req: CustomRequest, res: Response): Promise<Response> {
+  async registerMerchant(req: Request, res: Response): Promise<Response> {
     try {
       const { name, email } = req.body;
 
@@ -45,7 +45,7 @@ export class MerchantController {
     }
   }
 
-  async registerWebhook(req: CustomRequest, res: Response): Promise<Response> {
+  async registerWebhook(req: Request, res: Response): Promise<Response> {
     try {
       const { url } = req.body;
       const merchantId = req.merchant?.id;
@@ -86,7 +86,7 @@ export class MerchantController {
     }
   }
 
-  async updateWebhook(req: CustomRequest, res: Response): Promise<Response> {
+  async updateWebhook(req: Request, res: Response): Promise<Response> {
     try {
       const { url } = req.body;
       const merchantId = req.merchant?.id;
@@ -128,7 +128,7 @@ export class MerchantController {
     }
   }
 
-  async deleteWebhook(req: CustomRequest, res: Response): Promise<Response> {
+  async deleteWebhook(req: Request, res: Response): Promise<Response> {
     try {
       const merchantId = req.merchant?.id;
 
@@ -157,7 +157,7 @@ export class MerchantController {
     }
   }
 
-  async getWebhook(req: CustomRequest, res: Response): Promise<Response> {
+  async getWebhook(req: Request, res: Response): Promise<Response> {
     try {
       const merchantId = req.merchant?.id ?? "";
 
@@ -177,7 +177,7 @@ export class MerchantController {
     }
   }
 
-  async getProfile(req: CustomRequest, res: Response): Promise<Response> {
+  async getProfile(req: Request, res: Response): Promise<Response> {
     try {
       const merchantId = req.merchant?.id ?? "";
       const merchant: Partial<Merchant> | null =
@@ -193,7 +193,7 @@ export class MerchantController {
     }
   }
 
-  async createProfile(req: CustomRequest, res: Response): Promise<Response> {
+  async createProfile(req: Request, res: Response): Promise<Response> {
     try {
       const merchantId = req.merchant?.id ?? "";
       const profileData = req.body;
@@ -209,7 +209,7 @@ export class MerchantController {
     }
   }
 
-  async updateProfile(req: CustomRequest, res: Response): Promise<Response> {
+  async updateProfile(req: Request, res: Response): Promise<Response> {
     try {
       const merchantId = req.merchant?.id ?? "";
       const profileData = req.body;
@@ -225,13 +225,13 @@ export class MerchantController {
     }
   }
 
-  async uploadLogo(req: CustomRequest, res: Response): Promise<Response> {
+  async uploadLogo(req: Request, res: Response): Promise<Response> {
     try {
       const merchantId = req.merchant?.id ?? "";
       const logoUrl = req.body.fileUrl;
 
       const updatedMerchant = await merchantAuthService.updateLogo(
-        merchantId ?? "",
+        merchantId,
         logoUrl,
       );
 
@@ -244,7 +244,7 @@ export class MerchantController {
     }
   }
 
-  async deleteLogo(req: CustomRequest, res: Response): Promise<Response> {
+  async deleteLogo(req: Request, res: Response): Promise<Response> {
     try {
       const merchantId = req.merchant?.id ?? "";
 

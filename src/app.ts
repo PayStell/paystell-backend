@@ -21,6 +21,7 @@ import walletVerificationRoutes from "./routes/wallet-verification.routes";
 import merchantWebhookQueueRoutes from "./routes/merchantWebhookQueue.routes";
 import transactionReportsRoutes from "./routes/transactionReports.routes";
 import merchantRoutes from "./routes/merchantRoutes";
+import stellarContractRoutes from "./routes/stellar-contract.routes";
 
 // Middleware imports
 import { globalRateLimiter } from "./middlewares/globalRateLimiter.middleware";
@@ -126,7 +127,11 @@ app.use("/users", userRoutes);
 app.use("/merchants", merchantRoutes);
 app.use("/webhook-queue/merchant", merchantWebhookQueueRoutes);
 app.use("/reports/transactions", transactionReportsRoutes);
+
 app.use("/audit-log", auditLogRoute);
+
+app.use("/api/v1/stellar", stellarContractRoutes);
+
 
 // Error handling middleware
 const customErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
