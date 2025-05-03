@@ -9,6 +9,11 @@ import express, {
 import morgan from "morgan";
 import cors from "cors";
 
+// Define interface for request with raw body
+interface RequestWithRawBody extends Request {
+  rawBody?: Buffer;
+}
+
 // Route imports
 import sessionRouter from "./routes/session.routes";
 import emailVerification from "./routes/emailVerification.routes";
@@ -62,7 +67,13 @@ app.use(
   }),
 );
 
-app.use(express.json());
+// Configure express.json middleware to store raw body for webhook signature verification
+app.use(express.json({
+  verify: (req: RequestWithRawBody, _res, buf) => {
+    req.rawBody = buf;
+  },
+}));
+
 app.use(validateIpAddress as RequestHandler);
 app.use(
   RateLimitMonitoringService.createRateLimitMonitoringMiddleware() as RequestHandler,

@@ -2,15 +2,12 @@ import { Response } from "express";
 import { Request } from "express-serve-static-core";
 import { validateWebhookUrl } from "../validators/webhook.validators";
 import crypto from "crypto";
-import { Merchant, MerchantWebhook } from "../interfaces/webhook.interfaces";
-import { CustomRequest } from "../middlewares/merchantAuth";
+import { MerchantWebhook } from "../interfaces/webhook.interfaces";
 import { MerchantAuthService } from "../services/merchant.service";
 import { WebhookService } from "../services/webhook.service";
-import { validateWebhookUrl } from "../validators/webhook.validators";
 import { WebhookEventType } from "../enums/WebhookEventTypes";
 import { WebhookSubscriptionRequest, Merchant } from "../interfaces/webhook.interfaces";
 import { CryptoGeneratorService } from "../services/cryptoGenerator.service";
-import * as crypto from "crypto";
 
 // Default service initializations
 const merchantAuthService = new MerchantAuthService();
@@ -221,7 +218,7 @@ export class MerchantController {
     }
   }
 
-  async getAvailableEventTypes(req: CustomRequest, res: Response): Promise<Response> {
+  async getAvailableEventTypes(req: Request, res: Response): Promise<Response> {
     try {
       const eventTypes = await webhookService.getAvailableEventTypes();
       
@@ -234,7 +231,7 @@ export class MerchantController {
     }
   }
 
-  async generateWebhookSecret(req: CustomRequest, res: Response): Promise<Response> {
+  async generateWebhookSecret(req: Request, res: Response): Promise<Response> {
     try {
       const secretKey = cryptoGeneratorService.generateSecret();
       
@@ -247,7 +244,7 @@ export class MerchantController {
     }
   }
 
-  async getProfile(req: CustomRequest, res: Response): Promise<Response> {
+  async getProfile(req: Request, res: Response): Promise<Response> {
     try {
       const merchantId = req.merchant?.id ?? "";
       const merchant: Partial<Merchant> | null =
