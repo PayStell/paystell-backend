@@ -6,6 +6,11 @@ import { Request, Response } from "express";
 import { CryptoGeneratorService } from "../services/cryptoGenerator.service";
 import { validateWebhookUrl } from "../validators/webhook.validators";
 
+// Interface extension for Express Request with rawBody
+interface RequestWithRawBody extends Request {
+  rawBody?: Buffer | string;
+}
+
 // TODO: this initialization needs to be moved to dependency injection
 const defaultWebhookService = new WebhookService();
 const defaultMerchantAuthService = new MerchantAuthService();
@@ -319,9 +324,17 @@ export class WebhookController {
       }
 
       // Verify signature if we have a secret key
-      if (webhook.secretKey && signature) {
+      if (webhook.secretKey) {
+        if (!signature) {
+          return res.status(401).json({
+            status: "error",
+            code: "MISSING_SIGNATURE",
+            message: "Signature header is required for this webhook",
+          });
+        }
+        
         // Use rawBody if available (needs express configuration), otherwise fallback to body
-        const rawBody = (req as any).rawBody;
+        const rawBody = (req as RequestWithRawBody).rawBody;
         const isValid = this.cryptoGeneratorService.verifySignature(
           rawBody || req.body,
           signature.toString(),

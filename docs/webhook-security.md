@@ -36,6 +36,11 @@ function verifyWebhookSignature(payload, header, secret) {
     .update(payload)
     .digest('hex');
   
+  // Ensure signatures are the same length for timingSafeEqual
+  if (signature.length !== expectedSignature.length) {
+    throw new Error('Webhook signature verification failed');
+  }
+  
   // Compare signatures using constant-time comparison
   const valid = crypto.timingSafeEqual(
     Buffer.from(signature),

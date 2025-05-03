@@ -7,3 +7,6 @@ dist/
 logs/
 
 coverage/
+
+newrelic_agent.log
+logs/newrelic*
