@@ -90,7 +90,7 @@ export class MerchantController {
         webhook: {
           id: webhook.id,
           url: webhook.url,
-          secretKey: webhook.secretKey, // Only shown once during creation
+          secretKey: webhook.secretKey, // SECURITY WARNING: This secret key is only displayed once and cannot be retrieved later
           eventTypes: webhook.eventTypes,
           createdAt: webhook.createdAt
         }
