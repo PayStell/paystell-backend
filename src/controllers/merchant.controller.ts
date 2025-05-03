@@ -77,9 +77,9 @@ export class MerchantController {
         url,
         secretKey,
         eventTypes,
-        maxRetries,
-        initialRetryDelay,
-        maxRetryDelay
+        maxRetries: maxRetries !== undefined ? Math.min(Math.max(maxRetries, 0), 10) : undefined,
+        initialRetryDelay: initialRetryDelay !== undefined ? Math.max(initialRetryDelay, 1000) : undefined,
+        maxRetryDelay: maxRetryDelay !== undefined ? Math.min(Math.max(maxRetryDelay, 1000), 86400000) : undefined,
       };
 
       // Register webhook in database
@@ -90,7 +90,7 @@ export class MerchantController {
         webhook: {
           id: webhook.id,
           url: webhook.url,
-          secretKey: webhook.secretKey,
+          secretKey: webhook.secretKey, // Only shown once during creation
           eventTypes: webhook.eventTypes,
           createdAt: webhook.createdAt
         }
@@ -131,9 +131,9 @@ export class MerchantController {
       if (url) webhookData.url = url;
       if (secretKey) webhookData.secretKey = secretKey;
       if (eventTypes) webhookData.eventTypes = eventTypes;
-      if (maxRetries !== undefined) webhookData.maxRetries = maxRetries;
-      if (initialRetryDelay !== undefined) webhookData.initialRetryDelay = initialRetryDelay;
-      if (maxRetryDelay !== undefined) webhookData.maxRetryDelay = maxRetryDelay;
+      if (maxRetries !== undefined) webhookData.maxRetries = Math.min(Math.max(maxRetries, 0), 10);
+      if (initialRetryDelay !== undefined) webhookData.initialRetryDelay = Math.max(initialRetryDelay, 1000);
+      if (maxRetryDelay !== undefined) webhookData.maxRetryDelay = Math.min(Math.max(maxRetryDelay, 1000), 86400000);
 
       // Update webhook in database
       const updatedWebhook = await webhookService.update(merchantId ?? "", webhookData);
@@ -143,7 +143,7 @@ export class MerchantController {
         webhook: {
           id: updatedWebhook.id,
           url: updatedWebhook.url,
-          secretKey: updatedWebhook.secretKey,
+          secretKeyLastFour: updatedWebhook.secretKey ? updatedWebhook.secretKey.slice(-4).padStart(updatedWebhook.secretKey.length, '*') : null,
           eventTypes: updatedWebhook.eventTypes,
           maxRetries: updatedWebhook.maxRetries,
           initialRetryDelay: updatedWebhook.initialRetryDelay,
@@ -203,7 +203,7 @@ export class MerchantController {
       return res.status(200).json({
         id: webhook.id,
         url: webhook.url,
-        secretKey: webhook.secretKey,
+        secretKeyLastFour: webhook.secretKey ? webhook.secretKey.slice(-4).padStart(webhook.secretKey.length, '*') : null,
         eventTypes: webhook.eventTypes,
         maxRetries: webhook.maxRetries,
         initialRetryDelay: webhook.initialRetryDelay,
