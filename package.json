@@ -11,7 +11,8 @@
     "format:check": "prettier --check 'src/**/*.ts'",
     "format:fix": "prettier --write 'src/**/*.ts'",
     "test:coverage": "jest --coverage",
-    "migration:run": "npx typeorm-ts-node-commonjs migration:run -d src/config/db.ts"
+    "migration:run": "npx typeorm-ts-node-commonjs migration:run -d src/config/db.ts",
+    "test:webhooks": "node test-webhooks.js"
   },
   "keywords": [],
   "author": "",

@@ -12,6 +12,33 @@ import { CryptoGeneratorService } from "./cryptoGenerator.service";
 import { MerchantWebhookEventEntity } from "../entities/MerchantWebhookEvent.entity";
 import { MerchantWebhookEventEntityStatus } from "../enums/MerchantWebhookEventStatus";
 
+// Define interfaces for metrics
+interface QueueMetrics {
+  overall: {
+    active: number;
+    completed: number;
+    failed: number;
+    delayed: number;
+    waiting: number;
+    successRate: number;
+  };
+  merchant?: {
+    completed: number;
+    failed: number;
+    pending: number;
+    successRate: number;
+  };
+}
+
+interface WebhookMetricsData extends QueueMetrics {
+  webhook: {
+    completed: number;
+    failed: number;
+    pending: number;
+    successRate: number;
+  };
+}
+
 export class WebhookService {
   private merchantWebhookrepository: Repository<MerchantWebhookEntity>;
   private merchantWebhookEventRepository: Repository<MerchantWebhookEventEntity>;
@@ -51,7 +78,14 @@ export class WebhookService {
     const secretKey = webhookData.secretKey || this.cryptoGeneratorService.generateSecret();
     
     // Default to all event types if not specified
-    const eventTypes = webhookData.eventTypes || Object.values(WebhookEventType);
+    const requested = webhookData.eventTypes ?? Object.values(WebhookEventType);
+    const eventTypes = requested.filter((t) =>
+      Object.values(WebhookEventType).includes(t as WebhookEventType)
+    );
+    
+    if (eventTypes.length === 0) {
+      throw new Error("No valid event types supplied");
+    }
 
     const webhook = this.merchantWebhookrepository.create({
       id: uuidv4(),
@@ -83,7 +117,20 @@ export class WebhookService {
     // Update only the fields that are provided
     if (webhookData.url) existingWebhook.url = webhookData.url;
     if (webhookData.secretKey) existingWebhook.secretKey = webhookData.secretKey;
-    if (webhookData.eventTypes) existingWebhook.eventTypes = webhookData.eventTypes;
+    
+    // Validate event types if provided
+    if (webhookData.eventTypes) {
+      const validEventTypes = webhookData.eventTypes.filter((t) =>
+        Object.values(WebhookEventType).includes(t as WebhookEventType)
+      );
+      
+      if (validEventTypes.length === 0) {
+        throw new Error("No valid event types supplied");
+      }
+      
+      existingWebhook.eventTypes = validEventTypes;
+    }
+    
     if (webhookData.maxRetries !== undefined) existingWebhook.maxRetries = webhookData.maxRetries;
     if (webhookData.initialRetryDelay !== undefined) existingWebhook.initialRetryDelay = webhookData.initialRetryDelay;
     if (webhookData.maxRetryDelay !== undefined) existingWebhook.maxRetryDelay = webhookData.maxRetryDelay;
@@ -164,7 +211,7 @@ export class WebhookService {
     webhookId: string,
     limit: number = 10,
     offset: number = 0,
-    status?: string
+    status?: MerchantWebhookEventEntityStatus
   ): Promise<MerchantWebhookEventEntity[]> {
     try {
       // Build the base query
@@ -177,9 +224,7 @@ export class WebhookService {
       
       // Add status filter if provided
       if (status) {
-        query.andWhere('event.status = :status', { 
-          status: status as MerchantWebhookEventEntityStatus 
-        });
+        query.andWhere('event.status = :status', { status });
       }
       
       return await query.getMany();
@@ -197,7 +242,7 @@ export class WebhookService {
    */
   async getWebhookEventsCount(
     webhookId: string,
-    status?: string
+    status?: MerchantWebhookEventEntityStatus
   ): Promise<number> {
     try {
       // Build the base query
@@ -207,9 +252,7 @@ export class WebhookService {
       
       // Add status filter if provided
       if (status) {
-        query.andWhere('event.status = :status', { 
-          status: status as MerchantWebhookEventEntityStatus 
-        });
+        query.andWhere('event.status = :status', { status });
       }
       
       return await query.getCount();
@@ -225,7 +268,7 @@ export class WebhookService {
    * @param webhookId Optional webhook ID to filter metrics for a specific webhook
    * @returns Webhook delivery metrics
    */
-  async getWebhookMetrics(merchantId: string, webhookId?: string): Promise<any> {
+  async getWebhookMetrics(merchantId: string, webhookId?: string): Promise<unknown> {
     try {
       // Get queue service for overall metrics
       const queueService = this.getQueueService();
@@ -254,28 +297,33 @@ export class WebhookService {
             [MerchantWebhookEventEntityStatus.FAILED]: 0,
           }
         );
-        
+
         // Calculate success rate for this webhook
         const total = 
           webhookMetrics[MerchantWebhookEventEntityStatus.COMPLETED] + 
           webhookMetrics[MerchantWebhookEventEntityStatus.FAILED];
-        
+
         const successRate = total > 0 
           ? (webhookMetrics[MerchantWebhookEventEntityStatus.COMPLETED] / total) * 100 
           : 100;
-        
-        // Add to the metrics object - use type assertion to allow adding new property
-        (metrics as any).webhook = {
-          completed: webhookMetrics[MerchantWebhookEventEntityStatus.COMPLETED],
-          failed: webhookMetrics[MerchantWebhookEventEntityStatus.FAILED],
-          pending: webhookMetrics[MerchantWebhookEventEntityStatus.PENDING],
-          successRate: successRate,
+
+        // Add webhook specific metrics
+        return {
+          ...metrics,
+          webhook: {
+            completed: webhookMetrics[MerchantWebhookEventEntityStatus.COMPLETED],
+            failed: webhookMetrics[MerchantWebhookEventEntityStatus.FAILED],
+            pending: webhookMetrics[MerchantWebhookEventEntityStatus.PENDING],
+            successRate,
+          },
         };
       }
       
+      // If no webhook ID provided, return queue metrics only
       return metrics;
     } catch (error) {
       console.error(`Error fetching webhook metrics:`, error);
+      // Return empty metrics on error
       return {
         overall: {
           active: 0,

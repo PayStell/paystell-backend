@@ -120,10 +120,16 @@ router.post(
           status: "pending",
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(500).json({
+          status: "error",
+          message: error.message,
+        });
+      }
       return res.status(500).json({
         status: "error",
-        message: error.message || "Failed to retry webhook",
+        message: "Failed to retry webhook",
       });
     }
   }),

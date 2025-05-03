@@ -140,7 +140,7 @@ export class MerchantWebhookQueueService {
           );
           
           const nextRetryDate = isLastAttempt ? 
-            undefined : 
+            null : 
             new Date(Date.now() + nextRetryDelay);
 
           // Update the webhook event with failure information
@@ -189,7 +189,7 @@ export class MerchantWebhookQueueService {
     error: string | null,
     completedAt?: Date
   ) {
-    const updateData: any = {
+    const updateData: Partial<MerchantWebhookEventEntity> = {
       status,
       attemptsMade,
     };
@@ -287,8 +287,8 @@ export class MerchantWebhookQueueService {
           await this.updateWebhookEventStatus(
             job.id.toString(),
             MerchantWebhookEventEntityStatus.FAILED,
-            maxAttempts,
-            undefined,
+            attemptsMade,
+            null,
             error.message,
             new Date()
           );

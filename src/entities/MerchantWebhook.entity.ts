@@ -25,7 +25,7 @@ export class MerchantWebhookEntity {
   @Column({ default: true })
   isActive: boolean;
   
-  @Column({ nullable: true })
+  @Column({ nullable: true, select: false, length: 128 })
   secretKey: string;
   
   @Column("simple-array", { nullable: true })

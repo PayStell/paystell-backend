@@ -68,6 +68,17 @@ export class WebhookController {
           message: "Webhook already exists for this merchant. Use update endpoint instead.",
         });
       }
+      
+      // Validate event types if provided
+      if (eventTypes) {
+        const validEventTypes = await this.webhookService.getAvailableEventTypes();
+        if (!eventTypes.every((e: string) => validEventTypes.includes(e))) {
+          return res.status(400).json({
+            status: "error",
+            message: "One or more event types are invalid",
+          });
+        }
+      }
 
       // Create the webhook subscription
       const webhookData: WebhookSubscriptionRequest = {
@@ -131,6 +142,17 @@ export class WebhookController {
           status: "error",
           message: "No webhook found for this merchant. Register a webhook first.",
         });
+      }
+      
+      // Validate event types if provided
+      if (eventTypes) {
+        const validEventTypes = await this.webhookService.getAvailableEventTypes();
+        if (!eventTypes.every((e: string) => validEventTypes.includes(e))) {
+          return res.status(400).json({
+            status: "error",
+            message: "One or more event types are invalid",
+          });
+        }
       }
 
       // Update the webhook
@@ -298,8 +320,10 @@ export class WebhookController {
 
       // Verify signature if we have a secret key
       if (webhook.secretKey && signature) {
+        // Use rawBody if available (needs express configuration), otherwise fallback to body
+        const rawBody = (req as any).rawBody;
         const isValid = this.cryptoGeneratorService.verifySignature(
-          req.body,
+          rawBody || req.body,
           signature.toString(),
           webhook.secretKey
         );

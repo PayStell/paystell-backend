@@ -48,6 +48,7 @@ export class WebhookNotificationService {
     webhook: MerchantWebhook,
     payload: WebhookPayload,
   ): Promise<boolean> {
+    const webhookEvent = new MerchantWebhookEventEntity();
     try {
       if (!webhook.isActive) {
         console.warn(`Webhook ${webhook.id} is inactive - notification not sent`);
@@ -55,20 +56,20 @@ export class WebhookNotificationService {
       }
 
       // Generate timestamp if not provided
-      if (!payload.timestamp) {
-        payload.timestamp = new Date().toISOString();
-      }
+      const enrichedPayload = {
+        ...payload,
+        timestamp: payload.timestamp ?? new Date().toISOString(),
+      };
 
       // Generate a unique request ID
       const requestId = this.generateRequestId();
       
       // Create webhook event record for tracking
-      const webhookEvent = new MerchantWebhookEventEntity();
       webhookEvent.jobId = requestId;
       webhookEvent.merchantId = webhook.merchantId;
       webhookEvent.webhookId = webhook.id;
       webhookEvent.webhookUrl = webhook.url;
-      webhookEvent.payload = payload;
+      webhookEvent.payload = enrichedPayload;
       webhookEvent.status = MerchantWebhookEventEntityStatus.PENDING;
       webhookEvent.attemptsMade = 0;
       webhookEvent.maxAttempts = webhook.maxRetries || 5;
@@ -76,14 +77,17 @@ export class WebhookNotificationService {
       await this.webhookEventRepository.save(webhookEvent);
 
       // Generate the signature for the webhook payload
-      const signature = await this.generateSignature(payload, webhook.secretKey || '');
+      if (!webhook.secretKey) {
+        throw new Error("Webhook secretKey is missing – cannot sign payload securely");
+      }
+      const signature = await this.generateSignature(enrichedPayload, webhook.secretKey);
       
       // Add standard webhook headers
       const headers = {
         "Content-Type": "application/json",
         "X-Webhook-Signature": signature,
         "X-Webhook-ID": webhookEvent.id,
-        "X-Webhook-Timestamp": payload.timestamp,
+        "X-Webhook-Timestamp": enrichedPayload.timestamp,
         "User-Agent": "PayStell-Webhook/1.0",
       };
 
@@ -93,7 +97,7 @@ export class WebhookNotificationService {
       await this.webhookEventRepository.save(webhookEvent);
 
       // Send the webhook
-      const response = await axios.post(webhook.url, payload, {
+      const response = await axios.post(webhook.url, enrichedPayload, {
         headers,
         timeout: 15000, // 15 seconds timeout
       });
@@ -111,18 +115,10 @@ export class WebhookNotificationService {
     } catch (error) {
       console.error("Failed to send webhook notification", error);
       
-      // Try to update the webhook event if we have it
+      // Update the webhookEvent with error information
       try {
-        const webhookEvent = await this.webhookEventRepository.findOne({
-          where: {
-            merchantId: webhook.merchantId,
-            webhookUrl: webhook.url,
-            status: MerchantWebhookEventEntityStatus.PENDING
-          },
-          order: { createdAt: "DESC" }
-        });
-        
-        if (webhookEvent) {
+        // Only update if we've saved it to the database already
+        if (webhookEvent.id) {
           webhookEvent.status = MerchantWebhookEventEntityStatus.FAILED;
           webhookEvent.error = error instanceof Error ? error.message : "Unknown error";
           webhookEvent.attemptsMade += 1;

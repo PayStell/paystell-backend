@@ -95,7 +95,8 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
     }
 
     const response = await fetch(`${API_URL}${endpoint}`, options);
-    const data = await response.json();
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : null;
     
     return { status: response.status, data };
   } catch (error) {
@@ -116,7 +117,7 @@ async function registerWebhook() {
         webhookData.eventTypes = eventTypes.split(',').map(type => type.trim());
       }
       
-      const result = await apiRequest('/webhooks', 'POST', webhookData);
+      const result = await apiRequest('/webhooks/register', 'POST', webhookData);
       
       if (result) {
         console.log(`Response (${result.status}):`);
@@ -192,7 +193,7 @@ async function deleteWebhook() {
 
 // Get available event types
 async function getEventTypes() {
-  const result = await apiRequest('/webhook-events');
+  const result = await apiRequest('/webhooks/event-types');
   
   if (result) {
     console.log(`Response (${result.status}):`);
