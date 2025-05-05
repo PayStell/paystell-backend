@@ -6,6 +6,7 @@ import {
   IsDate,
   Min,
   MaxLength,
+  IsInt,
 } from "class-validator";
 
 export class CreatePaymentLinkDto {
@@ -36,6 +37,9 @@ export class CreatePaymentLinkDto {
   @IsOptional()
   @IsDate()
   expirationDate?: Date;
+
+  @IsInt()
+  userId: number;
 }
 
 export class UpdatePaymentLinkDto {
