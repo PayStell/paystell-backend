@@ -1,13 +1,6 @@
-import StellarSdk, { Keypair } from "@stellar/stellar-sdk";
-const {
-  Server,
-  TransactionBuilder,
-  Networks,
-  Memo,
-  xdr,
-  TimeoutInfinite,
-  Contract,
-} = StellarSdk;
+import { Horizon } from "@stellar/stellar-sdk";
+import { Keypair, TransactionBuilder, Networks, Memo, xdr, TimeoutInfinite, Contract } from "@stellar/stellar-sdk";
+const { Server } = Horizon;
 import { Redis, RedisOptions } from "ioredis";
 import {
   MerchantRegistrationDTO,
@@ -39,7 +32,7 @@ export class StellarContractService {
   private contractId: string;
   private networkPassphrase: string;
   private redis: Redis;
-  private adminKeypair: Keypair;
+  private adminKeypair: InstanceType<typeof Keypair>;
 
   constructor(options?: {
     server?: InstanceType<typeof Server>;
@@ -90,7 +83,7 @@ export class StellarContractService {
     if (!process.env.CONTRACT_ADMIN_SECRET) {
       throw new AppError("CONTRACT_ADMIN_SECRET is not configured", 500);
     }
-    this.adminKeypair = StellarSdk.Keypair.fromSecret(
+    this.adminKeypair = Keypair.fromSecret(
       process.env.CONTRACT_ADMIN_SECRET,
     );
   }
@@ -118,7 +111,7 @@ export class StellarContractService {
       const account = await this.initializeContract();
 
       const transaction = new TransactionBuilder(account, {
-        fee: await this.server.fetchBaseFee(),
+        fee: String(await this.server.fetchBaseFee()),
         networkPassphrase: this.networkPassphrase,
       })
         .addOperation(
@@ -171,7 +164,7 @@ export class StellarContractService {
       const account = await this.initializeContract();
 
       const transaction = new TransactionBuilder(account, {
-        fee: await this.server.fetchBaseFee(),
+        fee: String(await this.server.fetchBaseFee()),
         networkPassphrase: this.networkPassphrase,
       })
         .addOperation(
@@ -262,7 +255,7 @@ export class StellarContractService {
 
       // Build and submit transaction
       const txBuilder = new TransactionBuilder(account, {
-        fee: await this.server.fetchBaseFee(),
+        fee: String(await this.server.fetchBaseFee()),
         networkPassphrase: this.networkPassphrase,
       })
         .addOperation(
