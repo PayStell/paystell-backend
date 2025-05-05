@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   ManyToOne,
   JoinColumn,
 } from "typeorm";
@@ -19,6 +20,9 @@ export class PaymentLink {
 
   @Column({ unique: true })
   sku!: string;
+
+  @Column({ unique: true })
+  slug!: string;
 
   @Column("decimal", { precision: 10, scale: 2 })
   amount!: number;
@@ -44,6 +48,9 @@ export class PaymentLink {
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  @DeleteDateColumn()
+  deletedAt?: Date;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: "userId" })
