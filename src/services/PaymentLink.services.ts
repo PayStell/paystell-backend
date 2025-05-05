@@ -14,8 +14,43 @@ export class PaymentLinkService {
     private readonly paymentLinkRepository: Repository<PaymentLink>,
   ) {}
 
+  private generateSlug(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  private async generateUniqueSlug(name: string): Promise<string> {
+    let slug = this.generateSlug(name);
+    let counter = 1;
+    let uniqueSlug = slug;
+
+    while (true) {
+      const existingLink = await this.paymentLinkRepository.findOne({
+        where: { slug: uniqueSlug },
+      });
+
+      if (!existingLink) {
+        return uniqueSlug;
+      }
+
+      uniqueSlug = `${slug}-${counter}`;
+      counter++;
+    }
+  }
+
   async createPaymentLink(data: Partial<PaymentLink>): Promise<PaymentLink> {
-    const paymentLink = this.paymentLinkRepository.create(data);
+    if (!data.name) {
+      throw new Error('Name is required to generate a payment link');
+    }
+
+    const slug = await this.generateUniqueSlug(data.name);
+    const paymentLink = this.paymentLinkRepository.create({
+      ...data,
+      slug,
+    });
+    
     return await this.paymentLinkRepository.save(paymentLink);
   }
 
@@ -27,12 +62,22 @@ export class PaymentLinkService {
     id: string,
     data: Partial<PaymentLink>,
   ): Promise<PaymentLink | null> {
+    // If name is being updated, regenerate the slug
+    if (data.name) {
+      data.slug = await this.generateUniqueSlug(data.name);
+    }
+    
     await this.paymentLinkRepository.update(id, data);
     return this.getPaymentLinkById(id);
   }
 
   async deletePaymentLink(id: string): Promise<boolean> {
     const result = await this.paymentLinkRepository.delete(id);
+    return result.affected !== 0;
+  }
+
+  async softDeletePaymentLink(id: string): Promise<boolean> {
+    const result = await this.paymentLinkRepository.softDelete(id);
     return result.affected !== 0;
   }
 
@@ -48,6 +93,7 @@ export class PaymentLinkService {
       skip,
       take: limit,
       order: { createdAt: "DESC" },
+      withDeleted: false,
     });
 
     return {
