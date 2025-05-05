@@ -1,4 +1,3 @@
-import "newrelic";
 import cookieParser from "cookie-parser";
 import express, {
   Request,
@@ -20,7 +19,7 @@ import walletVerificationRoutes from "./routes/wallet-verification.routes";
 import merchantWebhookQueueRoutes from "./routes/merchantWebhookQueue.routes";
 import transactionReportsRoutes from "./routes/transactionReports.routes";
 import merchantRoutes from "./routes/merchantRoutes";
-import stellarContractRoutes from "./routes/stellar-contract.routes";
+//import stellarContractRoutes from "./routes/stellar-contract.routes";
 
 // Middleware imports
 import { globalRateLimiter } from "./middlewares/globalRateLimiter.middleware";
@@ -31,8 +30,6 @@ import { requestLogger } from "./middlewares/requestLogger.middleware";
 import RateLimitMonitoringService from "./services/rateLimitMonitoring.service";
 import { startExpiredSessionCleanupCronJobs } from "./utils/schedular";
 import logger from "./utils/logger";
-import { oauthConfig } from "./config/auth0Config";
-import { auth } from "express-openid-connect";
 
 // Initialize express app
 const app = express();
@@ -45,7 +42,7 @@ app.use(morgan("dev"));
 // CORS configuration
 app.use(
   cors({
-    origin: true, // Allow all origins in development
+    origin: ['http://localhost:3000', 'http://localhost:3001'],  // Add your frontend URLs
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: [
@@ -83,18 +80,6 @@ startExpiredSessionCleanupCronJobs();
 // Log application startup
 logger.info("Application started successfully");
 
-// Apply Auth0 middleware to all routes except registration and health check
-app.use((req, res, next) => {
-  console.log("Request path:", req.path);
-  if (req.path === "/auth/register" || req.path === "/health") {
-    console.log("Skipping Auth0 middleware for:", req.path);
-    next();
-  } else {
-    console.log("Applying Auth0 middleware for:", req.path);
-    auth(oauthConfig)(req, res, next);
-  }
-});
-
 // Define routes
 app.use("/health", healthRouter);
 app.use("/session", sessionRouter);
@@ -106,7 +91,7 @@ app.use("/users", userRoutes);
 app.use("/merchants", merchantRoutes);
 app.use("/webhook-queue/merchant", merchantWebhookQueueRoutes);
 app.use("/reports/transactions", transactionReportsRoutes);
-app.use("/api/v1/stellar", stellarContractRoutes);
+//app.use("/api/v1/stellar", stellarContractRoutes);
 
 // Error handling middleware
 const customErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
