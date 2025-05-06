@@ -46,12 +46,17 @@ export class PaymentLinkService {
     }
 
     const slug = await this.generateUniqueSlug(data.name);
-    const paymentLink = this.paymentLinkRepository.create({
-      ...data,
-      slug,
-    });
-    
-    return await this.paymentLinkRepository.save(paymentLink);
+    try {
+      const paymentLink = this.paymentLinkRepository.create({ ...data, slug });
+      return await this.paymentLinkRepository.save(paymentLink);
+    } catch (e: unknown) {
+      if (e && typeof e === 'object' && 'code' in e && e.code === '23505') {          // PostgreSQL unique_violation
+        // retry once with a new slug
+        data.slug = await this.generateUniqueSlug(data.name!);
+        return this.paymentLinkRepository.save(data as PaymentLink);
+      }
+      throw e;
+    }
   }
 
   async getPaymentLinkById(id: string): Promise<PaymentLink | null> {

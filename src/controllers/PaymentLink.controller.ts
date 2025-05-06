@@ -20,7 +20,10 @@ export class PaymentLinkController {
 
   async createPaymentLink(req: Request & { user?: { id: number } }, res: Response): Promise<Response> {
     try {
-      console.log('[PaymentLinkController] Creating payment link with data:', req.body);
+      console.log(
+        '[PaymentLinkController] Creating payment link',
+        { fields: Object.keys(req.body) } // log only non-sensitive metadata
+      );
       
       const userId = req.user?.id;
       if (!userId) {
@@ -47,10 +50,11 @@ export class PaymentLinkController {
       return res.status(201).json(paymentLink);
     } catch (error) {
       console.error('[PaymentLinkController] Error creating payment link:', error);
-      if (error instanceof Error) {
+      if (error instanceof Error && error.name === 'ValidationError') {
         return res.status(400).json({ message: error.message });
       }
-      return res.status(500).json({ message: "Internal server error" });
+      console.error('[PaymentLinkController] Unhandled error:', error);
+      return res.status(500).json({ message: 'Internal server error' });
     }
   }
 
