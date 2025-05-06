@@ -33,21 +33,20 @@ const asyncHandler = <T>(fn: AsyncRouteHandler<T>): RequestHandler => {
     console.log(`[PaymentLink] ${req.method} ${req.path}`, {
       body: req.body,
       query: req.query,
-      params: req.params
+      params: req.params,
     });
-    
-    Promise.resolve(fn(req as CustomRequest, res, next))
-      .catch((error) => {
-        console.error(`[PaymentLink] Error in ${req.method} ${req.path}:`, error);
-        next(error);
-      });
+
+    Promise.resolve(fn(req as CustomRequest, res, next)).catch((error) => {
+      console.error(`[PaymentLink] Error in ${req.method} ${req.path}:`, error);
+      next(error);
+    });
   };
 };
 
 // Middleware to log responses
 const logResponse = (req: Request, res: Response, next: NextFunction) => {
   const originalJson = res.json;
-  res.json = function(body) {
+  res.json = function (body) {
     console.log(`[PaymentLink] Response for ${req.method} ${req.path}:`, body);
     return originalJson.call(this, body);
   };

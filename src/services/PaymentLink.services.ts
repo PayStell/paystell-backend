@@ -17,8 +17,8 @@ export class PaymentLinkService {
   private generateSlug(name: string): string {
     return name
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
   }
 
   private async generateUniqueSlug(name: string): Promise<string> {
@@ -42,7 +42,7 @@ export class PaymentLinkService {
 
   async createPaymentLink(data: Partial<PaymentLink>): Promise<PaymentLink> {
     if (!data.name) {
-      throw new Error('Name is required to generate a payment link');
+      throw new Error("Name is required to generate a payment link");
     }
 
     const slug = await this.generateUniqueSlug(data.name);
@@ -50,7 +50,8 @@ export class PaymentLinkService {
       const paymentLink = this.paymentLinkRepository.create({ ...data, slug });
       return await this.paymentLinkRepository.save(paymentLink);
     } catch (e: unknown) {
-      if (e && typeof e === 'object' && 'code' in e && e.code === '23505') {          // PostgreSQL unique_violation
+      if (e && typeof e === "object" && "code" in e && e.code === "23505") {
+        // PostgreSQL unique_violation
         // retry once with a new slug
         data.slug = await this.generateUniqueSlug(data.name!);
         return this.paymentLinkRepository.save(data as PaymentLink);
@@ -71,7 +72,7 @@ export class PaymentLinkService {
     if (data.name) {
       data.slug = await this.generateUniqueSlug(data.name);
     }
-    
+
     await this.paymentLinkRepository.update(id, data);
     return this.getPaymentLinkById(id);
   }

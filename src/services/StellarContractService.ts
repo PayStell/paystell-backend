@@ -1,5 +1,13 @@
 import { Horizon } from "@stellar/stellar-sdk";
-import { Keypair, TransactionBuilder, Networks, Memo, xdr, TimeoutInfinite, Contract } from "@stellar/stellar-sdk";
+import {
+  Keypair,
+  TransactionBuilder,
+  Networks,
+  Memo,
+  xdr,
+  TimeoutInfinite,
+  Contract,
+} from "@stellar/stellar-sdk";
 const { Server } = Horizon;
 import { Redis, RedisOptions } from "ioredis";
 import {
@@ -83,9 +91,7 @@ export class StellarContractService {
     if (!process.env.CONTRACT_ADMIN_SECRET) {
       throw new AppError("CONTRACT_ADMIN_SECRET is not configured", 500);
     }
-    this.adminKeypair = Keypair.fromSecret(
-      process.env.CONTRACT_ADMIN_SECRET,
-    );
+    this.adminKeypair = Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET);
   }
 
   /**
