@@ -4,6 +4,9 @@ import { MerchantAuthService } from "../services/merchant.service";
 import { WebhookService } from "../services/webhook.service";
 import { Request, Response } from "express";
 import { CryptoGeneratorService } from "../services/cryptoGenerator.service";
+import { Between, Like } from "typeorm";
+import { WebhookLog } from "src/entities/webLog.entity";
+import AppDataSource from "src/config/db";
 
 // TODO: this initialization needs to be moved to dependency injection
 const defaultWebhookService = new WebhookService();
@@ -175,4 +178,62 @@ export class WebhookController {
       });
     }
   }
+
+  
+  async getWebhookLogs(req: Request, res: Response): Promise<Response> {
+    try {
+      const { status, merchantId, startDate, endDate, page = 1, limit = 10 } = req.query;
+  
+      const webhookLogRepository = AppDataSource.getRepository(WebhookLog);
+  
+      const queryBuilder = webhookLogRepository.createQueryBuilder("webhook_log");
+  
+      if (status) {
+        queryBuilder.andWhere("webhook_log.status = :status", { status });
+      }
+  
+      if (merchantId) {
+        queryBuilder.andWhere("webhook_log.merchantId = :merchantId", { merchantId });
+      }
+  
+      if (startDate && endDate) {
+        queryBuilder.andWhere("webhook_log.createdAt BETWEEN :startDate AND :endDate", {
+          startDate: new Date(startDate as string),
+          endDate: new Date(endDate as string),
+        });
+      } else if (startDate) {
+        queryBuilder.andWhere("webhook_log.createdAt >= :startDate", {
+          startDate: new Date(startDate as string),
+        });
+      } else if (endDate) {
+        queryBuilder.andWhere("webhook_log.createdAt <= :endDate", {
+          endDate: new Date(endDate as string),
+        });
+      }
+  
+      // Added pagination
+      const skip = (Number(page) - 1) * Number(limit);
+      queryBuilder.skip(skip).take(Number(limit));
+  
+      //  Order by latest first
+      queryBuilder.orderBy("webhook_log.createdAt", "DESC");
+  
+      const [logs, total] = await queryBuilder.getManyAndCount();
+  
+      return res.status(200).json({
+        status: "success",
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        data: logs,
+      });
+    } catch (error) {
+      console.error("Error fetching webhook logs:", error);
+      return res.status(500).json({
+        status: "error",
+        message: (error as Error).message,
+      });
+    }
+  }  
+
 }
