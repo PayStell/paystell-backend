@@ -4,10 +4,13 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from "typeorm";
 import { WebhookPayload } from "../interfaces/webhook.interfaces";
 import { MerchantWebhookEventEntityStatus } from "../enums/MerchantWebhookEventStatus";
 import { IsEnum } from "class-validator";
+import { MerchantWebhookEntity } from "./MerchantWebhook.entity";
 
 @Entity("merchant_webhook_events")
 export class MerchantWebhookEventEntity {
@@ -19,12 +22,21 @@ export class MerchantWebhookEventEntity {
 
   @Column()
   merchantId: string;
+  
+  @Column("uuid")
+  webhookId: string;
 
   @Column()
   webhookUrl: string;
 
   @Column("json")
   payload: WebhookPayload;
+  
+  @Column("json", { nullable: true })
+  headers: Record<string, string>;
+  
+  @Column("text", { nullable: true })
+  signature: string;
 
   @Column({
     type: "enum",
@@ -43,8 +55,14 @@ export class MerchantWebhookEventEntity {
   @Column({ nullable: true })
   nextRetry?: Date;
 
-  @Column({ nullable: true })
+  @Column({ type: "int", default: 5 })
   maxAttempts?: number;
+  
+  @Column({ type: "int", nullable: true })
+  responseStatusCode?: number;
+  
+  @Column({ type: "text", nullable: true })
+  responseBody?: string;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -54,4 +72,8 @@ export class MerchantWebhookEventEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
+  
+  @ManyToOne(() => MerchantWebhookEntity, webhook => webhook.events)
+  @JoinColumn({ name: "webhookId" })
+  webhook: MerchantWebhookEntity;
 }
