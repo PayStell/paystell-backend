@@ -410,7 +410,7 @@ These endpoints provide functionality for managing merchants, including authenti
 
 ### 5.4. Delete Merchant Logo
 - **Endpoint**: `DELETE /merchants/logo`
-- **Description**: Removes the merchant’s logo.
+- **Description**: Removes the merchant's logo.
 - **Authentication**: Requires API Key (`x-api-key`).
 - **Process**:
   - The merchant sends a `DELETE` request.
@@ -421,3 +421,356 @@ These endpoints provide functionality for managing merchants, including authenti
   - The merchant profile is updated to remove the logo URL.
   - A database transaction ensures data integrity.
   - If successful, returns a confirmation message.
+
+## 6. Payment Link Endpoints
+
+These endpoints provide functionality for managing payment links, including creation, retrieval, updates, and deletion.
+
+### 6.1. Create Payment Link
+- **Endpoint**: `POST /api/payment-links`
+- **Description**: Creates a new payment link
+- **Authentication**: JWT Token (Bearer)
+- **Rate Limited**: Yes
+- **Parameters**:
+  - **Body** (JSON):
+    ```json
+    {
+      "amount": 100.00,
+      "description": "Product or service description",
+      "expiryDate": "2025-03-12T04:02:01.021Z",
+      "currency": "USD"
+    }
+    ```
+- **Successful Response** (201 Created):
+    ```json
+    {
+      "id": "pl_123abc",
+      "url": "https://pay.paystell.com/pl_123abc",
+      "amount": 100.00,
+      "description": "Product or service description",
+      "expiryDate": "2025-03-12T04:02:01.021Z",
+      "status": "active",
+      "createdAt": "2025-03-12T04:02:01.021Z"
+    }
+    ```
+
+### 6.2. Get User's Payment Links
+- **Endpoint**: `GET /api/payment-links/user`
+- **Description**: Retrieves all payment links for the authenticated user
+- **Authentication**: JWT Token (Bearer)
+- **Successful Response** (200 OK):
+    ```json
+    {
+      "paymentLinks": [
+        {
+          "id": "pl_123abc",
+          "url": "https://pay.paystell.com/pl_123abc",
+          "amount": 100.00,
+          "description": "Product or service description",
+          "status": "active",
+          "createdAt": "2025-03-12T04:02:01.021Z"
+        }
+        // ... more payment links ...
+      ]
+    }
+    ```
+
+### 6.3. Get Payment Link by ID
+- **Endpoint**: `GET /api/payment-links/:id`
+- **Description**: Retrieves a specific payment link by ID
+- **Authentication**: JWT Token (Bearer)
+- **Parameters**:
+  - **Path**: `id` - Payment link ID
+- **Successful Response** (200 OK):
+    ```json
+    {
+      "id": "pl_123abc",
+      "url": "https://pay.paystell.com/pl_123abc",
+      "amount": 100.00,
+      "description": "Product or service description",
+      "status": "active",
+      "createdAt": "2025-03-12T04:02:01.021Z"
+    }
+    ```
+
+### 6.4. Update Payment Link
+- **Endpoint**: `PUT /api/payment-links/:id`
+- **Description**: Updates an existing payment link
+- **Authentication**: JWT Token (Bearer)
+- **Parameters**:
+  - **Path**: `id` - Payment link ID
+  - **Body** (JSON):
+    ```json
+    {
+      "amount": 150.00,
+      "description": "Updated description",
+      "expiryDate": "2025-03-12T04:02:01.021Z"
+    }
+    ```
+
+### 6.5. Delete Payment Link
+- **Endpoint**: `DELETE /api/payment-links/:id`
+- **Description**: Permanently deletes a payment link
+- **Authentication**: JWT Token (Bearer)
+- **Parameters**:
+  - **Path**: `id` - Payment link ID
+
+### 6.6. Soft Delete Payment Link
+- **Endpoint**: `PATCH /api/payment-links/:id/soft-delete`
+- **Description**: Marks a payment link as deleted without removing it from the database
+- **Authentication**: JWT Token (Bearer)
+- **Parameters**:
+  - **Path**: `id` - Payment link ID
+
+## 7. Webhook Management Endpoints
+
+### 7.1. Register Webhook
+- **Endpoint**: `POST /api/webhooks/register`
+- **Description**: Registers a new webhook endpoint for merchant notifications
+- **Authentication**: Merchant API Key
+- **Parameters**:
+  - **Body** (JSON):
+    ```json
+    {
+      "url": "https://merchant.com/webhook",
+      "events": ["payment.success", "payment.failed"],
+      "description": "Payment notifications webhook"
+    }
+    ```
+- **Successful Response** (201 Created):
+    ```json
+    {
+      "id": "wh_123abc",
+      "url": "https://merchant.com/webhook",
+      "events": ["payment.success", "payment.failed"],
+      "status": "active",
+      "createdAt": "2025-03-12T04:02:01.021Z"
+    }
+    ```
+
+### 7.2. Update Webhook
+- **Endpoint**: `PUT /api/webhooks/register/:id`
+- **Description**: Updates an existing webhook configuration
+- **Authentication**: Merchant API Key
+- **Parameters**:
+  - **Path**: `id` - Webhook ID
+  - **Body** (JSON):
+    ```json
+    {
+      "url": "https://merchant.com/new-webhook",
+      "events": ["payment.success", "payment.failed", "refund.success"],
+      "description": "Updated webhook configuration"
+    }
+    ```
+
+### 7.3. Stellar Webhook Handler
+- **Endpoint**: `POST /api/webhooks/stellar`
+- **Description**: Handles incoming webhooks from the Stellar network
+- **Authentication**: Stellar Webhook Authentication
+- **Parameters**:
+  - **Body**: Stellar webhook payload
+- **Note**: This endpoint is for internal use and processes Stellar network events.
+
+## 8. Stellar Contract Endpoints
+
+These endpoints handle Stellar blockchain contract interactions, merchant registration, and payment processing.
+
+### 8.1. Register Merchant on Stellar
+- **Endpoint**: `POST /api/stellar/merchants/register`
+- **Description**: Registers a merchant on the Stellar blockchain
+- **Authentication**: Merchant API Key
+- **Parameters**:
+  - **Body** (JSON):
+    ```json
+    {
+      "stellarAddress": "GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "merchantName": "Merchant Name",
+      "merchantDescription": "Merchant Description"
+    }
+    ```
+- **Successful Response** (201 Created):
+    ```json
+    {
+      "merchantId": "m_123abc",
+      "stellarAddress": "GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "status": "active",
+      "contractAddress": "CXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "createdAt": "2025-03-12T04:02:01.021Z"
+    }
+    ```
+
+### 8.2. Add Supported Token
+- **Endpoint**: `POST /api/stellar/merchants/tokens`
+- **Description**: Adds support for a new token/asset to the merchant's contract
+- **Authentication**: Merchant API Key
+- **Parameters**:
+  - **Body** (JSON):
+    ```json
+    {
+      "assetCode": "USDC",
+      "assetIssuer": "GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "minimumAmount": "1.0",
+      "maximumAmount": "10000.0"
+    }
+    ```
+- **Successful Response** (200 OK):
+    ```json
+    {
+      "success": true,
+      "asset": {
+        "code": "USDC",
+        "issuer": "GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "limits": {
+          "min": "1.0",
+          "max": "10000.0"
+        }
+      }
+    }
+    ```
+
+### 8.3. Process Payment
+- **Endpoint**: `POST /api/stellar/payments/process`
+- **Description**: Processes a payment through the Stellar contract
+- **Authentication**: Merchant API Key
+- **Rate Limited**: Yes
+- **Parameters**:
+  - **Body** (JSON):
+    ```json
+    {
+      "amount": "100.00",
+      "assetCode": "USDC",
+      "customerAddress": "GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "reference": "order_123",
+      "memo": "Payment for Order #123"
+    }
+    ```
+- **Successful Response** (200 OK):
+    ```json
+    {
+      "transactionId": "tx_123abc",
+      "status": "pending",
+      "stellarTxHash": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "amount": "100.00",
+      "assetCode": "USDC",
+      "createdAt": "2025-03-12T04:02:01.021Z"
+    }
+    ```
+
+### 8.4. Get Merchant Details
+- **Endpoint**: `GET /api/stellar/merchants/:merchantAddress`
+- **Description**: Retrieves merchant details and contract information
+- **Authentication**: Merchant API Key
+- **Parameters**:
+  - **Path**: `merchantAddress` - Stellar address of the merchant
+- **Successful Response** (200 OK):
+    ```json
+    {
+      "merchantId": "m_123abc",
+      "stellarAddress": "GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "contractAddress": "CXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "status": "active",
+      "supportedAssets": [
+        {
+          "code": "USDC",
+          "issuer": "GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+          "limits": {
+            "min": "1.0",
+            "max": "10000.0"
+          }
+        }
+      ],
+      "statistics": {
+        "totalTransactions": 150,
+        "totalVolume": "15000.00",
+        "lastActivity": "2025-03-12T04:02:01.021Z"
+      }
+    }
+    ```
+
+## 9. Payment Processing Endpoints
+
+### 9.1. Create Payment
+- **Endpoint**: `POST /api/payments`
+- **Description**: Creates a new payment transaction
+- **Authentication**: JWT Token (Bearer)
+- **Parameters**:
+  - **Body** (JSON):
+    ```json
+    {
+      "amount": "100.00",
+      "currency": "USD",
+      "description": "Payment for services",
+      "customerId": "cust_123",
+      "metadata": {
+        "orderNumber": "ORDER123",
+        "productId": "PROD456"
+      }
+    }
+    ```
+- **Successful Response** (201 Created):
+    ```json
+    {
+      "paymentId": "pay_123abc",
+      "amount": "100.00",
+      "currency": "USD",
+      "status": "pending",
+      "createdAt": "2025-03-12T04:02:01.021Z",
+      "metadata": {
+        "orderNumber": "ORDER123",
+        "productId": "PROD456"
+      }
+    }
+    ```
+
+## 10. Wallet Verification Endpoints
+
+These endpoints handle the verification of user wallets to ensure they have control over their Stellar addresses.
+
+### 10.1. Initiate Wallet Verification
+- **Endpoint**: `POST /api/wallet-verification/initiate`
+- **Description**: Initiates the wallet verification process
+- **Authentication**: JWT Token (Bearer)
+- **Parameters**:
+  - **Body** (JSON):
+    ```json
+    {
+      "walletAddress": "GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "network": "testnet"
+    }
+    ```
+- **Successful Response** (200 OK):
+    ```json
+    {
+      "verificationId": "wv_123abc",
+      "challenge": "RANDOM_CHALLENGE_STRING",
+      "expiresAt": "2025-03-12T04:07:01.021Z"
+    }
+    ```
+
+### 10.2. Verify Wallet
+- **Endpoint**: `POST /api/wallet-verification/verify`
+- **Description**: Completes the wallet verification process
+- **Authentication**: JWT Token (Bearer)
+- **Parameters**:
+  - **Body** (JSON):
+    ```json
+    {
+      "verificationId": "wv_123abc",
+      "signedChallenge": "SIGNED_CHALLENGE_STRING"
+    }
+    ```
+- **Successful Response** (200 OK):
+    ```json
+    {
+      "verified": true,
+      "walletAddress": "GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "verifiedAt": "2025-03-12T04:02:01.021Z"
+    }
+    ```
+- **Error Response** (400 Bad Request):
+    ```json
+    {
+      "verified": false,
+      "error": "Invalid signature"
+    }
+    ```

@@ -21,7 +21,7 @@ import walletVerificationRoutes from "./routes/wallet-verification.routes";
 import merchantWebhookQueueRoutes from "./routes/merchantWebhookQueue.routes";
 import transactionReportsRoutes from "./routes/transactionReports.routes";
 import merchantRoutes from "./routes/merchantRoutes";
-import stellarContractRoutes from "./routes/stellar-contract.routes";
+//import stellarContractRoutes from "./routes/stellar-contract.routes";
 
 // Middleware imports
 import { globalRateLimiter } from "./middlewares/globalRateLimiter.middleware";
@@ -32,10 +32,8 @@ import { requestLogger } from "./middlewares/requestLogger.middleware";
 import RateLimitMonitoringService from "./services/rateLimitMonitoring.service";
 import { startExpiredSessionCleanupCronJobs } from "./utils/schedular";
 import logger from "./utils/logger";
-import { oauthConfig } from "./config/auth0Config";
 import { auth } from "express-openid-connect";
 import { auditMiddleware } from "./middlewares/audit.middleware";
-import { AppDataSource } from "./config/db";
 
 // Initialize express app
 const app = express();
@@ -48,7 +46,7 @@ app.use(morgan("dev"));
 // CORS configuration
 app.use(
   cors({
-    origin: true, // Allow all origins in development
+    origin: ['http://localhost:3000', 'http://localhost:3001'],  // Add your frontend URLs
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: [
@@ -101,21 +99,6 @@ app.use(((req: Request, res: Response, next: NextFunction) => {
 // Log application startup
 logger.info("Application started successfully");
 
-// Apply Auth0 middleware to all routes except registration and health check
-app.use((req, res, next) => {
-  console.log("Request path:", req.path);
-  if (req.path === "/auth/register" || req.path === "/health") {
-    console.log("Skipping Auth0 middleware for:", req.path);
-    next();
-  } else {
-    console.log("Applying Auth0 middleware for:", req.path);
-    auth(oauthConfig)(req, res, next);
-  }
-});
-
-// Make dataSource available in request for services
-
-app.use(auditMiddleware as RequestHandler);
 // Define routes
 app.use("/health", healthRouter);
 app.use("/session", sessionRouter);
@@ -127,10 +110,9 @@ app.use("/users", userRoutes);
 app.use("/merchants", merchantRoutes);
 app.use("/webhook-queue/merchant", merchantWebhookQueueRoutes);
 app.use("/reports/transactions", transactionReportsRoutes);
-
-app.use("/audit-log", auditLogRoute);
-
+//app.use("/audit-log", auditLogRoute);
 app.use("/api/v1/stellar", stellarContractRoutes);
+
 
 
 // Error handling middleware
