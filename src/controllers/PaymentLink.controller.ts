@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { PaymentLinkService } from "../services/PaymentLink.services";
 import { Repository } from "typeorm";
 import { PaymentLink } from "../entities/PaymentLink";
-import AppDataSource from "../config/db";
+import { AppDataSource } from "../config/db";
 import {
   CreatePaymentLinkDto,
   UpdatePaymentLinkDto,

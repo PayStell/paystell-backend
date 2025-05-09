@@ -9,7 +9,7 @@ import {
   TransactionReportFilters,
 } from "../services/TransactionReportService";
 import { AuthGuard } from "../guards/AuthGuard";
-import AppDataSource from "../config/db";
+import { AppDataSource } from "../config/db";
 
 const router = express.Router();
 

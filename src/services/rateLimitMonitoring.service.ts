@@ -87,8 +87,8 @@ class RateLimitMonitoringService {
             endpoint: req.originalUrl,
             userAgent: req.headers["user-agent"],
             timestamp: new Date(),
-            userId: req.user?.id,
-            email: req.user?.email,
+            userId: req.user!.id,
+            email: req.user!.email,
           };
 
           this.logRateLimitEvent(event).catch((err) => {

@@ -9,11 +9,13 @@ import { WalletVerification } from "../entities/WalletVerification";
 import { MerchantEntity } from "../entities/Merchant.entity";
 import { MerchantWebhookEntity } from "../entities/MerchantWebhook.entity";
 import { MerchantWebhookEventEntity } from "../entities/MerchantWebhookEvent.entity";
+import { AuditLog } from "../entities/AuditLog.entity";
 import { PaymentLink } from "../entities/PaymentLink";
+
 
 dotenv.config();
 
-const AppDataSource = new DataSource({
+export const AppDataSource = new DataSource({
   type: "postgres",
   host: process.env.POSTGRES_HOST,
   port: Number(process.env.POSTGRES_PORT),
@@ -32,10 +34,9 @@ const AppDataSource = new DataSource({
     MerchantEntity,
     MerchantWebhookEntity,
     MerchantWebhookEventEntity,
+    AuditLog,
     PaymentLink,
   ],
   migrations: ["src/migrations/*.ts"],
   migrationsTableName: "migrations",
 });
-
-export default AppDataSource;

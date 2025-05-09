@@ -5,7 +5,7 @@ import {
   MerchantWebhook,
 } from "../interfaces/webhook.interfaces";
 import { MerchantWebhookEventEntity } from "../entities/MerchantWebhookEvent.entity";
-import AppDataSource from "../config/db";
+import { AppDataSource } from "../config/db";
 import { MerchantWebhookEventEntityStatus } from "../enums/MerchantWebhookEventStatus";
 import { NotificationService } from "./inAppNotificationService";
 import {

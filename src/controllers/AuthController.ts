@@ -2,10 +2,13 @@
 import { Request, Response } from "express";
 import { AuthService } from "../services/AuthService";
 import { validateTwoFactorAuthentication } from "./validateTwoFactorAuthentication";
-import AppDataSource from "../config/db";
 import { User } from "../entities/User";
 import { compare } from "bcryptjs";
 import { Auth0Profile } from "src/interfaces/auth.interfaces";
+
+import { AuditLogActionsEnum } from "../enums/AuditLogAction";
+import { AuditService } from "../services/Audit.service";
+import { AppDataSource } from "../config/db";
 
 export class AuthController {
   public authService: AuthService;
@@ -17,6 +20,18 @@ export class AuthController {
   register = async (req: Request, res: Response): Promise<void> => {
     try {
       const user = await this.authService.register(req.body);
+      console.log("Done with registration", { user });
+      const auditService = new AuditService(req.dataSource);
+      await auditService.createAuditLogs({
+        entityType: "User",
+        entityId: String(user.id),
+        action: AuditLogActionsEnum.CREATE,
+        newValues: req.body,
+        userId: String(user.id),
+        userEmail: user.email,
+        ipAddress: req.auditContext?.ipAddress || "0.0.0.0",
+        userAgent: req.auditContext?.userAgent || "Unknown",
+      });
       res.status(201).json(user);
     } catch (error) {
       if (error instanceof Error) {

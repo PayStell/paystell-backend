@@ -1,5 +1,5 @@
 import { Repository, MoreThan } from "typeorm";
-import DataSource from "../config/db";
+import { AppDataSource } from "../config/db";
 import { WalletVerification } from "../entities/WalletVerification";
 import { User } from "../entities/User";
 import * as crypto from "crypto";
@@ -15,8 +15,9 @@ class WalletVerificationService {
   private emailService: EmailService;
 
   constructor() {
-    this.walletVerificationRepo = DataSource.getRepository(WalletVerification);
-    this.userRepo = DataSource.getRepository(User);
+    this.walletVerificationRepo =
+      AppDataSource.getRepository(WalletVerification);
+    this.userRepo = AppDataSource.getRepository(User);
     this.emailService = new EmailService();
   }
 

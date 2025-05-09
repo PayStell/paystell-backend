@@ -1,7 +1,7 @@
 import { User } from "../entities/User";
 import { TwoFactorAuth } from "../entities/TwoFactorAuth";
 import { generateTwoFactorSecret } from "../services/generateTwoFactorSecret";
-import AppDataSource from "../config/db";
+import { AppDataSource } from "../config/db";
 import { validateTwoFactorAuthentication } from "./validateTwoFactorAuthentication";
 
 export const enableTwoFactorAuthentication = async (userId: number) => {

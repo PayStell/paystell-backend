@@ -1,5 +1,5 @@
 import { Repository } from "typeorm";
-import AppDataSource from "../config/db"; // ✅ Import the configured DataSource
+import { AppDataSource } from "../config/db"; // ✅ Import the configured DataSource
 import { Session } from "../entities/Session";
 import { User } from "../entities/User";
 import { v4 as uuidv4 } from "uuid";

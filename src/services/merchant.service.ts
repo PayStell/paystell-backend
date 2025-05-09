@@ -2,7 +2,7 @@ import { Merchant } from "../interfaces/webhook.interfaces";
 import { Repository, DataSource } from "typeorm";
 import { validate } from "class-validator";
 import { MerchantEntity } from "../entities/Merchant.entity";
-import AppDataSource from "../config/db";
+import { AppDataSource } from "../config/db";
 import { CreateMerchantDTO } from "../dtos/CreateMerchantDTO";
 import { UpdateMerchantProfileDTO } from "../dtos/UpdateMerchantProfileDTO";
 import { CreateMerchantProfileDTO } from "../dtos/CreateMerchantProfileDTO";

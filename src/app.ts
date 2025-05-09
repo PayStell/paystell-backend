@@ -4,6 +4,7 @@ import express, {
   Response,
   RequestHandler,
   ErrorRequestHandler,
+  NextFunction,
 } from "express";
 import morgan from "morgan";
 import cors from "cors";
@@ -13,6 +14,7 @@ import sessionRouter from "./routes/session.routes";
 import emailVerification from "./routes/emailVerification.routes";
 import PaymentRoute from "./routes/PaymentLink.routes";
 import authRoutes from "./routes/authRoutes";
+import auditLogRoute from "./routes/auditLogRoutes";
 import userRoutes from "./routes/userRoutes";
 import healthRouter from "./routes/health.routes";
 import walletVerificationRoutes from "./routes/wallet-verification.routes";
@@ -30,6 +32,8 @@ import { requestLogger } from "./middlewares/requestLogger.middleware";
 import RateLimitMonitoringService from "./services/rateLimitMonitoring.service";
 import { startExpiredSessionCleanupCronJobs } from "./utils/schedular";
 import logger from "./utils/logger";
+import { auth } from "express-openid-connect";
+import { auditMiddleware } from "./middlewares/audit.middleware";
 
 // Initialize express app
 const app = express();
@@ -77,6 +81,21 @@ app.use((req, res, next) => {
 // Start scheduled jobs
 startExpiredSessionCleanupCronJobs();
 
+// Initialize the database connection
+// AppDataSource.initialize()
+//   .then(() => {
+//     logger.info("Data Source has been initialized!");
+//   })
+//   .catch((err) => {
+//     logger.error("Error during Data Source initialization:", err);
+//     process.exit(1); // Exit if we can't connect to the database
+//   });
+
+app.use(((req: Request, res: Response, next: NextFunction) => {
+  req.dataSource = AppDataSource;
+  next();
+}) as RequestHandler);
+
 // Log application startup
 logger.info("Application started successfully");
 
@@ -91,7 +110,10 @@ app.use("/users", userRoutes);
 app.use("/merchants", merchantRoutes);
 app.use("/webhook-queue/merchant", merchantWebhookQueueRoutes);
 app.use("/reports/transactions", transactionReportsRoutes);
-//app.use("/api/v1/stellar", stellarContractRoutes);
+//app.use("/audit-log", auditLogRoute);
+app.use("/api/v1/stellar", stellarContractRoutes);
+
+
 
 // Error handling middleware
 const customErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
@@ -117,4 +139,4 @@ app.use(((req: Request, res: Response) => {
 }) as RequestHandler);
 
 // Export app
-export default app;
+export { app };
