@@ -503,11 +503,14 @@ export class WebhookController {
       let parsedStatus: MerchantWebhookEventEntityStatus | undefined = undefined;
       
       if (status) {
-        try {
-          parsedStatus = status as MerchantWebhookEventEntityStatus;
-        } catch (err) {
-          console.warn(`Invalid status filter: ${status}`);
+        // Validate status is one of the allowed values
+        if (!Object.values(MerchantWebhookEventEntityStatus).includes(status as MerchantWebhookEventEntityStatus)) {
+          return res.status(400).json({
+            status: "error",
+            message: `Invalid status filter: ${status}. Valid values are: ${Object.values(MerchantWebhookEventEntityStatus).join(', ')}`,
+          });
         }
+        parsedStatus = status as MerchantWebhookEventEntityStatus;
       }
 
       // Get events from webhook service

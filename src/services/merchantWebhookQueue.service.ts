@@ -207,6 +207,10 @@ export class MerchantWebhookQueueService {
     }
 
     try {
+      // TypeORM requires 'any' here due to complex nested types in the entity
+      // The _QueryDeepPartialEntity type has complex requirements for nested objects
+      // like payload.metadata that our DeepPartial doesn't satisfy
+      // This is a known TypeORM limitation when updating entities with JSON columns
       await this.merchantWebhookEventRepository.update(
         { jobId: jobId },
         updateData as any

@@ -27,10 +27,24 @@ interface QueueMetrics {
     failed: number;
     pending: number;
     successRate: number;
-  };
+  } | undefined;
 }
 
-interface WebhookMetricsData extends QueueMetrics {
+interface WebhookMetricsData {
+  overall: {
+    active: number;
+    completed: number;
+    failed: number;
+    delayed: number;
+    waiting: number;
+    successRate: number;
+  };
+  merchant?: {
+    completed: number;
+    failed: number;
+    pending: number;
+    successRate: number;
+  } | undefined;
   webhook: {
     completed: number;
     failed: number;
@@ -271,7 +285,7 @@ export class WebhookService {
    * @param webhookId Optional webhook ID to filter metrics for a specific webhook
    * @returns Webhook delivery metrics
    */
-  async getWebhookMetrics(merchantId: string, webhookId?: string): Promise<unknown> {
+  async getWebhookMetrics(merchantId: string, webhookId?: string): Promise<WebhookMetricsData | QueueMetrics> {
     try {
       // Get queue service for overall metrics
       const queueService = this.getQueueService();
@@ -311,8 +325,9 @@ export class WebhookService {
           : 100;
 
         // Add webhook specific metrics
-        return {
-          ...metrics,
+        const webhookData: WebhookMetricsData = {
+          overall: metrics.overall,
+          merchant: metrics.merchant,
           webhook: {
             completed: webhookMetrics[MerchantWebhookEventEntityStatus.COMPLETED],
             failed: webhookMetrics[MerchantWebhookEventEntityStatus.FAILED],
@@ -320,6 +335,7 @@ export class WebhookService {
             successRate,
           },
         };
+        return webhookData;
       }
       
       // If no webhook ID provided, return queue metrics only
@@ -327,7 +343,7 @@ export class WebhookService {
     } catch (error) {
       console.error(`Error fetching webhook metrics:`, error);
       // Return empty metrics on error
-      return {
+      const emptyMetrics: QueueMetrics = {
         overall: {
           active: 0,
           completed: 0,
@@ -337,6 +353,7 @@ export class WebhookService {
           successRate: 0,
         },
       };
+      return emptyMetrics;
     }
   }
 
