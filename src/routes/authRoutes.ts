@@ -18,10 +18,8 @@ import {
   refreshTokenMiddleware,
 } from "../middlewares/authMiddleware";
 import { UserRole } from "../enums/UserRole";
-import { auth } from "express-openid-connect";
-import { oauthConfig } from "../config/auth0Config";
 
-// Definir la interfaz CustomRequest para tipar correctamente req.user
+// Define CustomRequest interface for proper typing of req.user
 interface CustomRequest extends Request {
   user?: {
     id: number;
@@ -34,22 +32,6 @@ interface CustomRequest extends Request {
 
 const router = Router();
 const authController = new AuthController();
-
-// Auth0 authentication routes - exclude registration and skip in development
-router.use((req, res, next) => {
-  console.log("Auth route middleware - Path:", req.path);
-  console.log("Auth route middleware - Method:", req.method);
-  console.log("Auth route middleware - Headers:", req.headers);
-
-  // Skip Auth0 in development or for registration
-  if (process.env.NODE_ENV === "development") {
-    console.log("Skipping Auth0 middleware");
-    next();
-  } else {
-    console.log("Applying Auth0 middleware");
-    auth(oauthConfig)(req, res, next);
-  }
-});
 
 // Error handling middleware
 const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
@@ -126,14 +108,6 @@ router.post(
   validateRequest(login2FASchema) as RequestHandler,
   asyncHandler(async (req, res) => {
     await authController.loginWith2FA(req, res);
-  }),
-);
-
-// Auth0 callback route
-router.get(
-  "/callback",
-  asyncHandler(async (req, res) => {
-    await authController.auth0Callback(req, res);
   }),
 );
 
