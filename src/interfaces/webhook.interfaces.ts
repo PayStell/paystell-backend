@@ -1,3 +1,5 @@
+import { WebhookEventType } from "../enums/WebhookEventTypes";
+
 export type WebhookPayload = {
   transactionId: string;
   transactionType: string | undefined;
@@ -9,7 +11,7 @@ export type WebhookPayload = {
   nonce?: string;
   paymentMethod?: string;
   metadata?: Record<string, unknown>;
-  eventType: string; // 'payment.success' | 'payment.failure' | 'payment.pending'
+  eventType: WebhookEventType; // Updated from string to WebhookEventType enum
   reqMethod: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 };
 
@@ -18,8 +20,45 @@ export type MerchantWebhook = {
   merchantId: string;
   url: string;
   isActive: boolean;
+  secretKey?: string;
+  eventTypes?: WebhookEventType[];
+  maxRetries?: number;
+  initialRetryDelay?: number;
+  maxRetryDelay?: number;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type WebhookSubscriptionRequest = {
+  url: string;
+  secretKey?: string;
+  eventTypes?: WebhookEventType[];
+  maxRetries?: number;
+  initialRetryDelay?: number;
+  maxRetryDelay?: number;
+};
+
+export type WebhookEventResponse = {
+  id: string;
+  status: string;
+  eventType: string;
+  createdAt: Date;
+  attemptsMade: number;
+  maxAttempts: number;
+  nextRetry?: Date;
+  completedAt?: Date;
+};
+
+export type WebhookDeliveryResponse = {
+  id: string;
+  webhookId: string;
+  status: string;
+  attemptsMade: number;
+  maxAttempts: number;
+  createdAt: Date;
+  completedAt?: Date;
+  responseStatusCode?: number;
+  error?: string;
 };
 
 export type Merchant = {
