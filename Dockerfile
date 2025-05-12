@@ -2,12 +2,12 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install netcat for database health check
-RUN apk add --no-cache netcat-openbsd
+# Install netcat and dependencies required for bcrypt
+RUN apk add --no-cache netcat-openbsd python3 make g++
 
 COPY package*.json ./
 
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 COPY . .
 
