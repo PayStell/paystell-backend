@@ -78,10 +78,13 @@ export class WebhookService {
     const secretKey = webhookData.secretKey || this.cryptoGeneratorService.generateSecret();
     
     // Default to all event types if not specified
-    const requested = webhookData.eventTypes ?? Object.values(WebhookEventType);
-    const eventTypes = requested.filter((t) =>
-      Object.values(WebhookEventType).includes(t as WebhookEventType)
-    );
+    const allEventTypes = Object.values(WebhookEventType);
+    const requested = webhookData.eventTypes ?? allEventTypes;
+    
+    // Ensure all provided event types are valid by checking against enum values
+    const eventTypes = requested.filter((type) => 
+      allEventTypes.includes(type as WebhookEventType)
+    ) as WebhookEventType[];
     
     if (eventTypes.length === 0) {
       throw new Error("No valid event types supplied");
@@ -121,7 +124,7 @@ export class WebhookService {
     // Validate event types if provided
     if (webhookData.eventTypes) {
       const validEventTypes = webhookData.eventTypes.filter((t) =>
-        Object.values(WebhookEventType).includes(t as WebhookEventType)
+        Object.values(WebhookEventType).includes(t)
       );
       
       if (validEventTypes.length === 0) {
@@ -337,7 +340,11 @@ export class WebhookService {
     }
   }
 
-  async getAvailableEventTypes(): Promise<string[]> {
+  /**
+   * Get all available webhook event types
+   * @returns Array of available event types
+   */
+  async getAvailableEventTypes(): Promise<WebhookEventType[]> {
     return Object.values(WebhookEventType);
   }
 

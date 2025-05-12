@@ -5,6 +5,8 @@ import { WebhookService } from "../services/webhook.service";
 import { Request, Response } from "express";
 import { CryptoGeneratorService } from "../services/cryptoGenerator.service";
 import { validateWebhookUrl } from "../validators/webhook.validators";
+import { WebhookEventType } from "../enums/WebhookEventTypes";
+import { MerchantWebhookEventEntityStatus } from "../enums/MerchantWebhookEventStatus";
 
 // Interface extension for Express Request with rawBody
 interface RequestWithRawBody extends Request {
@@ -77,7 +79,7 @@ export class WebhookController {
       // Validate event types if provided
       if (eventTypes) {
         const validEventTypes = await this.webhookService.getAvailableEventTypes();
-        if (!eventTypes.every((e: string) => validEventTypes.includes(e))) {
+        if (!eventTypes.every((e: string) => validEventTypes.includes(e as WebhookEventType))) {
           return res.status(400).json({
             status: "error",
             message: "One or more event types are invalid",
@@ -152,7 +154,7 @@ export class WebhookController {
       // Validate event types if provided
       if (eventTypes) {
         const validEventTypes = await this.webhookService.getAvailableEventTypes();
-        if (!eventTypes.every((e: string) => validEventTypes.includes(e))) {
+        if (!eventTypes.every((e: string) => validEventTypes.includes(e as WebhookEventType))) {
           return res.status(400).json({
             status: "error",
             message: "One or more event types are invalid",
@@ -419,7 +421,7 @@ export class WebhookController {
         asset: "TEST",
         merchantId,
         timestamp: new Date().toISOString(),
-        eventType: "test.webhook",
+        eventType: WebhookEventType.TEST_WEBHOOK,
         reqMethod: "POST",
         metadata: {
           isTest: true,
@@ -498,19 +500,28 @@ export class WebhookController {
 
       // Filter by status if provided
       const status = req.query.status as string | undefined;
+      let parsedStatus: MerchantWebhookEventEntityStatus | undefined = undefined;
+      
+      if (status) {
+        try {
+          parsedStatus = status as MerchantWebhookEventEntityStatus;
+        } catch (err) {
+          console.warn(`Invalid status filter: ${status}`);
+        }
+      }
 
       // Get events from webhook service
       const events = await this.webhookService.getWebhookEvents(
         webhookId,
         limit,
         offset,
-        status
+        parsedStatus
       );
 
       // Get count for pagination
       const totalCount = await this.webhookService.getWebhookEventsCount(
         webhookId,
-        status
+        parsedStatus
       );
 
       return res.status(200).json({

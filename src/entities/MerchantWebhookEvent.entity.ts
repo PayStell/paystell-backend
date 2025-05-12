@@ -29,10 +29,10 @@ export class MerchantWebhookEventEntity {
   @Column()
   webhookUrl: string;
 
-  @Column("json")
+  @Column("simple-json")
   payload: WebhookPayload;
   
-  @Column("json", { nullable: true })
+  @Column("simple-json", { nullable: true })
   headers: Record<string, string>;
   
   @Column("text", { nullable: true })

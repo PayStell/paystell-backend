@@ -10,6 +10,7 @@ import {
 } from "typeorm";
 import { MerchantEntity } from "./Merchant.entity";
 import { MerchantWebhookEventEntity } from "./MerchantWebhookEvent.entity";
+import { WebhookEventType } from "../enums/WebhookEventTypes";
 
 @Entity("merchant_webhooks")
 export class MerchantWebhookEntity {
@@ -29,7 +30,7 @@ export class MerchantWebhookEntity {
   secretKey: string;
   
   @Column("simple-array", { nullable: true })
-  eventTypes: string[];
+  eventTypes: WebhookEventType[];
   
   @Column({ default: 5 })
   maxRetries: number;

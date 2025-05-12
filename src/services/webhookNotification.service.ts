@@ -133,51 +133,48 @@ export class WebhookNotificationService {
   }
 
   /**
-   * Notifies a merchant about a payment update via webhook
+   * Notifies a merchant about an event via webhook
    * @param merchantId The merchant ID
-   * @param eventType The type of event (payment.succeeded, etc)
-   * @param paymentDetails The payment details
+   * @param eventType The event type
+   * @param paymentDetails Additional payment details
    * @returns Promise resolving to boolean indicating success
    */
   async notifyEvent(
     merchantId: string,
-    eventType: string,
+    eventType: WebhookEventType,
     paymentDetails: Omit<WebhookPayload, "timestamp" | "eventType">,
   ): Promise<boolean> {
     try {
-      // Get the webhook configuration for this merchant
+      // Get merchant webhook
       const merchantWebhook = await this.webhookService.getMerchantWebhook(merchantId);
-
       if (!merchantWebhook) {
-        console.debug(`No webhook found for merchant ${merchantId}`);
+        console.debug(`No webhook registered for merchant ${merchantId}`);
         return false;
       }
-
+      
       if (!merchantWebhook.isActive) {
         console.debug(`Webhook for merchant ${merchantId} is inactive`);
         return false;
       }
-
-      // Check if the webhook is subscribed to this event type
-      if (merchantWebhook.eventTypes && 
-          merchantWebhook.eventTypes.length > 0 &&
-          !merchantWebhook.eventTypes.includes(eventType) &&
-          !merchantWebhook.eventTypes.includes("*")) {
+      
+      // Check if merchant is subscribed to this event type
+      if (
+        merchantWebhook.eventTypes && 
+        merchantWebhook.eventTypes.length > 0 &&
+        !merchantWebhook.eventTypes.includes(eventType) &&
+        !merchantWebhook.eventTypes.includes(WebhookEventType.WILDCARD)
+      ) {
         console.debug(`Merchant ${merchantId} not subscribed to event ${eventType}`);
         return false;
       }
-
-      if (!validateWebhookUrl(merchantWebhook.url)) {
-        console.error(`Invalid webhook URL for merchant ${merchantId}: ${merchantWebhook.url}`);
-        return false;
-      }
-
+      
+      // Create webhook payload
       const webhookPayload: WebhookPayload = {
         ...paymentDetails,
         eventType,
         timestamp: new Date().toISOString(),
       };
-
+      
       return this.sendWebhookNotification(merchantWebhook, webhookPayload);
     } catch (error) {
       console.error(`Failed to notify merchant ${merchantId} of event ${eventType}:`, error);
@@ -211,7 +208,7 @@ export class WebhookNotificationService {
         webhook.eventTypes && 
         webhook.eventTypes.length > 0 &&
         !webhook.eventTypes.includes(webhookPayload.eventType) &&
-        !webhook.eventTypes.includes("*")
+        !webhook.eventTypes.includes(WebhookEventType.WILDCARD)
       ) {
         console.debug(`Webhook not subscribed to event ${webhookPayload.eventType}`);
         return false;

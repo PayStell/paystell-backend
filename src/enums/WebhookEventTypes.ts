@@ -6,5 +6,6 @@ export enum WebhookEventType {
   ACCOUNT_CREATED = "account.created",
   ACCOUNT_UPDATED = "account.updated",
   TEST_WEBHOOK = "test.webhook",
+  WILDCARD = "*",
   // More events can be added as needed
 } 

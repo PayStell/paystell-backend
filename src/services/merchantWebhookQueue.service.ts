@@ -1,5 +1,5 @@
 import Queue from "bull";
-import { Repository } from "typeorm";
+import { Repository, DeepPartial } from "typeorm";
 import {
   WebhookPayload,
   MerchantWebhook,
@@ -189,13 +189,13 @@ export class MerchantWebhookQueueService {
     error: string | null,
     completedAt?: Date
   ) {
-    const updateData: Partial<MerchantWebhookEventEntity> = {
+    const updateData: DeepPartial<MerchantWebhookEventEntity> = {
       status,
       attemptsMade,
     };
 
     if (error !== null) {
-      updateData.error = error || undefined;
+      updateData.error = error;
     }
 
     if (nextRetry !== null) {
@@ -209,7 +209,7 @@ export class MerchantWebhookQueueService {
     try {
       await this.merchantWebhookEventRepository.update(
         { jobId: jobId },
-        updateData
+        updateData as any
       );
     } catch (dbError) {
       console.error("Failed to update webhook event status:", dbError);
