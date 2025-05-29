@@ -22,6 +22,7 @@ import merchantRoutes from "./routes/merchantRoutes";
 import stellarContractRoutes from "./routes/stellar-contract.routes";
 import tokenRoutes from "./routes/tokenRoutes";
 import { paymentRouter } from "./routes/paymentRoutes";
+import { subscriptionRouter } from "./routes/subscriptionRoutes";
 
 // Middleware imports
 import { globalRateLimiter } from "./middlewares/globalRateLimiter.middleware";
@@ -100,6 +101,7 @@ app.use("/reports/transactions", transactionReportsRoutes);
 app.use("/api/v1/stellar", stellarContractRoutes);
 app.use("/token", tokenRoutes);
 app.use("/payment", paymentRouter);
+app.use("/subscriptions", subscriptionRouter);
 
 // Error handling middleware
 const customErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
