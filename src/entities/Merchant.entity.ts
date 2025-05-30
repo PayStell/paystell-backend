@@ -8,6 +8,7 @@ import {
   OneToMany,
 } from "typeorm";
 import { MerchantWebhookEntity } from "./MerchantWebhook.entity";
+import { Role } from "./Role.entity";
 
 @Entity("merchants")
 export class MerchantEntity {
@@ -45,6 +46,9 @@ export class MerchantEntity {
 
   @Column({ nullable: true })
   business_logo_url: string;
+
+  @OneToMany(() => Role, role => role.merchant)
+  roles: Role[];
 
   @CreateDateColumn()
   createdAt: Date;
