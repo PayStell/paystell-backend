@@ -8,6 +8,8 @@ import {
   BeforeInsert,
   OneToOne,
   OneToMany,
+  ManyToMany,
+  JoinTable,
 } from "typeorm";
 import { UserRole } from "../enums/UserRole";
 import { Session } from "./Session";
@@ -15,6 +17,7 @@ import { EmailVerification } from "./emailVerification";
 import { WalletVerification } from "./WalletVerification";
 import { TwoFactorAuth } from "./TwoFactorAuth";
 import { hash } from "bcryptjs";
+import { Role } from "./Role.entity";
 
 @Entity("users")
 export class User {
@@ -40,6 +43,14 @@ export class User {
   })
   @IsEnum(UserRole)
   role!: UserRole;
+
+  @ManyToMany(() => Role, role => role.users)
+  @JoinTable({
+    name: 'user_roles',
+    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' }
+  })
+  roles: Role[];
 
   @Column({ nullable: true })
   description?: string;

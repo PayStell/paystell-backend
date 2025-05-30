@@ -11,7 +11,11 @@
     "format:check": "prettier --check 'src/**/*.ts'",
     "format:fix": "prettier --write 'src/**/*.ts'",
     "test:coverage": "jest --coverage",
-    "migration:run": "npx typeorm-ts-node-commonjs migration:run -d src/config/db.ts"
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:run": "npm run typeorm migration:run -d src/config/db.ts",
+    "migration:generate": "npm run typeorm migration:generate -d src/config/db.ts",
+    "migration:create": "typeorm-ts-node-commonjs migration:create",
+    "migration:revert": "npm run typeorm migration:revert -d src/config/db.ts"
   },
   "keywords": [],
   "author": "",

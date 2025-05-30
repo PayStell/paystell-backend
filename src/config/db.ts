@@ -10,6 +10,8 @@ import { MerchantEntity } from "../entities/Merchant.entity";
 import { MerchantWebhookEntity } from "../entities/MerchantWebhook.entity";
 import { MerchantWebhookEventEntity } from "../entities/MerchantWebhookEvent.entity";
 import { PaymentLink } from "../entities/PaymentLink";
+import { Role } from "../entities/Role.entity";
+import { Permission } from "../entities/Permission.entity";
 
 dotenv.config();
 
@@ -34,6 +36,8 @@ const AppDataSource = new DataSource({
     MerchantWebhookEntity,
     MerchantWebhookEventEntity,
     PaymentLink,
+    Role,
+    Permission,
   ],
   migrations: ["src/migrations/*.ts"],
   migrationsTableName: "migrations",
