@@ -13,6 +13,7 @@ import {
   NotificationType,
 } from "../entities/InAppNotification.entity";
 import { WebhookNotificationService } from "./webhookNotification.service";
+import { WebhookLog } from "src/entities/webLog.entity";
 
 interface QueueJobData {
   merchantWebhook: MerchantWebhook;
@@ -35,6 +36,7 @@ export class MerchantWebhookQueueService {
   private merchantWebhookEventRepository: Repository<MerchantWebhookEventEntity>;
   private webhookNotificationService: WebhookNotificationService;
   private readonly MERCHANT_WEBHOOK_QUEUE = "merchant-webhook-queue";
+  private webhooklogRepository:Repository<WebhookLog>
 
   constructor() {
     // Set up the Bull queue with Redis backing and exponential backoff
@@ -58,9 +60,11 @@ export class MerchantWebhookQueueService {
     this.merchantWebhookEventRepository = AppDataSource.getRepository(
       MerchantWebhookEventEntity,
     );
+    this.webhooklogRepository = AppDataSource.getRepository(WebhookLog);
 
     // Create webhook notification service for sending webhooks
     this.webhookNotificationService = new WebhookNotificationService();
+    
 
     // Set up queue processing and event handling
     this.setupQueueProcessor();
@@ -101,6 +105,20 @@ export class MerchantWebhookQueueService {
             },
           );
 
+          this.webhooklogRepository.save(
+            {
+              merchantId: merchantWebhook.merchantId, // assuming merchantWebhook has merchantId
+              webhookUrl: merchantWebhook.url,
+              status: 'success',
+              payload: webhookPayload,
+              response: null,
+              statusCode: 200,
+              retryCount: attemptsMade,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            }
+          );
+
           console.log(
             `Webhook delivered successfully to ${merchantWebhook.url} after ${attemptsMade} attempt(s)`,
           );
@@ -123,6 +141,18 @@ export class MerchantWebhookQueueService {
               nextRetry: isLastAttempt ? undefined : nextRetryDate,
             },
           );
+          await this.webhooklogRepository.save({
+            merchantId: merchantWebhook.merchantId,
+            webhookUrl: merchantWebhook.url,
+            status: 'failed',
+            payload: webhookPayload,
+            response: null,   // because webhook failed
+            statusCode: 403, // If axios error, else null
+            errorMessage: error instanceof Error ? error.message : "Unknown error",
+            retryCount: attemptsMade,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
 
           console.error(
             `Webhook delivery attempt ${attemptsMade} failed for ${merchantWebhook.url}:`,
@@ -218,7 +248,7 @@ export class MerchantWebhookQueueService {
               attemptsMade: maxAttempts,
               nextRetry: undefined,
               completedAt: new Date(),
-            },
+            }, 
           );
         }
       },
