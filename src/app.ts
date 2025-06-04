@@ -22,6 +22,7 @@ import merchantRoutes from "./routes/merchantRoutes";
 import stellarContractRoutes from "./routes/stellar-contract.routes";
 import tokenRoutes from "./routes/tokenRoutes";
 import { paymentRouter } from "./routes/paymentRoutes";
+import { auditMiddleware } from "./middlewares/auditMiddleware";
 
 // Middleware imports
 import { globalRateLimiter } from "./middlewares/globalRateLimiter.middleware";
@@ -34,6 +35,7 @@ import { startExpiredSessionCleanupCronJobs } from "./utils/schedular";
 import logger from "./utils/logger";
 import { oauthConfig } from "./config/auth0Config";
 import { auth } from "express-openid-connect";
+import routes from "./routes";
 
 // Initialize express app
 const app = express();
@@ -86,6 +88,9 @@ logger.info("Application started successfully");
 
 app.use(auth(oauthConfig));
 
+// Add audit middleware after auth middleware but before routes
+app.use(auditMiddleware);
+
 // Define routes
 app.use("/health", healthRouter);
 app.use("/session", sessionRouter);
@@ -100,6 +105,7 @@ app.use("/reports/transactions", transactionReportsRoutes);
 app.use("/api/v1/stellar", stellarContractRoutes);
 app.use("/token", tokenRoutes);
 app.use("/payment", paymentRouter);
+app.use("/", routes);
 
 // Error handling middleware
 const customErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
