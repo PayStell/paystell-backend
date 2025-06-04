@@ -12,6 +12,7 @@ import {
   validatePaymentStatus,
   validateTransactionVerification,
 } from "../validators/paymentValidators";
+import { fraudDetectionMiddleware } from "../middlewares/fraudDetection.middleware";
 
 const router = express.Router();
 const paymentController = new PaymentController();
@@ -37,6 +38,7 @@ router.post(
   paymentProcessingRateLimit,
   validatePayment,
   handleValidationErrors,
+  fraudDetectionMiddleware as RequestHandler,
   paymentController.processPayment.bind(paymentController) as RequestHandler,
 );
 

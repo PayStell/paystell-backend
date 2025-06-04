@@ -9,6 +9,17 @@ import { AppError } from "../utils/AppError";
 import logger from "../utils/logger";
 import { validationResult } from "express-validator";
 
+
+interface FraudRequest extends Request {
+  fraudCheck?: {
+    riskScore: number;
+    riskLevel: string;
+    rulesTriggered: string[];
+    shouldBlock: boolean;
+  };
+}
+
+
 export class PaymentController {
   private paymentService: PaymentService;
   private tokenService: TokenService;
@@ -38,7 +49,7 @@ export class PaymentController {
     }
   }
 
-  async processPayment(req: Request, res: Response): Promise<void> {
+  async processPayment(req: FraudRequest, res: Response): Promise<void> {
     try {
       // Validate request
       const errors = validationResult(req);
@@ -61,6 +72,16 @@ export class PaymentController {
         nonce,
         signature,
       } = req.body;
+
+       // Log fraud check results if available
+      if (req.fraudCheck) {
+        logger.info(`Payment fraud check completed`, {
+          orderId,
+          riskScore: req.fraudCheck.riskScore,
+          riskLevel: req.fraudCheck.riskLevel,
+          rulesTriggered: req.fraudCheck.rulesTriggered
+        });
+      }
 
       // Validate signature if provided
       if (signature) {
