@@ -22,6 +22,7 @@ import merchantRoutes from "./routes/merchantRoutes";
 import stellarContractRoutes from "./routes/stellar-contract.routes";
 import tokenRoutes from "./routes/tokenRoutes";
 import { paymentRouter } from "./routes/paymentRoutes";
+import { subscriptionRouter } from "./routes/subscriptionRoutes";
 
 // Middleware imports
 import { globalRateLimiter } from "./middlewares/globalRateLimiter.middleware";
@@ -31,6 +32,7 @@ import { requestLogger } from "./middlewares/requestLogger.middleware";
 // Service imports
 import RateLimitMonitoringService from "./services/rateLimitMonitoring.service";
 import { startExpiredSessionCleanupCronJobs } from "./utils/schedular";
+import { subscriptionScheduler } from "./utils/subscriptionScheduler";
 import logger from "./utils/logger";
 import { oauthConfig } from "./config/auth0Config";
 import { auth } from "express-openid-connect";
@@ -81,6 +83,9 @@ app.use((req, res, next) => {
 // Start scheduled jobs
 startExpiredSessionCleanupCronJobs();
 
+// Start subscription scheduler
+subscriptionScheduler.start();
+
 // Log application startup
 logger.info("Application started successfully");
 
@@ -100,6 +105,7 @@ app.use("/reports/transactions", transactionReportsRoutes);
 app.use("/api/v1/stellar", stellarContractRoutes);
 app.use("/token", tokenRoutes);
 app.use("/payment", paymentRouter);
+app.use("/subscriptions", subscriptionRouter);
 
 // Error handling middleware
 const customErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
