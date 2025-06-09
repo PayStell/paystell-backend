@@ -25,7 +25,11 @@ const updateProgramValidation = [
   body("refereeReward").optional().isNumeric().withMessage("Referee reward must be a number"),
   body("startDate").optional().isISO8601().withMessage("Invalid start date"),
   body("endDate").optional().isISO8601().withMessage("Invalid end date"),
-  body("status").optional().isIn(["active", "inactive", "draft"]),
+// at the top of src/routes/referralProgramRoutes.ts
+import { ProgramStatus } from "../enums/ProgramStatus";
+
+// … later in your validation chain …
+  body("status").optional().isIn(Object.values(ProgramStatus)),
 ]
 
 const programIdValidation = [param("id").isInt().withMessage("Invalid program ID")]
