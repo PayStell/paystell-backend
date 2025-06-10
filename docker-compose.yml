@@ -32,7 +32,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
   pgadmin:
     image: dpage/pgadmin4
     container_name: paystell-pgadmin
@@ -44,7 +43,6 @@ services:
       - "5051:80"
     depends_on:
       - postgres
-
   redis:
     image: redis:alpine
     container_name: paystell-redis
@@ -56,6 +54,5 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
 volumes:
   postgres_data:

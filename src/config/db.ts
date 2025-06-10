@@ -13,6 +13,8 @@ import { PaymentLink } from "../entities/PaymentLink";
 import { Referral } from "../entities/Referral";
 import { ReferralReward } from "../entities/ReferralReward";
 import { ReferralProgram } from "../entities/ReferralProgram";
+import { AuditLog } from "../entities/AuditLog";
+import { AuditSubscriber } from "../subscribers/AuditSubscriber";
 
 dotenv.config();
 
@@ -40,7 +42,9 @@ const AppDataSource = new DataSource({
     Referral,
     ReferralReward,
     ReferralProgram,
+    AuditLog,
   ],
+  subscribers: [AuditSubscriber],
   migrations: ["src/migrations/*.ts"],
   migrationsTableName: "migrations",
 });
