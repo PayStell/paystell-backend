@@ -16,16 +16,30 @@ class ReferralService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const token = localStorage.getItem("accessToken")
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers,
-      },
+    // Default headers
+    const defaultHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+    }
+    if (token) {
+      defaultHeaders["Authorization"] = `Bearer ${token}`
+    }
+
+    // Merge headers safely
+    const headers = {
+      ...defaultHeaders,
+      ...(options.headers || {}),
+    }
+
+    // Construct fetch options with merged headers and other options
+    const fetchOptions: RequestInit = {
       ...options,
-    })
+      headers,
+    }
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions)
 
     if (!response.ok) {
+      // Try to parse error message, fallback on network error
       const error = await response.json().catch(() => ({ message: "Network error" }))
       throw new Error(error.message || "Request failed")
     }
@@ -54,21 +68,8 @@ class ReferralService {
   }
 
   async getUserReferrals(page = 1, limit = 10) {
-    const response = await fetch(`${API_BASE_URL}/referrals?page=${page}&limit=${limit}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch referrals")
-    }
-
-    const result = await response.json()
-    return {
-      data: result.data,
-      pagination: result.pagination,
-    }
+    // You can refactor this method to use this.request for consistency:
+    return this.request(`/referrals?page=${page}&limit=${limit}`)
   }
 
   async getUserStats() {
@@ -76,30 +77,16 @@ class ReferralService {
   }
 
   async getUserRewards(page = 1, limit = 10) {
-    const response = await fetch(`${API_BASE_URL}/referrals/rewards?page=${page}&limit=${limit}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch rewards")
-    }
-
-    const result = await response.json()
-    return {
-      data: result.data,
-      pagination: result.pagination,
-    }
+    // Similarly refactor to use this.request:
+    return this.request(`/referrals/rewards?page=${page}&limit=${limit}`)
   }
 
   async validateReferralCode(code: string) {
+    // No token, so call fetch directly:
     const response = await fetch(`${API_BASE_URL}/referrals/validate/${code}`)
-
     if (!response.ok) {
       throw new Error("Failed to validate referral code")
     }
-
     const result = await response.json()
     return result.data
   }

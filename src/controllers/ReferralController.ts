@@ -100,11 +100,12 @@ export class ReferralController {
         },
       })
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: "Internal server error",
-      })
-    }
+  console.error(error)
+  res.status(500).json({
+    success: false,
+    message: "Internal server error",
+  })
+}
   }
 
   getUserReferralStats = async (req: Request, res: Response): Promise<void> => {
@@ -120,12 +121,14 @@ export class ReferralController {
         success: true,
         data: stats,
       })
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: "Internal server error",
-      })
-    }
+   } catch (error) {
+  console.error(error)
+  res.status(500).json({
+    success: false,
+    message: "Internal server error",
+  })
+}
+
   }
 
   getUserRewards = async (req: Request, res: Response): Promise<void> => {
@@ -150,12 +153,14 @@ export class ReferralController {
           pages: Math.ceil(result.total / limit),
         },
       })
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: "Internal server error",
-      })
-    }
+   } catch (error) {
+  console.error(error)
+  res.status(500).json({
+    success: false,
+    message: "Internal server error",
+  })
+}
+
   }
 
   validateReferralCode = async (req: Request, res: Response): Promise<void> => {
@@ -177,12 +182,14 @@ export class ReferralController {
             : null,
         },
       })
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: "Internal server error",
-      })
-    }
+   } catch (error) {
+  console.error(error)
+  res.status(500).json({
+    success: false,
+    message: "Internal server error",
+  })
+}
+
   }
 
   processRewardPayment = async (req: Request, res: Response): Promise<void> => {

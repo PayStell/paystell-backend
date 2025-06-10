@@ -1,4 +1,4 @@
-import type { Request, Response } from "express"
+import { Request, Response } from "express"
 import { ReferralProgramService } from "../services/ReferralProgramService"
 import { AppError } from "../utils/AppError"
 import { validationResult } from "express-validator"
@@ -26,6 +26,7 @@ export class ReferralProgramController {
         message: "Referral program created successfully",
       })
     } catch (error) {
+      console.error(error)
       if (error instanceof AppError) {
         res.status(error.statusCode).json({
           success: false,
@@ -57,6 +58,7 @@ export class ReferralProgramController {
         message: "Referral program updated successfully",
       })
     } catch (error) {
+      console.error(error)
       if (error instanceof AppError) {
         res.status(error.statusCode).json({
           success: false,
@@ -89,6 +91,7 @@ export class ReferralProgramController {
         },
       })
     } catch (error) {
+      console.error(error)
       res.status(500).json({
         success: false,
         message: "Internal server error",
@@ -106,6 +109,7 @@ export class ReferralProgramController {
         data: program,
       })
     } catch (error) {
+      console.error(error)
       if (error instanceof AppError) {
         res.status(error.statusCode).json({
           success: false,
@@ -129,6 +133,7 @@ export class ReferralProgramController {
         data: program,
       })
     } catch (error) {
+      console.error(error)
       res.status(500).json({
         success: false,
         message: "Internal server error",
@@ -147,6 +152,7 @@ export class ReferralProgramController {
         message: "Referral program activated successfully",
       })
     } catch (error) {
+      console.error(error)
       if (error instanceof AppError) {
         res.status(error.statusCode).json({
           success: false,
@@ -172,6 +178,7 @@ export class ReferralProgramController {
         message: "Referral program deactivated successfully",
       })
     } catch (error) {
+      console.error(error)
       if (error instanceof AppError) {
         res.status(error.statusCode).json({
           success: false,

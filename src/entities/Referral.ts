@@ -43,7 +43,7 @@ export class Referral {
   expiresAt?: Date
 
   @Column({ name: "metadata", type: "jsonb", nullable: true })
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 
   @CreateDateColumn({ name: "created_at" })
   createdAt!: Date

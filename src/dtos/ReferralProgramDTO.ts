@@ -1,6 +1,6 @@
 import { IsString, IsOptional, IsEnum, IsDateString, IsObject, IsNumber, Min } from "class-validator"
 import { ProgramStatus } from "../enums/ProgramStatus"
-import { ProgramConditions } from "../interfaces/ReferralStats"
+import { ProgramConditions } from "src/interfaces/ProgramConditions"
 
 export class CreateReferralProgramDTO {
   @IsString()

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsDateString, IsObject } from "class-validator"
+import { IsString, IsOptional, IsDateString, IsObject } from "class-validator"
 
 export class CreateReferralDTO {
   @IsString()
@@ -10,6 +10,6 @@ export class CreateReferralDTO {
 
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
