@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString, IsNumberString, Min, Max } from "class-validator"
+import { IsEnum, IsOptional, IsNumberString, Min, Max } from "class-validator"
 import { Transform } from "class-transformer"
 import { ReferralStatus } from "src/enums/ReferralStatus"
 
