@@ -15,7 +15,7 @@ interface ApiResponse<T> {
 }
 
 class ReferralService {
-  private async request<T>(endpoint: string, options: any = {}): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const token = localStorage.getItem("accessToken")
 
     // Default headers
@@ -33,7 +33,7 @@ class ReferralService {
     }
 
     // Construct fetch options with merged headers and other options
-    const fetchOptions: any = {
+    const fetchOptions: RequestInit = {
       ...options,
       headers,
     }
@@ -70,7 +70,6 @@ class ReferralService {
   }
 
   async getUserReferrals(page = 1, limit = 10) {
-    // You can refactor this method to use this.request for consistency:
     return this.request(`/referrals?page=${page}&limit=${limit}`)
   }
 
@@ -79,12 +78,10 @@ class ReferralService {
   }
 
   async getUserRewards(page = 1, limit = 10) {
-    // Similarly refactor to use this.request:
     return this.request(`/referrals/rewards?page=${page}&limit=${limit}`)
   }
 
   async validateReferralCode(code: string) {
-    // No token, so call fetch directly:
     const response = await fetch(`${API_BASE_URL}/referrals/validate/${code}`)
     if (!response.ok) {
       throw new Error("Failed to validate referral code")
