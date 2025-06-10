@@ -14,8 +14,14 @@ interface ApiResponse<T> {
   }
 }
 
+interface FetchOptions {
+  method?: string
+  headers?: Record<string, string>
+  body?: string
+}
+
 class ReferralService {
-  private async request<T>(endpoint: string, options: any = {}): Promise<T> {
+  private async request<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
     const token = localStorage.getItem("accessToken")
 
     // Default headers
@@ -33,7 +39,7 @@ class ReferralService {
     }
 
     // Construct fetch options with merged headers and other options
-    const fetchOptions: any = {
+    const fetchOptions: FetchOptions = {
       ...options,
       headers,
     }
