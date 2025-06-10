@@ -1,55 +1,73 @@
-import { ProgramConditions } from "../interfaces/ProgramConditions"
-import { ProgramStatus } from "../enums/ProgramStatus"
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm"
+import { ProgramConditions } from "../interfaces/ProgramConditions";
+import { ProgramStatus } from "../enums/ProgramStatus";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
 
 @Entity("referral_programs")
 export class ReferralProgram {
   @PrimaryGeneratedColumn()
-  id!: number
+  id!: number;
 
   @Column({ length: 255 })
-  name!: string
+  name!: string;
 
   @Column({ type: "text", nullable: true })
-  description?: string
+  description?: string;
 
   @Column({ name: "referrer_reward", type: "decimal", precision: 18, scale: 8 })
-  referrerReward!: string
+  referrerReward!: string;
 
   @Column({ name: "referee_reward", type: "decimal", precision: 18, scale: 8 })
-  refereeReward!: string
+  refereeReward!: string;
 
   @Column({ name: "reward_currency", length: 10, default: "USD" })
-  rewardCurrency!: string
+  rewardCurrency!: string;
 
   @Column({ type: "jsonb", nullable: true })
-  conditions?: ProgramConditions
+  conditions?: ProgramConditions;
 
   @Column({ name: "start_date" })
-  startDate!: Date
+  startDate!: Date;
 
   @Column({ name: "end_date", nullable: true })
-  endDate?: Date
+  endDate?: Date;
 
   @Column({
     type: "enum",
     enum: ProgramStatus,
     default: ProgramStatus.DRAFT,
   })
-  status!: ProgramStatus
+  status!: ProgramStatus;
 
   @Column({ name: "max_rewards_per_user", nullable: true })
-  maxRewardsPerUser?: number
+  maxRewardsPerUser?: number;
 
-  @Column({ name: "total_budget", type: "decimal", precision: 18, scale: 8, nullable: true })
-  totalBudget?: string
+  @Column({
+    name: "total_budget",
+    type: "decimal",
+    precision: 18,
+    scale: 8,
+    nullable: true,
+  })
+  totalBudget?: string;
 
-  @Column({ name: "used_budget", type: "decimal", precision: 18, scale: 8, default: "0" })
-  usedBudget!: string
+  @Column({
+    name: "used_budget",
+    type: "decimal",
+    precision: 18,
+    scale: 8,
+    default: "0",
+  })
+  usedBudget!: string;
 
   @CreateDateColumn({ name: "created_at" })
-  createdAt!: Date
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: "updated_at" })
-  updatedAt!: Date
+  updatedAt!: Date;
 }

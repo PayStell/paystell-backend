@@ -1,95 +1,103 @@
-import { IsString, IsOptional, IsEnum, IsDateString, IsObject, IsNumber, Min } from "class-validator"
-import { ProgramStatus } from "../enums/ProgramStatus"
-import { ProgramConditions } from "src/interfaces/ProgramConditions"
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsDateString,
+  IsObject,
+  IsNumber,
+  Min,
+} from "class-validator";
+import { ProgramStatus } from "../enums/ProgramStatus";
+import { ProgramConditions } from "src/interfaces/ProgramConditions";
 
 export class CreateReferralProgramDTO {
   @IsString()
-  name!: string
+  name!: string;
 
   @IsOptional()
   @IsString()
-  description?: string
+  description?: string;
 
   @IsNumber()
   @Min(0)
-  referrerReward!: number
+  referrerReward!: number;
 
   @IsNumber()
   @Min(0)
-  refereeReward!: number
+  refereeReward!: number;
 
   @IsOptional()
   @IsString()
-  rewardCurrency?: string
+  rewardCurrency?: string;
 
   @IsOptional()
   @IsObject()
-  conditions?: ProgramConditions
+  conditions?: ProgramConditions;
 
   @IsDateString()
-  startDate!: string
+  startDate!: string;
 
   @IsOptional()
   @IsDateString()
-  endDate?: string
+  endDate?: string;
 
   @IsOptional()
   @IsNumber()
   @Min(1)
-  maxRewardsPerUser?: number
+  maxRewardsPerUser?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  totalBudget?: number
+  totalBudget?: number;
 }
 
 export class UpdateReferralProgramDTO {
   @IsOptional()
   @IsString()
-  name?: string
+  name?: string;
 
   @IsOptional()
   @IsString()
-  description?: string
+  description?: string;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  referrerReward?: number
+  referrerReward?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  refereeReward?: number
+  refereeReward?: number;
 
   @IsOptional()
   @IsString()
-  rewardCurrency?: string
+  rewardCurrency?: string;
 
   @IsOptional()
   @IsObject()
-  conditions?: ProgramConditions
+  conditions?: ProgramConditions;
 
   @IsOptional()
   @IsDateString()
-  startDate?: string
+  startDate?: string;
 
   @IsOptional()
   @IsDateString()
-  endDate?: string
+  endDate?: string;
 
   @IsOptional()
   @IsEnum(ProgramStatus)
-  status?: ProgramStatus
+  status?: ProgramStatus;
 
   @IsOptional()
   @IsNumber()
   @Min(1)
-  maxRewardsPerUser?: number
+  maxRewardsPerUser?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  totalBudget?: number
+  totalBudget?: number;
 }

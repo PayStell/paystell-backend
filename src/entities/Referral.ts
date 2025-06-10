@@ -8,61 +8,58 @@ import {
   JoinColumn,
   OneToMany,
   Index,
-} from "typeorm"
-import { User } from "./User"
-import { ReferralReward } from "./ReferralReward"
-import { ReferralStatus } from "../enums/ReferralStatus"
+} from "typeorm";
+import { User } from "./User";
+import { ReferralReward } from "./ReferralReward";
+import { ReferralStatus } from "../enums/ReferralStatus";
 
 @Entity("referrals")
 @Index(["referralCode"], { unique: true })
 @Index(["referrerId", "refereeId"], { unique: true })
 export class Referral {
   @PrimaryGeneratedColumn()
-  id!: number
+  id!: number;
 
   @Column({ name: "referrer_id" })
-  referrerId!: number
+  referrerId!: number;
 
   @Column({ name: "referee_id", nullable: true })
-  refereeId?: number
+  refereeId?: number;
 
   @Column({ name: "referral_code", unique: true, length: 20 })
-  referralCode!: string
+  referralCode!: string;
 
   @Column({
     type: "enum",
     enum: ReferralStatus,
     default: ReferralStatus.PENDING,
   })
-  status!: ReferralStatus
+  status!: ReferralStatus;
 
   @Column({ name: "conversion_date", nullable: true })
-  conversionDate?: Date
+  conversionDate?: Date;
 
   @Column({ name: "expires_at", nullable: true })
-  expiresAt?: Date
+  expiresAt?: Date;
 
   @Column({ name: "metadata", type: "jsonb", nullable: true })
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>;
 
   @CreateDateColumn({ name: "created_at" })
-  createdAt!: Date
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: "updated_at" })
-  updatedAt!: Date
+  updatedAt!: Date;
 
   // Relations
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: "referrer_id" })
-  referrer!: User
+  referrer!: User;
 
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: "referee_id" })
-  referee?: User
+  referee?: User;
 
-  @OneToMany(
-    () => ReferralReward,
-    (reward) => reward.referral,
-  )
-  rewards!: ReferralReward[]
+  @OneToMany(() => ReferralReward, (reward) => reward.referral)
+  rewards!: ReferralReward[];
 }
