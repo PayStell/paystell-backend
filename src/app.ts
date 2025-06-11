@@ -8,6 +8,11 @@ import express, {
 import morgan from "morgan";
 import cors from "cors";
 
+// Define interface for request with raw body
+interface RequestWithRawBody extends Request {
+  rawBody?: Buffer;
+}
+
 // Route imports
 import sessionRouter from "./routes/session.routes";
 import emailVerification from "./routes/emailVerification.routes";
@@ -67,7 +72,19 @@ app.use(
   }),
 );
 
-app.use(express.json());
+// Configure standard express.json middleware for most routes
+app.use(express.json({
+  limit: '1mb' // Reasonable size limit to prevent DoS attacks
+}));
+
+// Configure specialized middleware for webhook routes that need raw body access
+const webhookBodyParser = express.json({
+  limit: '1mb',
+  verify: (req: RequestWithRawBody, _res, buf) => {
+    req.rawBody = buf;
+  },
+});
+
 app.use(validateIpAddress as RequestHandler);
 app.use(
   RateLimitMonitoringService.createRateLimitMonitoringMiddleware() as RequestHandler,
@@ -104,8 +121,15 @@ app.use("/paymentlink", PaymentRoute);
 app.use("/auth", authRoutes);
 app.use("/wallet-verification", walletVerificationRoutes);
 app.use("/users", userRoutes);
-app.use("/merchants", merchantRoutes);
-app.use("/webhook-queue/merchant", merchantWebhookQueueRoutes);
+app.use("/merchants", (req, res, next) => {
+  // Apply webhook body parser only to webhook-related endpoints
+  if (req.path.includes('/webhook')) {
+    webhookBodyParser(req, res, next);
+  } else {
+    next();
+  }
+}, merchantRoutes);
+app.use("/webhook-queue/merchant", webhookBodyParser, merchantWebhookQueueRoutes);
 app.use("/reports/transactions", transactionReportsRoutes);
 app.use("/api/v1/stellar", stellarContractRoutes);
 app.use("/token", tokenRoutes);

@@ -6,8 +6,11 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from "typeorm";
 import { MerchantEntity } from "./Merchant.entity";
+import { MerchantWebhookEventEntity } from "./MerchantWebhookEvent.entity";
+import { WebhookEventType } from "../enums/WebhookEventTypes";
 
 @Entity("merchant_webhooks")
 export class MerchantWebhookEntity {
@@ -22,6 +25,21 @@ export class MerchantWebhookEntity {
 
   @Column({ default: true })
   isActive: boolean;
+  
+  @Column({ nullable: true, select: false, length: 128 })
+  secretKey: string;
+  
+  @Column("simple-array", { nullable: true })
+  eventTypes: WebhookEventType[];
+  
+  @Column({ default: 5 })
+  maxRetries: number;
+  
+  @Column({ default: 5000 })
+  initialRetryDelay: number;
+  
+  @Column({ default: 3600000 })
+  maxRetryDelay: number;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -32,4 +50,7 @@ export class MerchantWebhookEntity {
   @ManyToOne(() => MerchantEntity, (merchant) => merchant.webhooks)
   @JoinColumn({ name: "merchantId" })
   merchant: MerchantEntity;
+  
+  @OneToMany(() => MerchantWebhookEventEntity, event => event.webhook)
+  events: MerchantWebhookEventEntity[];
 }
