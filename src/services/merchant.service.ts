@@ -2,19 +2,23 @@ import { Merchant } from "../interfaces/webhook.interfaces";
 import { Repository, DataSource } from "typeorm";
 import { validate } from "class-validator";
 import { MerchantEntity } from "../entities/Merchant.entity";
+import { MerchantFraudConfig } from "../entities/MerchantFraudConfig";
 import AppDataSource from "../config/db";
 import { CreateMerchantDTO } from "../dtos/CreateMerchantDTO";
 import { UpdateMerchantProfileDTO } from "../dtos/UpdateMerchantProfileDTO";
 import { CreateMerchantProfileDTO } from "../dtos/CreateMerchantProfileDTO";
+import { CreateMerchantFraudConfigDTO } from "../dtos/FraudDetection.dto";
 import { FileUploadService } from "./fileUpload.service";
 
 export class MerchantAuthService {
   private merchantRepository: Repository<MerchantEntity>;
+  private fraudConfigRepository: Repository<MerchantFraudConfig>;
   private dataSource: DataSource;
 
   constructor() {
     this.dataSource = AppDataSource;
     this.merchantRepository = this.dataSource.getRepository(MerchantEntity);
+    this.fraudConfigRepository = this.dataSource.getRepository(MerchantFraudConfig);
   }
 
   async register(merchantData: CreateMerchantDTO): Promise<Merchant> {
@@ -43,6 +47,9 @@ export class MerchantAuthService {
       const merchant = this.merchantRepository.create(merchantData);
       const savedMerchant = await queryRunner.manager.save(merchant);
 
+      // Initialize default fraud configuration for new merchant
+      await this.initializeDefaultFraudConfig(savedMerchant.id, queryRunner);
+
       await queryRunner.commitTransaction();
       return savedMerchant;
     } catch (err) {
@@ -50,6 +57,35 @@ export class MerchantAuthService {
       throw err;
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  private async initializeDefaultFraudConfig(
+    merchantId: string,
+    queryRunner: any
+  ): Promise<void> {
+    try {
+      // Create default fraud configuration DTO
+      const fraudConfigData = new CreateMerchantFraudConfigDTO();
+      fraudConfigData.merchantId = merchantId;
+      
+      // Validate the DTO
+      const errors = await validate(fraudConfigData);
+      if (errors.length > 0) {
+        throw new Error(
+          `Fraud config validation failed: ${errors.map((err) => 
+            Object.values(err.constraints || {})).join(", ")}`
+        );
+      }
+
+      // Create and save the fraud configuration
+      const fraudConfig = this.fraudConfigRepository.create(fraudConfigData);
+      await queryRunner.manager.save(fraudConfig);
+
+      console.log(`Default fraud configuration initialized for merchant: ${merchantId}`);
+    } catch (error) {
+      console.error(`Failed to initialize fraud config for merchant ${merchantId}:`, error);
+      throw error;
     }
   }
 

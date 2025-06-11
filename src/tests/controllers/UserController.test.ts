@@ -15,8 +15,9 @@ describe("UserController", () => {
   beforeEach(() => {
     userService = new UserService() as jest.Mocked<UserService>;
     userController = new UserController();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (userController as any).userService = userService;
+    // Use type assertion to access private property for testing
+    (userController as unknown as { userService: UserService }).userService =
+      userService;
 
     req = {};
     res = {
@@ -42,22 +43,31 @@ describe("UserController", () => {
       emailVerifications: [],
       sessions: [],
     };
-    const createdUser = { id: 1, ...userData };
 
-    userService.createUser.mockResolvedValue(createdUser);
+    const createdUser = {
+      id: 1,
+      ...userData,
+      twoFactorAuth: undefined,
+      walletVerifications: [],
+    };
+
+    userService.createUser.mockResolvedValue(createdUser as unknown as User);
     req.body = userData;
 
     await userController.createUser(req as Request, res as Response);
 
-    const mutableUser: Partial<User> = { ...createdUser };
-    delete mutableUser.password;
+    const mutableUser = { ...createdUser };
+    // Use type assertion to delete password property
+    delete (mutableUser as Partial<typeof mutableUser> & { password?: string })
+      .password;
 
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith(mutableUser);
   });
 
   it("should get a user by id", async () => {
-    const userData = {
+    const user = {
+      id: 1,
       name: "Test",
       email: "test@example.com",
       password: "password123",
@@ -71,16 +81,19 @@ describe("UserController", () => {
       hashPassword: jest.fn(),
       emailVerifications: [],
       sessions: [],
+      twoFactorAuth: undefined,
+      walletVerifications: [],
     };
-    const user = { id: 1, ...userData };
 
-    userService.getUserById.mockResolvedValue(user);
+    userService.getUserById.mockResolvedValue(user as unknown as User);
     req.params = { id: "1" };
 
     await userController.getUserById(req as Request, res as Response);
 
-    const mutableUser: Partial<User> = { ...user };
-    delete mutableUser.password;
+    const mutableUser = { ...user };
+    // Use type assertion to delete password property
+    delete (mutableUser as Partial<typeof mutableUser> & { password?: string })
+      .password;
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(mutableUser);
@@ -102,16 +115,24 @@ describe("UserController", () => {
       emailVerifications: [],
       sessions: [],
     };
-    const updatedUser = { id: 1, ...userData };
 
-    userService.updateUser.mockResolvedValue(updatedUser);
+    const updatedUser = {
+      id: 1,
+      ...userData,
+      twoFactorAuth: undefined,
+      walletVerifications: [],
+    };
+
+    userService.updateUser.mockResolvedValue(updatedUser as unknown as User);
     req.params = { id: "1" };
     req.body = userData;
 
     await userController.updateUser(req as Request, res as Response);
 
-    const mutableUser: Partial<User> = { ...updatedUser };
-    delete mutableUser.password;
+    const mutableUser = { ...updatedUser };
+    // Use type assertion to delete password property
+    delete (mutableUser as Partial<typeof mutableUser> & { password?: string })
+      .password;
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(mutableUser);

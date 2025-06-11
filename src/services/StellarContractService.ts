@@ -2,7 +2,6 @@ import { Horizon } from "@stellar/stellar-sdk";
 import {
   Keypair,
   TransactionBuilder,
-  Networks,
   Memo,
   xdr,
   TimeoutInfinite,
@@ -19,6 +18,7 @@ import {
 import { AppError } from "../utils/AppError";
 import { validateSignature } from "../utils/validateSignature";
 import logger from "../utils/logger";
+import config from "../config/stellarConfig";
 
 interface PaymentOrder {
   merchantAddress: string;
@@ -47,21 +47,16 @@ export class StellarContractService {
     redis?: Redis;
     contractId?: string;
   }) {
-    this.server =
-      options?.server ||
-      new Server(
-        process.env.STELLAR_HORIZON_URL ||
-          "https://horizon-testnet.stellar.org",
-      );
-    const contractId = process.env.STELLAR_CONTRACT_ID;
+    this.server = options?.server || new Server(config.STELLAR_HORIZON_URL);
+
+    const contractId = config.SOROBAN_CONTRACT_ID;
     if (!contractId) {
-      throw new AppError("STELLAR_CONTRACT_ID is not configured", 500);
+      throw new AppError("SOROBAN_CONTRACT_ID is not configured", 500);
     }
     this.contractId = contractId;
 
     this.contract = new Contract(this.contractId);
-    this.networkPassphrase =
-      process.env.STELLAR_NETWORK_PASSPHRASE || Networks.TESTNET;
+    this.networkPassphrase = config.STELLAR_NETWORK_PASSPHRASE;
 
     // Initialize Redis with proper configuration
     const redisOptions: RedisOptions = {
@@ -250,15 +245,6 @@ export class StellarContractService {
         throw new AppError("Token not supported by merchant", 400);
       }
 
-      // Check token support
-      const isTokenSupported = await this.redis.sismember(
-        `merchant:${data.paymentOrder.merchantAddress}:tokens`,
-        data.paymentOrder.tokenAddress,
-      );
-      if (!isTokenSupported) {
-        throw new AppError("Token not supported by merchant", 400);
-      }
-
       // Build and submit transaction
       const txBuilder = new TransactionBuilder(account, {
         fee: String(await this.server.fetchBaseFee()),
@@ -328,7 +314,12 @@ export class StellarContractService {
     }
   }
 
-  private serializePaymentOrder(paymentOrder: PaymentOrderDTO): string {
+  /**
+   * Serialize payment order using the PaymentOrder interface
+   */
+  private serializePaymentOrder(
+    paymentOrder: PaymentOrderDTO | PaymentOrder,
+  ): string {
     return JSON.stringify(paymentOrder);
   }
 }

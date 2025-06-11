@@ -54,7 +54,6 @@ export const authMiddleware = async (
       process.env.JWT_SECRET || "your-secret-key",
     ) as JwtPayload;
 
-    // Check if token has jti
     if (!decoded.jti) {
       res.status(401).json({
         status: "error",
@@ -75,9 +74,6 @@ export const authMiddleware = async (
       return;
     }
 
-    console.log(decoded.jti, "8888");
-    console.log(isBlacklisted, "xccc");
-
     req.user = {
       id: decoded.id,
       email: decoded.email,
@@ -85,7 +81,6 @@ export const authMiddleware = async (
       jti: decoded.jti,
     };
 
-    // Token expiration warning (5 minutes before expiration)
     const tokenExp = decoded.exp || 0;
     const now = Math.floor(Date.now() / 1000);
     if (tokenExp - now < 300) {
@@ -123,7 +118,6 @@ export const refreshTokenMiddleware = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    // Get refresh token from cookie
     const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
@@ -181,7 +175,6 @@ export const refreshTokenMiddleware = async (
 
     next();
   } catch (error) {
-    // Clear the invalid cookie
     res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -213,7 +206,6 @@ export const refreshTokenMiddleware = async (
 
 export const isUserAuthorized = (roles: UserRole | UserRole[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    // Ensure user is authenticated first
     if (!req.user || !req.user.id) {
       res.status(401).json({
         status: "error",
@@ -224,7 +216,7 @@ export const isUserAuthorized = (roles: UserRole | UserRole[]) => {
     }
 
     const userService = new UserService();
-    const user = await userService.getUserById(req?.user?.id);
+    const user = await userService.getUserById(req.user.id);
     if (!user) {
       res.status(401).json({
         status: "error",
@@ -233,12 +225,10 @@ export const isUserAuthorized = (roles: UserRole | UserRole[]) => {
       });
       return;
     }
-    const userRole = user.role;
 
-    // Check if user has the required role
     const allowedRoles = Array.isArray(roles) ? roles : [roles];
 
-    if (userRole && allowedRoles.includes(userRole)) {
+    if (user.role && allowedRoles.includes(user.role)) {
       next();
     } else {
       res.status(403).json({

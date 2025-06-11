@@ -4,7 +4,7 @@ services:
     container_name: paystell-backend
     ports:
       - "4000:4000"
-    env_file: .env.local
+    env_file: .env.docker
     depends_on:
       postgres:
         condition: service_healthy
@@ -12,7 +12,6 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
-      - /app/node_modules
     command: ["sh", "-c", "chmod +x /app/start.sh && /app/start.sh"]
   
   postgres:
@@ -23,6 +22,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
       POSTGRES_DB: paystell
+      POSTGRES_HOST_AUTH_METHOD: md5
+    ports:
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -30,7 +32,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
   pgadmin:
     image: dpage/pgadmin4
     container_name: paystell-pgadmin
@@ -39,10 +40,9 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
-      - "5050:80"
+      - "5051:80"
     depends_on:
       - postgres
-
   redis:
     image: redis:alpine
     container_name: paystell-redis
@@ -54,6 +54,5 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
 volumes:
   postgres_data:

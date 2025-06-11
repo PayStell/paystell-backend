@@ -20,7 +20,7 @@
   "description": "",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.777.0",
-    "@stellar/stellar-sdk": "13.3.0",
+    "@stellar/stellar-sdk": "^13.3.0",
     "@types/multer": "^1.4.12",
     "@types/rate-limit-redis": "^1.7.4",
     "auth0-js": "^9.28.0",
@@ -37,6 +37,7 @@
     "express-async-handler": "^1.2.0",
     "express-openid-connect": "^2.18.0",
     "express-rate-limit": "^7.5.0",
+    "express-validator": "^7.2.1",
     "ioredis": "^5.6.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
@@ -52,6 +53,9 @@
     "redis": "^4.7.0",
     "reflect-metadata": "^0.2.2",
     "speakeasy": "^2.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0",
+    "tweetnacl": "^1.0.3",
     "uuid": "^9.0.1",
     "winston": "^3.17.0",
     "zod": "^3.24.1"

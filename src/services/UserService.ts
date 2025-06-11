@@ -4,7 +4,7 @@ import { User } from "../entities/User";
 import { validate } from "class-validator";
 import { CreateUserDTO } from "../dtos/CreateUserDTO";
 import { UpdateUserDTO } from "../dtos/UpdateUserDTO";
-import { hash } from "bcrypt";
+import { hash } from "bcryptjs";
 
 export class UserService {
   private userRepository: Repository<User>;

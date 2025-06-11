@@ -4,7 +4,7 @@ import { CreateUserDTO } from "../dtos/CreateUserDTO";
 import { UpdateUserDTO } from "../dtos/UpdateUserDTO";
 import { redisClient } from "../config/redisConfig";
 import { cacheMiddleware } from "../middlewares/cacheMiddleware";
-import { User } from "src/entities/User";
+import { User } from "../entities/User";
 
 export class UserController {
   private userService: UserService;
@@ -19,8 +19,7 @@ export class UserController {
 
       const newUser: User = await this.userService.createUser(userData);
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password, ...userWithoutPassword } = newUser;
+      const { password: _password, ...userWithoutPassword } = newUser;
 
       const _cacheKey = `user:${newUser.id}`;
       await redisClient.setEx(
@@ -53,8 +52,7 @@ export class UserController {
           return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password, ...userWithoutPassword } = user;
+        const { password: _password, ...userWithoutPassword } = user;
 
         if (res.locals.cacheKey) {
           await redisClient.setEx(
@@ -108,8 +106,8 @@ export class UserController {
       const updateData: UpdateUserDTO = req.body;
 
       const updatedUser = await this.userService.updateUser(userId, updateData);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password, ...userWithoutPassword } = updatedUser;
+
+      const { password: _password, ...userWithoutPassword } = updatedUser;
 
       const _cacheKey = `user:${userId}`;
       await redisClient.setEx(

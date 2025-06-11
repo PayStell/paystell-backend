@@ -10,17 +10,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:latest
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: 1234
-          POSTGRES_DB: paystell
-        ports:
-          - 5433:5432
-        options: --health-cmd "pg_isready -U postgres -d paystell" --health-interval 5s --health-timeout 5s --health-retries 5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -32,7 +21,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run ESLint
         run: npm run lint
@@ -46,8 +35,19 @@ jobs:
       - name: Build Docker Image
         run: docker build -t paystell-backend .
 
+      - name: Create .env file for docker-compose
+        run: cp .env.example .env
+
       - name: Run Docker Containers
         run: docker compose up -d
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for PostgreSQL to be ready..."
+          timeout 60s bash -c 'until docker exec paystell-db pg_isready -U postgres -d paystell; do sleep 2; done'
+          echo "Waiting for Redis to be ready..."
+          timeout 60s bash -c 'until docker exec paystell-redis redis-cli ping; do sleep 2; done'
+          echo "Services are ready!"
 
       # - name: Run Tests in Docker
       #   run: docker exec paystell-backend npm test
