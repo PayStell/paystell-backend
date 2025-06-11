@@ -10,6 +10,9 @@ import { MerchantEntity } from "../entities/Merchant.entity";
 import { MerchantWebhookEntity } from "../entities/MerchantWebhook.entity";
 import { MerchantWebhookEventEntity } from "../entities/MerchantWebhookEvent.entity";
 import { PaymentLink } from "../entities/PaymentLink";
+import { Referral } from "../entities/Referral";
+import { ReferralReward } from "../entities/ReferralReward";
+import { ReferralProgram } from "../entities/ReferralProgram";
 import { AuditLog } from "../entities/AuditLog";
 import { AuditSubscriber } from "../subscribers/AuditSubscriber";
 
@@ -36,6 +39,9 @@ const AppDataSource = new DataSource({
     MerchantWebhookEntity,
     MerchantWebhookEventEntity,
     PaymentLink,
+    Referral,
+    ReferralReward,
+    ReferralProgram,
     AuditLog,
   ],
   subscribers: [AuditSubscriber],
