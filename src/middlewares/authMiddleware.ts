@@ -8,6 +8,7 @@ import {
 import { UserRole } from "../enums/UserRole";
 import { UserService } from "../services/UserService";
 import { redisClient } from "../config/redisConfig";
+import { MerchantEntity } from "../entities/Merchant.entity";
 
 declare module "express" {
   interface Request {
@@ -18,6 +19,7 @@ declare module "express" {
       jti?: string;
       role?: UserRole;
     };
+    merchant?: MerchantEntity;
   }
 }
 

@@ -14,7 +14,17 @@ export interface AuditContext {
 export interface CreateAuditLogParams {
   entityType: string;
   entityId: string;
-  action: "CREATE" | "UPDATE" | "DELETE";
+  action:
+    | "CREATE"
+    | "UPDATE"
+    | "DELETE"
+    | "CREATE_ROLE"
+    | "UPDATE_ROLE"
+    | "DELETE_ROLE"
+    | "ASSIGN_PERMISSION"
+    | "REMOVE_PERMISSION"
+    | "ASSIGN_USER_ROLE"
+    | "REMOVE_USER_ROLE";
   oldValues?: Record<string, unknown>;
   newValues?: Record<string, unknown>;
   context: AuditContext;
@@ -149,4 +159,14 @@ export class AuditService {
   }
 }
 
-export const auditService = new AuditService();
+// Remove this line:
+// export const auditService = new AuditService();
+
+let auditServiceInstance: AuditService | null = null;
+
+export const getAuditService = (): AuditService => {
+  if (!auditServiceInstance) {
+    auditServiceInstance = new AuditService();
+  }
+  return auditServiceInstance;
+};

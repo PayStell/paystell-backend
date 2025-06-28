@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import { PaymentService } from "../services/PaymentService";
 import { TokenService } from "../services/TokenService";
 import {
@@ -9,7 +9,6 @@ import { AppError } from "../utils/AppError";
 import logger from "../utils/logger";
 import { validationResult } from "express-validator";
 
-
 interface FraudRequest extends Request {
   fraudCheck?: {
     riskScore: number;
@@ -18,7 +17,6 @@ interface FraudRequest extends Request {
     shouldBlock: boolean;
   };
 }
-
 
 export class PaymentController {
   private paymentService: PaymentService;
@@ -73,13 +71,13 @@ export class PaymentController {
         signature,
       } = req.body;
 
-       // Log fraud check results if available
+      // Log fraud check results if available
       if (req.fraudCheck) {
         logger.info(`Payment fraud check completed`, {
           orderId,
           riskScore: req.fraudCheck.riskScore,
           riskLevel: req.fraudCheck.riskLevel,
-          rulesTriggered: req.fraudCheck.rulesTriggered
+          rulesTriggered: req.fraudCheck.rulesTriggered,
         });
       }
 
@@ -288,6 +286,22 @@ export class PaymentController {
         success: false,
         message: errorMessage,
       });
+    }
+  }
+
+  async getPayments(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const payments = await this.paymentService.getPayments(req.query);
+      res.status(200).json({
+        status: "success",
+        data: payments,
+      });
+    } catch (error) {
+      next(error);
     }
   }
 }

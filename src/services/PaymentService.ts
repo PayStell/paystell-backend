@@ -117,4 +117,35 @@ export class PaymentService {
 
     return server.submitTransaction(transaction);
   }
+
+  async getPayments(query: {
+    page?: number;
+    limit?: number;
+    status?: "pending" | "completed" | "failed";
+    merchantId?: string;
+  }): Promise<Payment[]> {
+    try {
+      const { page = 1, limit = 10, status, merchantId } = query;
+      const skip = (page - 1) * limit;
+
+      const whereConditions: {
+        status?: "pending" | "completed" | "failed";
+        merchantId?: string;
+      } = {};
+      if (status) whereConditions.status = status;
+      if (merchantId) whereConditions.merchantId = merchantId;
+
+      const payments = await this.paymentRepository.find({
+        where: whereConditions,
+        skip,
+        take: limit,
+        order: { createdAt: "DESC" },
+        relations: ["paymentLink"],
+      });
+
+      return payments;
+    } catch (error) {
+      throw new AppError(`Failed to get payments: ${error}`, 500);
+    }
+  }
 }
