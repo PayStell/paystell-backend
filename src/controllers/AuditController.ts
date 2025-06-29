@@ -39,7 +39,8 @@ export class AuditController {
         entityType: entityType as string,
         entityId: entityId as string,
         userId: userId as string,
-        action: action as "CREATE" | "UPDATE" | "DELETE",
+        // Allow all audit actions, including RBAC ones
+        action: action as string,
         startDate: startDate ? this.parseDate(startDate as string) : undefined,
         endDate: endDate ? this.parseDate(endDate as string) : undefined,
         page: this.parsePositiveInt(page as string, 1),

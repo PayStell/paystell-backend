@@ -38,13 +38,13 @@ router.delete(
 // Permission Management Routes
 router.post(
   "/roles/permissions",
-  requirePermission(PermissionResource.USERS, PermissionAction.MANAGE),
+  requirePermission(PermissionResource.ROLES, PermissionAction.MANAGE),
   teamController.assignPermission,
 );
 
 router.delete(
   "/roles/permissions",
-  requirePermission(PermissionResource.USERS, PermissionAction.MANAGE),
+  requirePermission(PermissionResource.ROLES, PermissionAction.MANAGE),
   teamController.removePermission,
 );
 

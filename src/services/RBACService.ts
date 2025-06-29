@@ -10,7 +10,7 @@ import { UserRole } from "../entities/UserRole";
 import { RolePermission } from "../entities/RolePermission";
 import { User } from "../entities/User";
 import { MerchantEntity } from "../entities/Merchant.entity";
-import { getAuditService } from "./AuditService";
+import { getAuditService, AuditContext } from "./AuditService";
 
 export class RBACService {
   private roleRepository: Repository<Role>;
@@ -35,6 +35,7 @@ export class RBACService {
     name: string,
     description?: string,
     isDefault = false,
+    auditContext?: AuditContext,
   ): Promise<Role> {
     const merchant = await this.merchantRepository.findOne({
       where: { id: merchantId },
@@ -68,9 +69,9 @@ export class RBACService {
       entityId: savedRole.id,
       newValues: { roleName: name, merchantId },
       context: {
-        userId: undefined, // Changed from null to undefined
-        ipAddress: "",
-        userAgent: "",
+        userId: auditContext?.userId,
+        ipAddress: auditContext?.ipAddress || "",
+        userAgent: auditContext?.userAgent || "",
       },
     });
 
@@ -84,7 +85,11 @@ export class RBACService {
     });
   }
 
-  async updateRole(roleId: string, updates: Partial<Role>): Promise<Role> {
+  async updateRole(
+    roleId: string,
+    updates: Partial<Role>,
+    auditContext?: AuditContext,
+  ): Promise<Role> {
     const role = await this.roleRepository.findOne({ where: { id: roleId } });
     if (!role) {
       throw new Error("Role not found");
@@ -100,17 +105,19 @@ export class RBACService {
       entityId: roleId,
       newValues: updates,
       context: {
-        userId: undefined, // Changed from null to undefined
-        ipAddress: "",
-        userAgent: "",
+        userId: auditContext?.userId,
+        ipAddress: auditContext?.ipAddress || "",
+        userAgent: auditContext?.userAgent || "",
       },
     });
 
     return updatedRole;
   }
 
-  async deleteRole(roleId: string): Promise<void> {
-    const role = await this.roleRepository.findOne({ where: { id: roleId } });
+  async deleteRole(roleId: string, auditContext?: AuditContext): Promise<void> {
+    const role = await this.roleRepository.findOne({
+      where: { id: roleId, isActive: true },
+    });
     if (!role) {
       throw new Error("Role not found");
     }
@@ -127,26 +134,41 @@ export class RBACService {
       throw new Error("Cannot delete role that is assigned to users");
     }
 
-    await this.roleRepository.remove(role);
+    // Soft delete
+    role.isActive = false;
+    await this.roleRepository.save(role);
 
     // Audit log
     await getAuditService().createAuditLog({
       action: "DELETE_ROLE",
       entityType: "Role",
       entityId: roleId,
-      oldValues: { roleName: role.name }, // Changed from 'details' to 'oldValues'
+      oldValues: { roleName: role.name, isActive: true },
+      newValues: { isActive: false },
       context: {
-        userId: undefined, // Changed from null and moved to context
-        ipAddress: "", // Changed from null and moved to context
-        userAgent: "", // Added required property
+        userId: auditContext?.userId,
+        ipAddress: auditContext?.ipAddress || "",
+        userAgent: auditContext?.userAgent || "",
       },
     });
+  }
+
+  async getRoleById(roleId: string): Promise<Role> {
+    const role = await this.roleRepository.findOne({
+      where: { id: roleId, isActive: true },
+      relations: ["rolePermissions", "rolePermissions.permission"],
+    });
+    if (!role) {
+      throw new Error("Role not found");
+    }
+    return role;
   }
 
   // Permission Management
   async assignPermissionToRole(
     roleId: string,
     permissionId: string,
+    auditContext?: AuditContext,
   ): Promise<RolePermission> {
     const existing = await this.rolePermissionRepository.findOne({
       where: { roleId, permissionId },
@@ -170,9 +192,9 @@ export class RBACService {
       entityId: saved.id,
       newValues: { roleId, permissionId },
       context: {
-        userId: undefined,
-        ipAddress: "",
-        userAgent: "",
+        userId: auditContext?.userId,
+        ipAddress: auditContext?.ipAddress || "",
+        userAgent: auditContext?.userAgent || "",
       },
     });
 
@@ -182,6 +204,7 @@ export class RBACService {
   async removePermissionFromRole(
     roleId: string,
     permissionId: string,
+    auditContext?: AuditContext,
   ): Promise<void> {
     const rolePermission = await this.rolePermissionRepository.findOne({
       where: { roleId, permissionId },
@@ -200,9 +223,9 @@ export class RBACService {
       entityId: rolePermission.id,
       newValues: { roleId, permissionId },
       context: {
-        userId: undefined,
-        ipAddress: "",
-        userAgent: "",
+        userId: auditContext?.userId,
+        ipAddress: auditContext?.ipAddress || "",
+        userAgent: auditContext?.userAgent || "",
       },
     });
   }
@@ -212,6 +235,7 @@ export class RBACService {
     userId: number,
     roleId: string,
     merchantId: string,
+    auditContext?: AuditContext,
   ): Promise<UserRole> {
     const existing = await this.userRoleRepository.findOne({
       where: { userId, roleId, merchantId },
@@ -236,19 +260,20 @@ export class RBACService {
       entityId: saved.id,
       newValues: { userId, roleId, merchantId },
       context: {
-        userId: undefined,
-        ipAddress: "",
-        userAgent: "",
+        userId: auditContext?.userId,
+        ipAddress: auditContext?.ipAddress || "",
+        userAgent: auditContext?.userAgent || "",
       },
     });
 
     return saved;
   }
 
-  async removeRoleFromUser(
+  async removeUserRole(
     userId: number,
     roleId: string,
     merchantId: string,
+    auditContext?: AuditContext,
   ): Promise<void> {
     const userRole = await this.userRoleRepository.findOne({
       where: { userId, roleId, merchantId },
@@ -267,11 +292,21 @@ export class RBACService {
       entityId: userRole.id,
       oldValues: { userId, roleId, merchantId },
       context: {
-        userId: undefined,
-        ipAddress: "",
-        userAgent: "",
+        userId: auditContext?.userId,
+        ipAddress: auditContext?.ipAddress || "",
+        userAgent: auditContext?.userAgent || "",
       },
     });
+  }
+
+  // Alias for backward compatibility
+  async removeRoleFromUser(
+    userId: number,
+    roleId: string,
+    merchantId: string,
+    auditContext?: AuditContext,
+  ): Promise<void> {
+    return this.removeUserRole(userId, roleId, merchantId, auditContext);
   }
 
   // Permission Checking

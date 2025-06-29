@@ -123,9 +123,22 @@ export class PaymentService {
     limit?: number;
     status?: "pending" | "completed" | "failed";
     merchantId?: string;
+    userMerchantId?: string; // From authenticated user context
   }): Promise<Payment[]> {
     try {
-      const { page = 1, limit = 10, status, merchantId } = query;
+      const {
+        page = 1,
+        limit = 10,
+        status,
+        merchantId,
+        userMerchantId,
+      } = query;
+
+      // Ensure user can only access their merchant's payments
+      if (merchantId && userMerchantId && merchantId !== userMerchantId) {
+        throw new AppError("Access denied to merchant data", 403);
+      }
+
       const skip = (page - 1) * limit;
 
       const whereConditions: {
@@ -134,6 +147,8 @@ export class PaymentService {
       } = {};
       if (status) whereConditions.status = status;
       if (merchantId) whereConditions.merchantId = merchantId;
+      // If no merchantId specified but userMerchantId exists, use it
+      else if (userMerchantId) whereConditions.merchantId = userMerchantId;
 
       const payments = await this.paymentRepository.find({
         where: whereConditions,

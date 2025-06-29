@@ -297,8 +297,8 @@ export class PaymentController {
     try {
       const payments = await this.paymentService.getPayments(req.query);
       res.status(200).json({
-        status: "success",
-        data: payments,
+        success: true,
+        payments,
       });
     } catch (error) {
       next(error);
