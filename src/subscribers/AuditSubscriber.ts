@@ -16,6 +16,14 @@ import { AsyncLocalStorage } from "async_hooks";
 // Create async local storage for request context
 export const auditContext = new AsyncLocalStorage<AuditContext>();
 
+// Define the union type for audited entities
+type AuditedEntity =
+  | User
+  | PaymentLink
+  | MerchantEntity
+  | MerchantWebhookEntity
+  | Session;
+
 // Define entities that should be audited
 const AUDITED_ENTITIES = [
   User,
@@ -25,28 +33,17 @@ const AUDITED_ENTITIES = [
   Session,
 ];
 
-// Define a union type for audited entities
-type AuditedEntity =
-  | User
-  | PaymentLink
-  | MerchantEntity
-  | MerchantWebhookEntity
-  | Session;
-
 @EventSubscriber()
-export class AuditSubscriber
-  implements EntitySubscriberInterface<AuditedEntity>
-{
-  listenTo(): typeof User {
-    return User;
-  }
-
+export class AuditSubscriber implements EntitySubscriberInterface {
   /**
    * Called after entity insertion.
    */
   async afterInsert(event: InsertEvent<AuditedEntity>) {
     const context = auditContext.getStore();
-    if (!context) return;
+    if (!context) {
+      console.warn("No audit context found for insert event");
+      return;
+    }
 
     // Check if this entity should be audited
     if (!this.shouldAuditEntity(event.entity)) return;
@@ -60,7 +57,7 @@ export class AuditSubscriber
         context,
       });
     } catch (error) {
-      console.error("Failed to create audit log for INSERT:", error);
+      console.error("Failed to create audit log for insert:", error);
     }
   }
 
@@ -69,7 +66,10 @@ export class AuditSubscriber
    */
   async afterUpdate(event: UpdateEvent<AuditedEntity>) {
     const context = auditContext.getStore();
-    if (!context) return;
+    if (!context) {
+      console.warn("No audit context found for update event");
+      return;
+    }
 
     // Check if this entity should be audited
     if (!this.shouldAuditEntity(event.entity)) return;
@@ -84,7 +84,7 @@ export class AuditSubscriber
         context,
       });
     } catch (error) {
-      console.error("Failed to create audit log for UPDATE:", error);
+      console.error("Failed to create audit log for update:", error);
     }
   }
 
@@ -93,7 +93,10 @@ export class AuditSubscriber
    */
   async afterRemove(event: RemoveEvent<AuditedEntity>) {
     const context = auditContext.getStore();
-    if (!context) return;
+    if (!context) {
+      console.warn("No audit context found for remove event");
+      return;
+    }
 
     const entityToCheck = event.entity || event.databaseEntity;
     if (!this.shouldAuditEntity(entityToCheck)) return;
@@ -107,7 +110,7 @@ export class AuditSubscriber
         context,
       });
     } catch (error) {
-      console.error("Failed to create audit log for DELETE:", error);
+      console.error("Failed to create audit log for remove:", error);
     }
   }
 

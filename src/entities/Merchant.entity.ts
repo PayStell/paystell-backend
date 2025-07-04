@@ -29,22 +29,22 @@ export class MerchantEntity {
   @Column({ default: true })
   isActive: boolean;
   @Column({ nullable: true })
-  business_name: string;
+  business_name: string | null;
 
   @Column({ nullable: true })
-  business_description: string;
+  business_description: string | null;
 
   @Column({ nullable: true })
-  business_address: string;
+  business_address: string | null;
 
   @Column({ nullable: true })
-  business_phone: string;
+  business_phone: string | null;
 
   @Column({ nullable: true })
-  business_email: string;
+  business_email: string | null;
 
   @Column({ nullable: true })
-  business_logo_url: string;
+  business_logo_url: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

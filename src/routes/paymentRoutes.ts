@@ -1,4 +1,4 @@
-import express, { RequestHandler } from "express";
+import { Router, RequestHandler, Response, NextFunction } from "express";
 import { PaymentController } from "../controllers/PaymentController";
 import { handleValidationErrors } from "../middlewares/validationErrorHandler";
 import {
@@ -13,8 +13,13 @@ import {
   validateTransactionVerification,
 } from "../validators/paymentValidators";
 import { fraudDetectionMiddleware } from "../middlewares/fraudDetection.middleware";
+import {
+  requirePermission,
+  AuthenticatedRequest,
+} from "../middlewares/permissionMiddleware";
+import { PermissionResource, PermissionAction } from "../entities/Permission";
 
-const router = express.Router();
+const router = Router();
 const paymentController = new PaymentController();
 
 /**
@@ -91,6 +96,45 @@ router.get(
   "/generate-nonce",
   tokenOperationsRateLimit,
   paymentController.generateNonce.bind(paymentController) as RequestHandler,
+);
+
+/**
+ * @route GET /api/payments
+ * @desc Get all payments for authenticated user
+ * @access Private
+ */
+router.get(
+  "/",
+  requirePermission(PermissionResource.PAYMENTS, PermissionAction.READ),
+  async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      await paymentController.getPayments(req, res, next);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Update the existing POST route to include permission check
+router.post(
+  "/",
+  requirePermission(PermissionResource.PAYMENTS, PermissionAction.CREATE),
+  paymentCreationRateLimit,
+  async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      await paymentController.createPayment(req, res, next);
+    } catch (error) {
+      next(error);
+    }
+  },
 );
 
 export { router as paymentRouter };

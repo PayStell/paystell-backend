@@ -117,4 +117,50 @@ export class PaymentService {
 
     return server.submitTransaction(transaction);
   }
+
+  async getPayments(query: {
+    page?: number;
+    limit?: number;
+    status?: "pending" | "completed" | "failed";
+    merchantId?: string;
+    userMerchantId?: string; // From authenticated user context
+  }): Promise<Payment[]> {
+    try {
+      const {
+        page = 1,
+        limit = 10,
+        status,
+        merchantId,
+        userMerchantId,
+      } = query;
+
+      // Ensure user can only access their merchant's payments
+      if (merchantId && userMerchantId && merchantId !== userMerchantId) {
+        throw new AppError("Access denied to merchant data", 403);
+      }
+
+      const skip = (page - 1) * limit;
+
+      const whereConditions: {
+        status?: "pending" | "completed" | "failed";
+        merchantId?: string;
+      } = {};
+      if (status) whereConditions.status = status;
+      if (merchantId) whereConditions.merchantId = merchantId;
+      // If no merchantId specified but userMerchantId exists, use it
+      else if (userMerchantId) whereConditions.merchantId = userMerchantId;
+
+      const payments = await this.paymentRepository.find({
+        where: whereConditions,
+        skip,
+        take: limit,
+        order: { createdAt: "DESC" },
+        relations: ["paymentLink"],
+      });
+
+      return payments;
+    } catch (error) {
+      throw new AppError(`Failed to get payments: ${error}`, 500);
+    }
+  }
 }

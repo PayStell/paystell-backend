@@ -2,12 +2,6 @@ import { Repository } from "typeorm";
 import AppDataSource from "../config/db";
 import { AuditLog } from "../entities/AuditLog";
 import { Request } from "express";
-import { User } from "../entities/User";
-
-interface AuthenticatedRequest extends Request {
-  user?: User;
-  validatedIp?: string;
-}
 
 export interface AuditContext {
   userId?: string;
@@ -20,35 +14,27 @@ export interface AuditContext {
 export interface CreateAuditLogParams {
   entityType: string;
   entityId: string;
-  action: "CREATE" | "UPDATE" | "DELETE";
+  action:
+    | "CREATE"
+    | "UPDATE"
+    | "DELETE"
+    | "CREATE_ROLE"
+    | "UPDATE_ROLE"
+    | "DELETE_ROLE"
+    | "ASSIGN_PERMISSION"
+    | "REMOVE_PERMISSION"
+    | "ASSIGN_USER_ROLE"
+    | "REMOVE_USER_ROLE";
   oldValues?: Record<string, unknown>;
   newValues?: Record<string, unknown>;
   context: AuditContext;
 }
 
 export class AuditService {
-  private static instance: AuditService;
-  private _auditLogRepository?: Repository<AuditLog>;
+  private auditLogRepository: Repository<AuditLog>;
 
-  private constructor() {
-    // Private constructor to enforce singleton
-  }
-
-  public static getInstance(): AuditService {
-    if (!AuditService.instance) {
-      AuditService.instance = new AuditService();
-    }
-    return AuditService.instance;
-  }
-
-  private get auditLogRepository(): Repository<AuditLog> {
-    if (!this._auditLogRepository) {
-      if (!AppDataSource.isInitialized) {
-        throw new Error("Database connection not initialized. Cannot access audit log repository.");
-      }
-      this._auditLogRepository = AppDataSource.getRepository(AuditLog);
-    }
-    return this._auditLogRepository;
+  constructor() {
+    this.auditLogRepository = AppDataSource.getRepository(AuditLog);
   }
 
   async createAuditLog(params: CreateAuditLogParams): Promise<AuditLog> {
@@ -163,18 +149,24 @@ export class AuditService {
 
   static extractContextFromRequest(req: Request): AuditContext {
     return {
-      userId: (req as AuthenticatedRequest).user?.id?.toString(),
-      userEmail: (req as AuthenticatedRequest).user?.email,
+      userId: req.user?.id?.toString(),
+      userEmail: req.user?.email,
       ipAddress:
-        (req as AuthenticatedRequest).validatedIp ||
-        req.ip ||
-        req.connection.remoteAddress ||
-        "unknown",
+        req.validatedIp || req.ip || req.connection.remoteAddress || "unknown",
       userAgent: req.get("User-Agent") || "unknown",
       sessionId: req.headers["x-session-id"] as string,
     };
   }
 }
 
-// Lazy singleton instance getter
-export const getAuditService = (): AuditService => AuditService.getInstance();
+// Remove this line:
+// export const auditService = new AuditService();
+
+let auditServiceInstance: AuditService | null = null;
+
+export const getAuditService = (): AuditService => {
+  if (!auditServiceInstance) {
+    auditServiceInstance = new AuditService();
+  }
+  return auditServiceInstance;
+};
