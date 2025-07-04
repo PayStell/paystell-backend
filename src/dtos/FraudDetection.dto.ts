@@ -1,7 +1,23 @@
-import { IsNumber, IsEnum, IsBoolean, IsArray, IsOptional, IsString, IsObject, Min, Max, ValidateNested, IsUUID } from 'class-validator';
-import { Type } from 'class-transformer';
-import { RiskLevel, FraudAlertStatus, FraudAlert } from '../entities/FraudAlert';
-import { Transaction } from '../entities/Transaction';
+import {
+  IsNumber,
+  IsEnum,
+  IsBoolean,
+  IsArray,
+  IsOptional,
+  IsString,
+  IsObject,
+  Min,
+  Max,
+  ValidateNested,
+  IsUUID,
+} from "class-validator";
+import { Type } from "class-transformer";
+import {
+  RiskLevel,
+  FraudAlertStatus,
+  FraudAlert,
+} from "../entities/FraudAlert";
+import { Transaction } from "../entities/Transaction";
 
 export class FraudCheckResultDTO {
   @IsNumber()

@@ -6,7 +6,7 @@ export const fraudAlertsRateLimit = rateLimit({
   max: 100, // limit each IP to 100 requests per windowMs
   message: {
     success: false,
-    error: "Too many fraud alert requests, please try again later"
+    error: "Too many fraud alert requests, please try again later",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -18,7 +18,7 @@ export const fraudConfigRateLimit = rateLimit({
   max: 10, // limit each IP to 10 config updates per windowMs
   message: {
     success: false,
-    error: "Too many configuration update requests, please try again later"
+    error: "Too many configuration update requests, please try again later",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -30,7 +30,7 @@ export const fraudStatsRateLimit = rateLimit({
   max: 30, // limit each IP to 30 stats requests per minute
   message: {
     success: false,
-    error: "Too many statistics requests, please try again later"
+    error: "Too many statistics requests, please try again later",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -42,7 +42,7 @@ export const fraudReviewRateLimit = rateLimit({
   max: 20, // limit each IP to 20 reviews per minute
   message: {
     success: false,
-    error: "Too many review requests, please try again later"
+    error: "Too many review requests, please try again later",
   },
   standardHeaders: true,
   legacyHeaders: false,

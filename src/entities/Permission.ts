@@ -33,7 +33,9 @@ export enum PermissionResource {
 }
 
 @Entity("permissions")
-@Index("UQ_permission_resource_action", ["resource", "action"], { unique: true })
+@Index("UQ_permission_resource_action", ["resource", "action"], {
+  unique: true,
+})
 export class Permission {
   @PrimaryGeneratedColumn("uuid")
   id!: string;

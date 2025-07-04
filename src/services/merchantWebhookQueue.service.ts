@@ -90,7 +90,9 @@ export class MerchantWebhookQueueService {
 
           // If notification fails but doesn't throw an error
           if (!result.success) {
-            throw new Error(result.errorMessage || "Webhook notification failed");
+            throw new Error(
+              result.errorMessage || "Webhook notification failed",
+            );
           }
 
           // Create webhook log entry for successful delivery
@@ -132,7 +134,8 @@ export class MerchantWebhookQueueService {
           webhookLog.webhookUrl = merchantWebhook.url;
           webhookLog.status = "failed";
           webhookLog.payload = webhookPayload;
-          webhookLog.errorMessage = error instanceof Error ? error.message : "Unknown error";
+          webhookLog.errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
           webhookLog.retryCount = attemptsMade;
           await this.webhookLogRepository.save(webhookLog);
 
@@ -442,8 +445,8 @@ export class MerchantWebhookQueueService {
       const merchantSuccessRate =
         merchantTotal > 0
           ? (statusCounts[MerchantWebhookEventEntityStatus.COMPLETED] /
-            merchantTotal) *
-          100
+              merchantTotal) *
+            100
           : 100;
 
       // Prepare merchant metrics

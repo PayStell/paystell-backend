@@ -1,11 +1,21 @@
 import { Repository, LessThanOrEqual } from "typeorm";
 import AppDataSource from "../config/db";
-import { Subscription, SubscriptionStatus, BillingInterval } from "../entities/Subscription";
+import {
+  Subscription,
+  SubscriptionStatus,
+  BillingInterval,
+} from "../entities/Subscription";
 import { BillingCycle, BillingCycleStatus } from "../entities/BillingCycle";
-import { SubscriptionEvent, SubscriptionEventType } from "../entities/SubscriptionEvent";
+import {
+  SubscriptionEvent,
+  SubscriptionEventType,
+} from "../entities/SubscriptionEvent";
 import { PaymentService } from "./PaymentService";
 import { NotificationService } from "./inAppNotificationService";
-import { NotificationType, NotificationCategory } from "../entities/InAppNotification.entity";
+import {
+  NotificationType,
+  NotificationCategory,
+} from "../entities/InAppNotification.entity";
 import { generatePaymentId } from "../utils/generatePaymentId";
 import { AppError } from "../utils/AppError";
 import { logInfo, logError } from "../utils/logger";
@@ -38,7 +48,9 @@ export class SubscriptionService {
     this.notificationService = new NotificationService();
   }
 
-  async createSubscription(params: CreateSubscriptionParams): Promise<Subscription> {
+  async createSubscription(
+    params: CreateSubscriptionParams,
+  ): Promise<Subscription> {
     const subscription = new Subscription();
     subscription.subscriptionId = generatePaymentId();
     subscription.customerId = params.customerId;
@@ -53,12 +65,13 @@ export class SubscriptionService {
     subscription.nextBillingDate = this.calculateNextBillingDate(
       subscription.startDate,
       params.billingInterval,
-      params.intervalCount || 1
+      params.intervalCount || 1,
     );
     subscription.metadata = params.metadata;
     subscription.status = SubscriptionStatus.ACTIVE;
 
-    const savedSubscription = await this.subscriptionRepository.save(subscription);
+    const savedSubscription =
+      await this.subscriptionRepository.save(subscription);
 
     // Create first billing cycle
     await this.createBillingCycle(savedSubscription);
@@ -95,7 +108,9 @@ export class SubscriptionService {
     return subscription;
   }
 
-  async getSubscriptionsByMerchant(merchantId: string): Promise<Subscription[]> {
+  async getSubscriptionsByMerchant(
+    merchantId: string,
+  ): Promise<Subscription[]> {
     return this.subscriptionRepository.find({
       where: { merchantId },
       relations: ["billingCycles"],
@@ -105,7 +120,7 @@ export class SubscriptionService {
 
   async pauseSubscription(subscriptionId: string): Promise<Subscription> {
     const subscription = await this.getSubscription(subscriptionId);
-    
+
     subscription.status = SubscriptionStatus.PAUSED;
     const updated = await this.subscriptionRepository.save(subscription);
 
@@ -115,12 +130,12 @@ export class SubscriptionService {
 
   async resumeSubscription(subscriptionId: string): Promise<Subscription> {
     const subscription = await this.getSubscription(subscriptionId);
-    
+
     subscription.status = SubscriptionStatus.ACTIVE;
     subscription.nextBillingDate = this.calculateNextBillingDate(
       new Date(),
       subscription.billingInterval,
-      subscription.intervalCount
+      subscription.intervalCount,
     );
 
     const updated = await this.subscriptionRepository.save(subscription);
@@ -130,7 +145,7 @@ export class SubscriptionService {
 
   async cancelSubscription(subscriptionId: string): Promise<Subscription> {
     const subscription = await this.getSubscription(subscriptionId);
-    
+
     subscription.status = SubscriptionStatus.CANCELLED;
     subscription.endDate = new Date();
 
@@ -169,7 +184,7 @@ export class SubscriptionService {
         cycle.subscription.tokenAddress,
         `sub_${cycle.id}`,
         Math.floor(Date.now() / 1000) + 3600, // 1 hour expiration
-        generatePaymentId()
+        generatePaymentId(),
       );
 
       cycle.status = BillingCycleStatus.COMPLETED;
@@ -182,7 +197,7 @@ export class SubscriptionService {
       await this.logEvent(
         cycle.subscription.id,
         SubscriptionEventType.PAYMENT_SUCCESS,
-        { billingCycleId: cycle.id }
+        { billingCycleId: cycle.id },
       );
 
       logInfo(`Payment processed successfully for cycle ${cycle.id}`);
@@ -191,7 +206,10 @@ export class SubscriptionService {
     }
   }
 
-  private async handlePaymentFailure(cycle: BillingCycle, error: Error): Promise<void> {
+  private async handlePaymentFailure(
+    cycle: BillingCycle,
+    error: Error,
+  ): Promise<void> {
     cycle.status = BillingCycleStatus.FAILED;
     cycle.failureReason = error.message;
     cycle.retryCount += 1;
@@ -202,22 +220,24 @@ export class SubscriptionService {
 
     if (cycle.retryCount < subscription.maxRetries) {
       // Schedule retry
-      cycle.nextRetryAt = new Date(Date.now() + this.getRetryDelay(cycle.retryCount));
+      cycle.nextRetryAt = new Date(
+        Date.now() + this.getRetryDelay(cycle.retryCount),
+      );
       cycle.status = BillingCycleStatus.PENDING;
 
       await this.logEvent(
         subscription.id,
         SubscriptionEventType.PAYMENT_RETRY,
-        { billingCycleId: cycle.id, retryCount: cycle.retryCount }
+        { billingCycleId: cycle.id, retryCount: cycle.retryCount },
       );
     } else {
       // Max retries reached, start dunning process
       subscription.status = SubscriptionStatus.PAST_DUE;
-      
+
       await this.logEvent(
         subscription.id,
         SubscriptionEventType.DUNNING_STARTED,
-        { billingCycleId: cycle.id }
+        { billingCycleId: cycle.id },
       );
 
       // Send notification
@@ -240,7 +260,9 @@ export class SubscriptionService {
     });
   }
 
-  private async createBillingCycle(subscription: Subscription): Promise<BillingCycle> {
+  private async createBillingCycle(
+    subscription: Subscription,
+  ): Promise<BillingCycle> {
     const cycle = new BillingCycle();
     cycle.subscriptionId = subscription.id;
     cycle.amount = subscription.amount;
@@ -252,7 +274,7 @@ export class SubscriptionService {
     subscription.nextBillingDate = this.calculateNextBillingDate(
       subscription.nextBillingDate,
       subscription.billingInterval,
-      subscription.intervalCount
+      subscription.intervalCount,
     );
     await this.subscriptionRepository.save(subscription);
 
@@ -262,13 +284,13 @@ export class SubscriptionService {
   private calculateNextBillingDate(
     currentDate: Date,
     interval: BillingInterval,
-    count: number
+    count: number,
   ): Date {
     const nextDate = new Date(currentDate);
 
     switch (interval) {
       case BillingInterval.WEEKLY:
-        nextDate.setDate(nextDate.getDate() + (7 * count));
+        nextDate.setDate(nextDate.getDate() + 7 * count);
         break;
       case BillingInterval.MONTHLY:
         nextDate.setMonth(nextDate.getMonth() + count);
@@ -292,7 +314,7 @@ export class SubscriptionService {
   private async logEvent(
     subscriptionId: string,
     eventType: SubscriptionEventType,
-    eventData?: Record<string, unknown>
+    eventData?: Record<string, unknown>,
   ): Promise<void> {
     const event = new SubscriptionEvent();
     event.subscriptionId = subscriptionId;

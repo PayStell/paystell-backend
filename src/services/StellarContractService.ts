@@ -51,7 +51,9 @@ export class StellarContractService {
 
     const contractId = config.SOROBAN_CONTRACT_ID;
     if (!contractId || contractId === "") {
-      console.warn("⚠️  SOROBAN_CONTRACT_ID not configured - Stellar features will be disabled");
+      console.warn(
+        "⚠️  SOROBAN_CONTRACT_ID not configured - Stellar features will be disabled",
+      );
       this.contractId = ""; // Empty string to indicate no contract
     } else {
       this.contractId = contractId;
@@ -89,7 +91,9 @@ export class StellarContractService {
     });
 
     if (!process.env.CONTRACT_ADMIN_SECRET) {
-      console.warn("⚠️  CONTRACT_ADMIN_SECRET not configured - Using random keypair for development");
+      console.warn(
+        "⚠️  CONTRACT_ADMIN_SECRET not configured - Using random keypair for development",
+      );
       this.adminKeypair = Keypair.random();
     } else {
       this.adminKeypair = Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET);

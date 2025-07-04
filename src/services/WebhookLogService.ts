@@ -8,7 +8,9 @@ export class WebhookLogService {
   private get webhookLogRepository(): Repository<WebhookLog> {
     if (!this._webhookLogRepository) {
       if (!AppDataSource.isInitialized) {
-        throw new Error("Database connection not initialized. Cannot access webhook log repository.");
+        throw new Error(
+          "Database connection not initialized. Cannot access webhook log repository.",
+        );
       }
       this._webhookLogRepository = AppDataSource.getRepository(WebhookLog);
     }
@@ -89,8 +91,14 @@ export class WebhookLogService {
 
     const [total, successful, failed] = await Promise.all([
       query.getCount(),
-      query.clone().andWhere("webhook_log.status = :status", { status: "success" }).getCount(),
-      query.clone().andWhere("webhook_log.status = :status", { status: "failed" }).getCount(),
+      query
+        .clone()
+        .andWhere("webhook_log.status = :status", { status: "success" })
+        .getCount(),
+      query
+        .clone()
+        .andWhere("webhook_log.status = :status", { status: "failed" })
+        .getCount(),
     ]);
 
     const successRate = total > 0 ? (successful / total) * 100 : 100;
@@ -118,4 +126,4 @@ export class WebhookLogService {
 
     return query.getMany();
   }
-} 
+}
