@@ -3,6 +3,7 @@ import { Request } from "express-serve-static-core";
 import { validateWebhookUrl } from "../validators/webhook.validators";
 import crypto from "crypto";
 import { Merchant, MerchantWebhook } from "../interfaces/webhook.interfaces";
+import { CreateMerchantDTO } from "../dtos/CreateMerchantDTO";
 import { MerchantAuthService } from "../services/merchant.service";
 import { WebhookService } from "../services/webhook.service";
 
@@ -19,15 +20,10 @@ export class MerchantController {
       const secret = crypto.randomBytes(32).toString("hex");
 
       // Create merchant data
-      const merchantData: Merchant = {
-        id: crypto.randomUUID(),
+      const merchantData: CreateMerchantDTO = {
         name,
         email,
-        apiKey,
-        secret,
         isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       };
 
       // Register merchant in database
