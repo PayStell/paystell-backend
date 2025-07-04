@@ -115,7 +115,6 @@ describe("MerchantWebhookQueueService", () => {
       WebhookService as unknown as jest.Mocked<WebhookService>;
     _mockNotificationService =
       NotificationService as unknown as jest.Mocked<NotificationService>;
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     mockRepository = require("../../config/db").getRepository();
   });
 
