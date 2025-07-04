@@ -4,6 +4,7 @@ import AppDataSource from "./config/db";
 
 async function main() {
   try {
+    
     // Initialize the database connection
     await AppDataSource.initialize();
     console.log("✅ Database connected successfully");

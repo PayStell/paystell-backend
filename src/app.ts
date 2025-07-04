@@ -36,8 +36,8 @@ import { subscriptionScheduler } from "./utils/subscriptionScheduler";
 import logger from "./utils/logger";
 import { oauthConfig } from "./config/auth0Config";
 import { auth } from "express-openid-connect";
-import { auditMiddleware } from "./middlewares/auditMiddleware";
-import routes from "./routes";
+// import { auditMiddleware } from "./middlewares/auditMiddleware";
+// import routes from "./routes";
 
 // Initialize express app
 const app = express();
@@ -87,14 +87,30 @@ startExpiredSessionCleanupCronJobs();
 
 // Start subscription scheduler
 subscriptionScheduler.start();
+try {
+    startExpiredSessionCleanupCronJobs();
+  subscriptionScheduler.start();
+} catch (error) {
+  console.error("❌ Error starting cron jobs or subscription scheduler:", error);
+  process.exit(1);
+}
 
 // Log application startup
 logger.info("Application started successfully");
-
-app.use(auth(oauthConfig));
+console.log("Auth0 Config:", {
+  baseURL: oauthConfig.baseURL,
+  clientID: oauthConfig.clientID,
+  issuerBaseURL: oauthConfig.issuerBaseURL,
+});
+try {
+  app.use(auth(oauthConfig));
+} catch (error) {
+    console.error("❌ Error initializing Auth0 middleware:", error);
+  process.exit(1);
+}
 
 // Add audit middleware after auth middleware but before routes
-app.use(auditMiddleware);
+// app.use(auditMiddleware);
 
 // Define routes
 app.use("/health", healthRouter);
@@ -107,11 +123,11 @@ app.use("/users", userRoutes);
 app.use("/merchants", merchantRoutes);
 app.use("/webhook-queue/merchant", merchantWebhookQueueRoutes);
 app.use("/reports/transactions", transactionReportsRoutes);
-app.use("/api/v1/stellar", stellarContractRoutes);
-app.use("/token", tokenRoutes);
-app.use("/payment", paymentRouter);
+// app.use("/api/v1/stellar", stellarContractRoutes);
+// app.use("/token", tokenRoutes);
+// app.use("/payment", paymentRouter);
 app.use("/subscriptions", subscriptionRouter);
-app.use("/", routes);
+// app.use("/", routes);
 
 // Error handling middleware
 const customErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
