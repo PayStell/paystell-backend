@@ -93,7 +93,6 @@ describe("SubscriptionService", () => {
     });
 
     // Mock the service instances
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const SubscriptionServiceClass =
       require("../../services/SubscriptionService").SubscriptionService;
     subscriptionService = new SubscriptionServiceClass();
