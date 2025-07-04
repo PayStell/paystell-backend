@@ -27,8 +27,28 @@ export interface CreateAuditLogParams {
 }
 
 export class AuditService {
+  private static instance: AuditService;
+  private _auditLogRepository?: Repository<AuditLog>;
+
+  private constructor() {
+    // Private constructor to enforce singleton
+  }
+
+  public static getInstance(): AuditService {
+    if (!AuditService.instance) {
+      AuditService.instance = new AuditService();
+    }
+    return AuditService.instance;
+  }
+
   private get auditLogRepository(): Repository<AuditLog> {
-    return AppDataSource.getRepository(AuditLog);
+    if (!this._auditLogRepository) {
+      if (!AppDataSource.isInitialized) {
+        throw new Error("Database connection not initialized. Cannot access audit log repository.");
+      }
+      this._auditLogRepository = AppDataSource.getRepository(AuditLog);
+    }
+    return this._auditLogRepository;
   }
 
   async createAuditLog(params: CreateAuditLogParams): Promise<AuditLog> {
@@ -156,4 +176,5 @@ export class AuditService {
   }
 }
 
-export const auditService = new AuditService();
+// Lazy singleton instance getter
+export const getAuditService = (): AuditService => AuditService.getInstance();
