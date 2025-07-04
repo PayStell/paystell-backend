@@ -26,6 +26,7 @@ export class PaymentLinkService {
     let counter = 1;
     let uniqueSlug = slug;
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const existingLink = await this.paymentLinkRepository.findOne({
         where: { slug: uniqueSlug },
