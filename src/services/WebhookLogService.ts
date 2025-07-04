@@ -3,10 +3,16 @@ import { WebhookLog } from "../entities/WebhookLog";
 import AppDataSource from "../config/db";
 
 export class WebhookLogService {
-  private webhookLogRepository: Repository<WebhookLog>;
+  private _webhookLogRepository?: Repository<WebhookLog>;
 
-  constructor() {
-    this.webhookLogRepository = AppDataSource.getRepository(WebhookLog);
+  private get webhookLogRepository(): Repository<WebhookLog> {
+    if (!this._webhookLogRepository) {
+      if (!AppDataSource.isInitialized) {
+        throw new Error("Database connection not initialized. Cannot access webhook log repository.");
+      }
+      this._webhookLogRepository = AppDataSource.getRepository(WebhookLog);
+    }
+    return this._webhookLogRepository;
   }
 
   /**
