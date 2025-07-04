@@ -64,7 +64,7 @@ import {
     failureReason?: string;
   
     @Column({ type: "json", nullable: true })
-    paymentData?: Record<string, any>;
+    paymentData?: Record<string, unknown>;
   
     @CreateDateColumn()
     createdAt!: Date;

@@ -90,7 +90,7 @@ import {
     maxRetries!: number;
   
     @Column({ type: "json", nullable: true })
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
   
     @OneToMany(() => BillingCycle, (billingCycle) => billingCycle.subscription)
     billingCycles!: BillingCycle[];

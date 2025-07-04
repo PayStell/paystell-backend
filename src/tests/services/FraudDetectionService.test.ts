@@ -1,7 +1,9 @@
 import { FraudDetectionService } from "../../services/FraudDetectionService";
 import { Transaction, TransactionStatus, PaymentMethod } from "../../entities/Transaction";
-import { RiskLevel, FraudAlertStatus } from "../../entities/FraudAlert";
+import { RiskLevel, FraudAlertStatus, FraudAlert } from "../../entities/FraudAlert";
 import { MerchantFraudConfig } from "../../entities/MerchantFraudConfig";
+import { MerchantEntity } from "../../entities/Merchant.entity";
+import { Repository } from "typeorm";
 import AppDataSource from "../../config/db";
 
 // Mock the database connection
@@ -11,10 +13,10 @@ jest.mock("../../config/db", () => ({
 
 describe("FraudDetectionService", () => {
   let fraudService: FraudDetectionService;
-  let mockTransactionRepo: any;
-  let mockFraudAlertRepo: any;
-  let mockMerchantConfigRepo: any;
-  let mockMerchantRepo: any;
+  let mockTransactionRepo: jest.Mocked<Partial<Repository<Transaction>>>;
+  let mockFraudAlertRepo: jest.Mocked<Partial<Repository<FraudAlert>>>;
+  let mockMerchantConfigRepo: jest.Mocked<Partial<Repository<MerchantFraudConfig>>>;
+  let mockMerchantRepo: jest.Mocked<Partial<Repository<MerchantEntity>>>;
 
   const createMockTransaction = (overrides: Partial<Transaction> = {}): Transaction => ({
     id: "test-transaction-id",
@@ -52,7 +54,7 @@ describe("FraudDetectionService", () => {
     ...overrides,
   } as MerchantFraudConfig);
 
-  const createMockAlert = (overrides: any = {}) => ({
+  const createMockAlert = (overrides: Partial<FraudAlert> = {}): FraudAlert => ({
     id: "alert-id",
     transactionId: "test-transaction-id",
     merchantId: "test-merchant-id",
@@ -63,10 +65,13 @@ describe("FraudDetectionService", () => {
     status: FraudAlertStatus.PENDING,
     rulesTriggered: [],
     metadata: {},
+    reviewNotes: "",
+    reviewedBy: "",
+    reviewedAt: new Date(),
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
-  });
+  } as FraudAlert);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -101,8 +106,8 @@ describe("FraudDetectionService", () => {
       getRawOne: jest.fn(),
     };
 
-    mockTransactionRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder);
-    mockFraudAlertRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+    (mockTransactionRepo.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
+    (mockFraudAlertRepo.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
 
     (AppDataSource.getRepository as jest.Mock).mockImplementation((entity) => {
       if (entity === Transaction) return mockTransactionRepo;
@@ -119,9 +124,9 @@ describe("FraudDetectionService", () => {
       const transaction = createMockTransaction();
       const config = createMockConfig();
 
-      mockMerchantConfigRepo.findOne.mockResolvedValue(config);
-      mockTransactionRepo.count.mockResolvedValue(0);
-      mockTransactionRepo.find.mockResolvedValue([]);
+      (mockMerchantConfigRepo.findOne as jest.Mock).mockResolvedValue(config);
+      (mockTransactionRepo.count as jest.Mock).mockResolvedValue(0);
+      (mockTransactionRepo.find as jest.Mock).mockResolvedValue([]);
       
       const mockQueryBuilder = {
         select: jest.fn().mockReturnThis(),
@@ -129,7 +134,7 @@ describe("FraudDetectionService", () => {
         andWhere: jest.fn().mockReturnThis(),
         getRawOne: jest.fn().mockResolvedValue({ total: "100" }),
       };
-      mockTransactionRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+      (mockTransactionRepo.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
 
       const result = await fraudService.checkTransaction({ transaction });
 
@@ -152,10 +157,10 @@ describe("FraudDetectionService", () => {
         rulesTriggered: ["AMOUNT_EXCEEDS_LIMIT"],
       });
 
-      mockMerchantConfigRepo.findOne.mockResolvedValue(config);
-      mockTransactionRepo.count.mockResolvedValue(0);
-      mockTransactionRepo.find.mockResolvedValue([]);
-      mockFraudAlertRepo.save.mockResolvedValue(mockAlert);
+      (mockMerchantConfigRepo.findOne as jest.Mock).mockResolvedValue(config);
+      (mockTransactionRepo.count as jest.Mock).mockResolvedValue(0);
+      (mockTransactionRepo.find as jest.Mock).mockResolvedValue([]);
+      (mockFraudAlertRepo.save as jest.Mock).mockResolvedValue(mockAlert);
 
       const result = await fraudService.checkTransaction({ transaction });
 
@@ -173,8 +178,8 @@ describe("FraudDetectionService", () => {
         rulesTriggered: ["VELOCITY_HOURLY_EXCEEDED", "VELOCITY_DAILY_EXCEEDED", "DAILY_AMOUNT_LIMIT_EXCEEDED"],
       });
 
-      mockMerchantConfigRepo.findOne.mockResolvedValue(config);
-      mockTransactionRepo.count
+      (mockMerchantConfigRepo.findOne as jest.Mock).mockResolvedValue(config);
+      (mockTransactionRepo.count as jest.Mock)
         .mockResolvedValueOnce(15) // hourly count
         .mockResolvedValueOnce(60); // daily count
       
@@ -184,8 +189,8 @@ describe("FraudDetectionService", () => {
         andWhere: jest.fn().mockReturnThis(),
         getRawOne: jest.fn().mockResolvedValue({ total: "4950" }),
       };
-      mockTransactionRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder);
-      mockTransactionRepo.find.mockResolvedValue([]);
+      (mockTransactionRepo.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
+      (mockTransactionRepo.find as jest.Mock).mockResolvedValue([]);
 
       const createAlertSpy = jest.spyOn(fraudService, 'createFraudAlert').mockResolvedValue(mockAlert);
 
@@ -204,8 +209,8 @@ describe("FraudDetectionService", () => {
       const transaction = createMockTransaction({ amount: 500 });
       const config = createMockConfig();
 
-      mockMerchantConfigRepo.findOne.mockResolvedValue(config);
-      mockTransactionRepo.count
+      (mockMerchantConfigRepo.findOne as jest.Mock).mockResolvedValue(config);
+      (mockTransactionRepo.count as jest.Mock)
         .mockResolvedValueOnce(0) // hourly count
         .mockResolvedValueOnce(0) // daily count
         .mockResolvedValueOnce(5) // same amount count
@@ -217,8 +222,8 @@ describe("FraudDetectionService", () => {
         andWhere: jest.fn().mockReturnThis(),
         getRawOne: jest.fn().mockResolvedValue({ total: "100" }),
       };
-      mockTransactionRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder);
-      mockTransactionRepo.find.mockResolvedValue([]);
+      (mockTransactionRepo.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
+      (mockTransactionRepo.find as jest.Mock).mockResolvedValue([]);
 
       const result = await fraudService.checkTransaction({ transaction });
 
@@ -233,8 +238,8 @@ describe("FraudDetectionService", () => {
       const transaction = createMockTransaction();
       const config = createMockConfig();
 
-      mockMerchantConfigRepo.findOne.mockResolvedValue(config);
-      mockTransactionRepo.count
+      (mockMerchantConfigRepo.findOne as jest.Mock).mockResolvedValue(config);
+      (mockTransactionRepo.count as jest.Mock)
         .mockResolvedValueOnce(0) // hourly count
         .mockResolvedValueOnce(0) // daily count
         .mockResolvedValueOnce(0) // same amount count
@@ -246,8 +251,8 @@ describe("FraudDetectionService", () => {
         andWhere: jest.fn().mockReturnThis(),
         getRawOne: jest.fn().mockResolvedValue({ total: "100" }),
       };
-      mockTransactionRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder);
-      mockTransactionRepo.find.mockResolvedValue([]);
+      (mockTransactionRepo.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
+      (mockTransactionRepo.find as jest.Mock).mockResolvedValue([]);
 
       const result = await fraudService.checkTransaction({ transaction });
 
@@ -266,9 +271,9 @@ describe("FraudDetectionService", () => {
         createMockTransaction({ amount: 100 + i })
       );
 
-      mockMerchantConfigRepo.findOne.mockResolvedValue(config);
-      mockTransactionRepo.count.mockResolvedValue(0);
-      mockTransactionRepo.find.mockResolvedValue(recentTransactions);
+      (mockMerchantConfigRepo.findOne as jest.Mock).mockResolvedValue(config);
+      (mockTransactionRepo.count as jest.Mock).mockResolvedValue(0);
+      (mockTransactionRepo.find as jest.Mock).mockResolvedValue(recentTransactions);
       
       const mockQueryBuilder = {
         select: jest.fn().mockReturnThis(),
@@ -276,7 +281,7 @@ describe("FraudDetectionService", () => {
         andWhere: jest.fn().mockReturnThis(),
         getRawOne: jest.fn().mockResolvedValue({ total: "100" }),
       };
-      mockTransactionRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+      (mockTransactionRepo.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
 
       const result = await fraudService.checkTransaction({ transaction });
 
@@ -291,20 +296,19 @@ describe("FraudDetectionService", () => {
       mockDate.setHours(3);
       
       const OriginalDate = global.Date;
-      const mockDateConstructor = jest.fn(() => mockDate) as any;
+      const mockDateConstructor = jest.fn(() => mockDate) as unknown as DateConstructor;
       mockDateConstructor.now = jest.fn().mockReturnValue(Date.now());
       mockDateConstructor.parse = jest.fn().mockImplementation(Date.parse);
       mockDateConstructor.UTC = jest.fn().mockImplementation(Date.UTC);
-      mockDateConstructor.prototype = Date.prototype;
       
-      global.Date = mockDateConstructor as any;
+      global.Date = mockDateConstructor;
 
       const transaction = createMockTransaction();
       const config = createMockConfig();
 
-      mockMerchantConfigRepo.findOne.mockResolvedValue(config);
-      mockTransactionRepo.count.mockResolvedValue(0);
-      mockTransactionRepo.find.mockResolvedValue([]);
+      (mockMerchantConfigRepo.findOne as jest.Mock).mockResolvedValue(config);
+      (mockTransactionRepo.count as jest.Mock).mockResolvedValue(0);
+      (mockTransactionRepo.find as jest.Mock).mockResolvedValue([]);
       
       const mockQueryBuilder = {
         select: jest.fn().mockReturnThis(),
@@ -312,7 +316,7 @@ describe("FraudDetectionService", () => {
         andWhere: jest.fn().mockReturnThis(),
         getRawOne: jest.fn().mockResolvedValue({ total: "100" }),
       };
-      mockTransactionRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+      (mockTransactionRepo.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
 
       const result = await fraudService.checkTransaction({ transaction });
 
@@ -328,7 +332,7 @@ describe("FraudDetectionService", () => {
   describe("getMerchantConfig", () => {
     it("should return existing config", async () => {
       const config = createMockConfig();
-      mockMerchantConfigRepo.findOne.mockResolvedValue(config);
+      (mockMerchantConfigRepo.findOne as jest.Mock).mockResolvedValue(config);
 
       const result = await fraudService.getMerchantConfig("test-merchant-id");
 
@@ -340,8 +344,8 @@ describe("FraudDetectionService", () => {
 
     it("should create default config if none exists", async () => {
       const newConfig = createMockConfig();
-      mockMerchantConfigRepo.findOne.mockResolvedValue(null);
-      mockMerchantConfigRepo.save.mockResolvedValue(newConfig);
+      (mockMerchantConfigRepo.findOne as jest.Mock).mockResolvedValue(null);
+      (mockMerchantConfigRepo.save as jest.Mock).mockResolvedValue(newConfig);
 
       const result = await fraudService.getMerchantConfig("test-merchant-id");
 
@@ -374,7 +378,7 @@ describe("FraudDetectionService", () => {
         metadata: transaction.metadata,
       };
 
-      mockFraudAlertRepo.save.mockResolvedValue(expectedAlert);
+      (mockFraudAlertRepo.save as jest.Mock).mockResolvedValue(expectedAlert);
 
       const result = await fraudService.createFraudAlert(transaction, fraudResult);
 
@@ -397,7 +401,7 @@ describe("FraudDetectionService", () => {
         status: FraudAlertStatus.BLOCKED,
       };
 
-      mockFraudAlertRepo.save.mockResolvedValue(expectedAlert);
+      (mockFraudAlertRepo.save as jest.Mock).mockResolvedValue(expectedAlert);
 
       const result = await fraudService.createFraudAlert(transaction, fraudResult);
 
@@ -423,8 +427,8 @@ describe("FraudDetectionService", () => {
         reviewedAt: new Date(),
       };
 
-      mockFraudAlertRepo.findOne.mockResolvedValue(existingAlert);
-      mockFraudAlertRepo.save.mockResolvedValue(updatedAlert);
+      (mockFraudAlertRepo.findOne as jest.Mock).mockResolvedValue(existingAlert);
+      (mockFraudAlertRepo.save as jest.Mock).mockResolvedValue(updatedAlert);
 
       const result = await fraudService.reviewFraudAlert(
         "alert-id",
@@ -440,7 +444,7 @@ describe("FraudDetectionService", () => {
     });
 
     it("should throw error if alert not found", async () => {
-      mockFraudAlertRepo.findOne.mockResolvedValue(null);
+      (mockFraudAlertRepo.findOne as jest.Mock).mockResolvedValue(null);
 
       await expect(
         fraudService.reviewFraudAlert("non-existent-id", FraudAlertStatus.APPROVED)
@@ -454,8 +458,8 @@ describe("FraudDetectionService", () => {
       const updates = { maxTransactionAmount: 2000 };
       const updatedConfig = { ...existingConfig, ...updates };
 
-      mockMerchantConfigRepo.findOne.mockResolvedValue(existingConfig);
-      mockMerchantConfigRepo.save.mockResolvedValue(updatedConfig);
+      (mockMerchantConfigRepo.findOne as jest.Mock).mockResolvedValue(existingConfig);
+      (mockMerchantConfigRepo.save as jest.Mock).mockResolvedValue(updatedConfig);
 
       const result = await fraudService.updateMerchantConfig("test-merchant-id", updates);
 
@@ -479,7 +483,7 @@ describe("FraudDetectionService", () => {
         getMany: jest.fn().mockResolvedValue(mockAlerts),
       };
 
-      mockFraudAlertRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+      (mockFraudAlertRepo.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
 
       const result = await fraudService.getFraudAlerts("merchant-1", FraudAlertStatus.PENDING);
 
@@ -499,7 +503,7 @@ describe("FraudDetectionService", () => {
         getMany: jest.fn().mockResolvedValue(mockAlerts),
       };
 
-      mockFraudAlertRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+      (mockFraudAlertRepo.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
 
       const result = await fraudService.getFraudAlerts();
 
@@ -533,7 +537,7 @@ describe("FraudDetectionService", () => {
         getMany: jest.fn().mockResolvedValue(mockAlerts),
       };
 
-      mockFraudAlertRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+      (mockFraudAlertRepo.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
 
       const result = await fraudService.getFraudStats("test-merchant-id", 30);
 

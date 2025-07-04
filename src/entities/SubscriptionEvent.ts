@@ -44,7 +44,7 @@ import {
     description?: string;
   
     @Column({ type: "json", nullable: true })
-    eventData?: Record<string, any>;
+    eventData?: Record<string, unknown>;
   
     @Column({ nullable: true })
     billingCycleId?: string;

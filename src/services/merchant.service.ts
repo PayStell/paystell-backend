@@ -1,5 +1,5 @@
 import { Merchant } from "../interfaces/webhook.interfaces";
-import { Repository, DataSource } from "typeorm";
+import { Repository, DataSource, QueryRunner } from "typeorm";
 import { validate } from "class-validator";
 import { MerchantEntity } from "../entities/Merchant.entity";
 import { MerchantFraudConfig } from "../entities/MerchantFraudConfig";
@@ -62,7 +62,7 @@ export class MerchantAuthService {
 
   private async initializeDefaultFraudConfig(
     merchantId: string,
-    queryRunner: any
+    queryRunner: QueryRunner
   ): Promise<void> {
     try {
       // Create default fraud configuration DTO

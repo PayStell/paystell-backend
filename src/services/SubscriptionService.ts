@@ -20,7 +20,7 @@ export interface CreateSubscriptionParams {
   billingInterval: BillingInterval;
   intervalCount?: number;
   startDate?: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class SubscriptionService {
@@ -292,7 +292,7 @@ export class SubscriptionService {
   private async logEvent(
     subscriptionId: string,
     eventType: SubscriptionEventType,
-    eventData?: Record<string, any>
+    eventData?: Record<string, unknown>
   ): Promise<void> {
     const event = new SubscriptionEvent();
     event.subscriptionId = subscriptionId;

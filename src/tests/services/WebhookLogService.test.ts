@@ -281,8 +281,7 @@ describe("WebhookLogService", () => {
 
       expect(() => {
         // Trigger the getter by accessing the repository
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (newService as any).webhookLogRepository;
+        void (newService as unknown as { webhookLogRepository: unknown }).webhookLogRepository;
       }).toThrow("Database connection not initialized. Cannot access webhook log repository.");
     });
   });
