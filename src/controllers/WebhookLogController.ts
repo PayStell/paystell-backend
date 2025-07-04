@@ -13,19 +13,16 @@ export class WebhookLogController {
    */
   async getWebhookLogs(req: Request, res: Response): Promise<Response> {
     try {
-      const {
-        merchantId,
-        status,
-        startDate,
-        endDate,
-        limit,
-        offset,
-      } = req.query;
+      const { merchantId, status, startDate, endDate, limit, offset } =
+        req.query;
 
       // Parse and validate query parameters
       const filters = {
         merchantId: typeof merchantId === "string" ? merchantId : undefined,
-        status: (status === "success" || status === "failed") ? status as "success" | "failed" : undefined,
+        status:
+          status === "success" || status === "failed"
+            ? (status as "success" | "failed")
+            : undefined,
         startDate: startDate ? new Date(startDate as string) : undefined,
         endDate: endDate ? new Date(endDate as string) : undefined,
         limit: limit ? parseInt(limit as string, 10) : 10,
@@ -139,7 +136,8 @@ export class WebhookLogController {
       const { merchantId, limit } = req.query;
 
       const parsedLimit = limit ? parseInt(limit as string, 10) : 20;
-      const validLimit = isNaN(parsedLimit) || parsedLimit < 1 ? 20 : Math.min(parsedLimit, 50);
+      const validLimit =
+        isNaN(parsedLimit) || parsedLimit < 1 ? 20 : Math.min(parsedLimit, 50);
 
       const activity = await this.webhookLogService.getRecentActivity(
         typeof merchantId === "string" ? merchantId : undefined,
@@ -158,4 +156,4 @@ export class WebhookLogController {
       });
     }
   }
-} 
+}

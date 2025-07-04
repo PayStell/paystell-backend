@@ -1,6 +1,9 @@
 import express from "express";
 import { WebhookLogController } from "../controllers/WebhookLogController";
-import { authenticateMerchant, asyncHandler } from "../middlewares/merchantAuth";
+import {
+  authenticateMerchant,
+  asyncHandler,
+} from "../middlewares/merchantAuth";
 
 const router = express.Router();
 const webhookLogController = new WebhookLogController();
@@ -18,14 +21,22 @@ router.use(authenticateMerchant);
  * @query limit - Number of logs per page (default: 10, max: 100)
  * @query offset - Number of logs to skip for pagination (default: 0)
  */
-router.get("/", asyncHandler(webhookLogController.getWebhookLogs.bind(webhookLogController)));
+router.get(
+  "/",
+  asyncHandler(webhookLogController.getWebhookLogs.bind(webhookLogController)),
+);
 
 /**
  * @route GET /api/webhook-logs/stats
  * @desc Get webhook log statistics
  * @query merchantId - Filter by merchant ID (optional)
  */
-router.get("/stats", asyncHandler(webhookLogController.getWebhookLogStats.bind(webhookLogController)));
+router.get(
+  "/stats",
+  asyncHandler(
+    webhookLogController.getWebhookLogStats.bind(webhookLogController),
+  ),
+);
 
 /**
  * @route GET /api/webhook-logs/recent
@@ -33,13 +44,23 @@ router.get("/stats", asyncHandler(webhookLogController.getWebhookLogStats.bind(w
  * @query merchantId - Filter by merchant ID (optional)
  * @query limit - Number of recent logs (default: 20, max: 50)
  */
-router.get("/recent", asyncHandler(webhookLogController.getRecentActivity.bind(webhookLogController)));
+router.get(
+  "/recent",
+  asyncHandler(
+    webhookLogController.getRecentActivity.bind(webhookLogController),
+  ),
+);
 
 /**
  * @route GET /api/webhook-logs/:id
  * @desc Get a specific webhook log by ID
  * @param id - Webhook log UUID
  */
-router.get("/:id", asyncHandler(webhookLogController.getWebhookLogById.bind(webhookLogController)));
+router.get(
+  "/:id",
+  asyncHandler(
+    webhookLogController.getWebhookLogById.bind(webhookLogController),
+  ),
+);
 
-export default router; 
+export default router;

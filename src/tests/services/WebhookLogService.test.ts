@@ -51,8 +51,13 @@ describe("WebhookLogService", () => {
       where: jest.fn().mockReturnThis(),
     };
 
-    (AppDataSource.getRepository as jest.Mock).mockReturnValue(mockWebhookLogRepository);
-    Object.defineProperty(AppDataSource, 'isInitialized', { value: true, writable: true });
+    (AppDataSource.getRepository as jest.Mock).mockReturnValue(
+      mockWebhookLogRepository,
+    );
+    Object.defineProperty(AppDataSource, "isInitialized", {
+      value: true,
+      writable: true,
+    });
 
     webhookLogService = new WebhookLogService();
   });
@@ -70,18 +75,38 @@ describe("WebhookLogService", () => {
     it("should retrieve webhook logs with filters successfully", async () => {
       const mockLogs = [mockWebhookLogData];
       const mockTotal = 1;
-      mockWebhookLogRepository.getManyAndCount.mockResolvedValueOnce([mockLogs, mockTotal]);
+      mockWebhookLogRepository.getManyAndCount.mockResolvedValueOnce([
+        mockLogs,
+        mockTotal,
+      ]);
 
       const result = await webhookLogService.getWebhookLogs(mockFilters);
 
-      expect(mockWebhookLogRepository.createQueryBuilder).toHaveBeenCalledWith("webhook_log");
-      expect(mockWebhookLogRepository.orderBy).toHaveBeenCalledWith("webhook_log.createdAt", "DESC");
+      expect(mockWebhookLogRepository.createQueryBuilder).toHaveBeenCalledWith(
+        "webhook_log",
+      );
+      expect(mockWebhookLogRepository.orderBy).toHaveBeenCalledWith(
+        "webhook_log.createdAt",
+        "DESC",
+      );
       expect(mockWebhookLogRepository.limit).toHaveBeenCalledWith(10);
       expect(mockWebhookLogRepository.offset).toHaveBeenCalledWith(0);
-      expect(mockWebhookLogRepository.andWhere).toHaveBeenCalledWith("webhook_log.merchantId = :merchantId", { merchantId: "merchant_123" });
-      expect(mockWebhookLogRepository.andWhere).toHaveBeenCalledWith("webhook_log.status = :status", { status: "success" });
-      expect(mockWebhookLogRepository.andWhere).toHaveBeenCalledWith("webhook_log.createdAt >= :startDate", { startDate: mockFilters.startDate });
-      expect(mockWebhookLogRepository.andWhere).toHaveBeenCalledWith("webhook_log.createdAt <= :endDate", { endDate: mockFilters.endDate });
+      expect(mockWebhookLogRepository.andWhere).toHaveBeenCalledWith(
+        "webhook_log.merchantId = :merchantId",
+        { merchantId: "merchant_123" },
+      );
+      expect(mockWebhookLogRepository.andWhere).toHaveBeenCalledWith(
+        "webhook_log.status = :status",
+        { status: "success" },
+      );
+      expect(mockWebhookLogRepository.andWhere).toHaveBeenCalledWith(
+        "webhook_log.createdAt >= :startDate",
+        { startDate: mockFilters.startDate },
+      );
+      expect(mockWebhookLogRepository.andWhere).toHaveBeenCalledWith(
+        "webhook_log.createdAt <= :endDate",
+        { endDate: mockFilters.endDate },
+      );
 
       expect(result).toEqual({
         logs: mockLogs,
@@ -95,7 +120,10 @@ describe("WebhookLogService", () => {
     it("should handle default pagination values", async () => {
       const mockLogs = [mockWebhookLogData];
       const mockTotal = 1;
-      mockWebhookLogRepository.getManyAndCount.mockResolvedValueOnce([mockLogs, mockTotal]);
+      mockWebhookLogRepository.getManyAndCount.mockResolvedValueOnce([
+        mockLogs,
+        mockTotal,
+      ]);
 
       const result = await webhookLogService.getWebhookLogs({});
 
@@ -108,7 +136,10 @@ describe("WebhookLogService", () => {
     it("should cap limit at 100", async () => {
       const mockLogs = [mockWebhookLogData];
       const mockTotal = 1;
-      mockWebhookLogRepository.getManyAndCount.mockResolvedValueOnce([mockLogs, mockTotal]);
+      mockWebhookLogRepository.getManyAndCount.mockResolvedValueOnce([
+        mockLogs,
+        mockTotal,
+      ]);
 
       await webhookLogService.getWebhookLogs({ limit: 150 });
 
@@ -118,7 +149,10 @@ describe("WebhookLogService", () => {
     it("should ensure offset is never negative", async () => {
       const mockLogs = [mockWebhookLogData];
       const mockTotal = 1;
-      mockWebhookLogRepository.getManyAndCount.mockResolvedValueOnce([mockLogs, mockTotal]);
+      mockWebhookLogRepository.getManyAndCount.mockResolvedValueOnce([
+        mockLogs,
+        mockTotal,
+      ]);
 
       await webhookLogService.getWebhookLogs({ offset: -5 });
 
@@ -128,9 +162,15 @@ describe("WebhookLogService", () => {
     it("should calculate hasMore correctly", async () => {
       const mockLogs = Array(10).fill(mockWebhookLogData);
       const mockTotal = 25;
-      mockWebhookLogRepository.getManyAndCount.mockResolvedValueOnce([mockLogs, mockTotal]);
+      mockWebhookLogRepository.getManyAndCount.mockResolvedValueOnce([
+        mockLogs,
+        mockTotal,
+      ]);
 
-      const result = await webhookLogService.getWebhookLogs({ limit: 10, offset: 10 });
+      const result = await webhookLogService.getWebhookLogs({
+        limit: 10,
+        offset: 10,
+      });
 
       expect(result.hasMore).toBe(true);
     });
@@ -138,11 +178,16 @@ describe("WebhookLogService", () => {
     it("should work without filters", async () => {
       const mockLogs = [mockWebhookLogData];
       const mockTotal = 1;
-      mockWebhookLogRepository.getManyAndCount.mockResolvedValueOnce([mockLogs, mockTotal]);
+      mockWebhookLogRepository.getManyAndCount.mockResolvedValueOnce([
+        mockLogs,
+        mockTotal,
+      ]);
 
       const result = await webhookLogService.getWebhookLogs({});
 
-      expect(mockWebhookLogRepository.createQueryBuilder).toHaveBeenCalledWith("webhook_log");
+      expect(mockWebhookLogRepository.createQueryBuilder).toHaveBeenCalledWith(
+        "webhook_log",
+      );
       expect(mockWebhookLogRepository.andWhere).not.toHaveBeenCalled();
       expect(result.logs).toEqual(mockLogs);
     });
@@ -150,11 +195,15 @@ describe("WebhookLogService", () => {
 
   describe("getWebhookLogById", () => {
     it("should retrieve a webhook log by ID", async () => {
-      mockWebhookLogRepository.findOne.mockResolvedValueOnce(mockWebhookLogData);
+      mockWebhookLogRepository.findOne.mockResolvedValueOnce(
+        mockWebhookLogData,
+      );
 
       const result = await webhookLogService.getWebhookLogById("log_123");
 
-      expect(mockWebhookLogRepository.findOne).toHaveBeenCalledWith({ where: { id: "log_123" } });
+      expect(mockWebhookLogRepository.findOne).toHaveBeenCalledWith({
+        where: { id: "log_123" },
+      });
       expect(result).toEqual(mockWebhookLogData);
     });
 
@@ -171,16 +220,27 @@ describe("WebhookLogService", () => {
     it("should calculate stats correctly with merchantId", async () => {
       mockWebhookLogRepository.getCount
         .mockResolvedValueOnce(100) // total
-        .mockResolvedValueOnce(85)  // successful
+        .mockResolvedValueOnce(85) // successful
         .mockResolvedValueOnce(15); // failed
 
       const result = await webhookLogService.getWebhookLogStats("merchant_123");
 
-      expect(mockWebhookLogRepository.createQueryBuilder).toHaveBeenCalledWith("webhook_log");
-      expect(mockWebhookLogRepository.where).toHaveBeenCalledWith("webhook_log.merchantId = :merchantId", { merchantId: "merchant_123" });
+      expect(mockWebhookLogRepository.createQueryBuilder).toHaveBeenCalledWith(
+        "webhook_log",
+      );
+      expect(mockWebhookLogRepository.where).toHaveBeenCalledWith(
+        "webhook_log.merchantId = :merchantId",
+        { merchantId: "merchant_123" },
+      );
       expect(mockWebhookLogRepository.clone).toHaveBeenCalledTimes(2);
-      expect(mockWebhookLogRepository.andWhere).toHaveBeenCalledWith("webhook_log.status = :status", { status: "success" });
-      expect(mockWebhookLogRepository.andWhere).toHaveBeenCalledWith("webhook_log.status = :status", { status: "failed" });
+      expect(mockWebhookLogRepository.andWhere).toHaveBeenCalledWith(
+        "webhook_log.status = :status",
+        { status: "success" },
+      );
+      expect(mockWebhookLogRepository.andWhere).toHaveBeenCalledWith(
+        "webhook_log.status = :status",
+        { status: "failed" },
+      );
 
       expect(result).toEqual({
         total: 100,
@@ -192,13 +252,15 @@ describe("WebhookLogService", () => {
 
     it("should calculate stats correctly without merchantId", async () => {
       mockWebhookLogRepository.getCount
-        .mockResolvedValueOnce(50)  // total
-        .mockResolvedValueOnce(40)  // successful
+        .mockResolvedValueOnce(50) // total
+        .mockResolvedValueOnce(40) // successful
         .mockResolvedValueOnce(10); // failed
 
       const result = await webhookLogService.getWebhookLogStats();
 
-      expect(mockWebhookLogRepository.createQueryBuilder).toHaveBeenCalledWith("webhook_log");
+      expect(mockWebhookLogRepository.createQueryBuilder).toHaveBeenCalledWith(
+        "webhook_log",
+      );
       expect(mockWebhookLogRepository.where).not.toHaveBeenCalled();
 
       expect(result).toEqual({
@@ -211,8 +273,8 @@ describe("WebhookLogService", () => {
 
     it("should handle zero total logs", async () => {
       mockWebhookLogRepository.getCount
-        .mockResolvedValueOnce(0)  // total
-        .mockResolvedValueOnce(0)  // successful
+        .mockResolvedValueOnce(0) // total
+        .mockResolvedValueOnce(0) // successful
         .mockResolvedValueOnce(0); // failed
 
       const result = await webhookLogService.getWebhookLogStats("merchant_123");
@@ -227,8 +289,8 @@ describe("WebhookLogService", () => {
 
     it("should round success rate to 2 decimal places", async () => {
       mockWebhookLogRepository.getCount
-        .mockResolvedValueOnce(3)  // total
-        .mockResolvedValueOnce(2)  // successful
+        .mockResolvedValueOnce(3) // total
+        .mockResolvedValueOnce(2) // successful
         .mockResolvedValueOnce(1); // failed
 
       const result = await webhookLogService.getWebhookLogStats("merchant_123");
@@ -242,12 +304,23 @@ describe("WebhookLogService", () => {
       const mockLogs = [mockWebhookLogData];
       mockWebhookLogRepository.getMany.mockResolvedValueOnce(mockLogs);
 
-      const result = await webhookLogService.getRecentActivity("merchant_123", 20);
+      const result = await webhookLogService.getRecentActivity(
+        "merchant_123",
+        20,
+      );
 
-      expect(mockWebhookLogRepository.createQueryBuilder).toHaveBeenCalledWith("webhook_log");
-      expect(mockWebhookLogRepository.orderBy).toHaveBeenCalledWith("webhook_log.createdAt", "DESC");
+      expect(mockWebhookLogRepository.createQueryBuilder).toHaveBeenCalledWith(
+        "webhook_log",
+      );
+      expect(mockWebhookLogRepository.orderBy).toHaveBeenCalledWith(
+        "webhook_log.createdAt",
+        "DESC",
+      );
       expect(mockWebhookLogRepository.limit).toHaveBeenCalledWith(20);
-      expect(mockWebhookLogRepository.where).toHaveBeenCalledWith("webhook_log.merchantId = :merchantId", { merchantId: "merchant_123" });
+      expect(mockWebhookLogRepository.where).toHaveBeenCalledWith(
+        "webhook_log.merchantId = :merchantId",
+        { merchantId: "merchant_123" },
+      );
       expect(result).toEqual(mockLogs);
     });
 
@@ -257,8 +330,13 @@ describe("WebhookLogService", () => {
 
       const result = await webhookLogService.getRecentActivity();
 
-      expect(mockWebhookLogRepository.createQueryBuilder).toHaveBeenCalledWith("webhook_log");
-      expect(mockWebhookLogRepository.orderBy).toHaveBeenCalledWith("webhook_log.createdAt", "DESC");
+      expect(mockWebhookLogRepository.createQueryBuilder).toHaveBeenCalledWith(
+        "webhook_log",
+      );
+      expect(mockWebhookLogRepository.orderBy).toHaveBeenCalledWith(
+        "webhook_log.createdAt",
+        "DESC",
+      );
       expect(mockWebhookLogRepository.limit).toHaveBeenCalledWith(20);
       expect(mockWebhookLogRepository.where).not.toHaveBeenCalled();
       expect(result).toEqual(mockLogs);
@@ -276,13 +354,19 @@ describe("WebhookLogService", () => {
 
   describe("Database initialization check", () => {
     it("should throw error when database is not initialized", () => {
-      Object.defineProperty(AppDataSource, 'isInitialized', { value: false, writable: true });
+      Object.defineProperty(AppDataSource, "isInitialized", {
+        value: false,
+        writable: true,
+      });
       const newService = new WebhookLogService();
 
       expect(() => {
         // Trigger the getter by accessing the repository
-        void (newService as unknown as { webhookLogRepository: unknown }).webhookLogRepository;
-      }).toThrow("Database connection not initialized. Cannot access webhook log repository.");
+        void (newService as unknown as { webhookLogRepository: unknown })
+          .webhookLogRepository;
+      }).toThrow(
+        "Database connection not initialized. Cannot access webhook log repository.",
+      );
     });
   });
 });

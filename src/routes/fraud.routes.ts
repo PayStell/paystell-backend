@@ -5,7 +5,7 @@ import {
   fraudAlertsRateLimit,
   fraudConfigRateLimit,
   fraudStatsRateLimit,
-  fraudReviewRateLimit
+  fraudReviewRateLimit,
 } from "../middlewares/fraudRateLimiter.middleware";
 
 const router = Router();
@@ -14,43 +14,48 @@ const fraudController = new FraudController();
 router.use(authMiddleware);
 
 // Get fraud alerts
-router.get("/alerts", 
+router.get(
+  "/alerts",
   fraudAlertsRateLimit,
   async (req: Request, res: Response) => {
     await fraudController.getFraudAlerts(req, res);
-  }
+  },
 );
 
 // Review fraud alert
-router.patch("/alerts/:alertId/review", 
+router.patch(
+  "/alerts/:alertId/review",
   fraudReviewRateLimit,
   async (req: Request, res: Response) => {
     await fraudController.reviewFraudAlert(req, res);
-  }
+  },
 );
 
 // Get merchant fraud configuration
-router.get("/config/:merchantId", 
+router.get(
+  "/config/:merchantId",
   fraudAlertsRateLimit,
   async (req: Request, res: Response) => {
     await fraudController.getMerchantConfig(req, res);
-  }
+  },
 );
 
 // Update merchant fraud configuration
-router.put("/config/:merchantId", 
+router.put(
+  "/config/:merchantId",
   fraudConfigRateLimit,
   async (req: Request, res: Response) => {
     await fraudController.updateMerchantConfig(req, res);
-  }
+  },
 );
 
 // Get fraud statistics
-router.get("/stats", 
+router.get(
+  "/stats",
   fraudStatsRateLimit,
   async (req: Request, res: Response) => {
     await fraudController.getFraudStats(req, res);
-  }
+  },
 );
 
 export default router;

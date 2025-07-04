@@ -49,4 +49,4 @@ export class WebhookLog {
 
   @UpdateDateColumn()
   updatedAt: Date;
-} 
+}

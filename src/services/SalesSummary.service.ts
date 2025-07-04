@@ -14,7 +14,9 @@ export class SalesSummaryService {
   private get paymentRepository(): Repository<Payment> {
     if (!this._paymentRepository) {
       if (!AppDataSource.isInitialized) {
-        throw new Error("Database connection not initialized. Cannot access payment repository.");
+        throw new Error(
+          "Database connection not initialized. Cannot access payment repository.",
+        );
       }
       this._paymentRepository = AppDataSource.getRepository(Payment);
     }
@@ -24,7 +26,9 @@ export class SalesSummaryService {
   private get paymentLinkRepository(): Repository<PaymentLink> {
     if (!this._paymentLinkRepository) {
       if (!AppDataSource.isInitialized) {
-        throw new Error("Database connection not initialized. Cannot access payment link repository.");
+        throw new Error(
+          "Database connection not initialized. Cannot access payment link repository.",
+        );
       }
       this._paymentLinkRepository = AppDataSource.getRepository(PaymentLink);
     }
@@ -34,7 +38,9 @@ export class SalesSummaryService {
   private get userRepository(): Repository<User> {
     if (!this._userRepository) {
       if (!AppDataSource.isInitialized) {
-        throw new Error("Database connection not initialized. Cannot access user repository.");
+        throw new Error(
+          "Database connection not initialized. Cannot access user repository.",
+        );
       }
       this._userRepository = AppDataSource.getRepository(User);
     }
@@ -44,7 +50,9 @@ export class SalesSummaryService {
   private get merchantRepository(): Repository<MerchantEntity> {
     if (!this._merchantRepository) {
       if (!AppDataSource.isInitialized) {
-        throw new Error("Database connection not initialized. Cannot access merchant repository.");
+        throw new Error(
+          "Database connection not initialized. Cannot access merchant repository.",
+        );
       }
       this._merchantRepository = AppDataSource.getRepository(MerchantEntity);
     }

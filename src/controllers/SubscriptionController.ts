@@ -9,14 +9,25 @@ const createSubscriptionSchema = z.object({
   customerId: z.string().min(1, "Customer ID is required"),
   customerEmail: z.string().email("Valid customer email is required"),
   merchantId: z.string().min(1, "Merchant ID is required"),
-  amount: z.string().transform((val) => parseFloat(val)).pipe(z.number().positive("Amount must be greater than 0")),
+  amount: z
+    .string()
+    .transform((val) => parseFloat(val))
+    .pipe(z.number().positive("Amount must be greater than 0")),
   currency: z.string().min(1, "Currency is required"),
   tokenAddress: z.string().min(1, "Token address is required"),
   billingInterval: z.enum(["monthly", "yearly", "weekly", "custom"], {
-    errorMap: () => ({ message: "Invalid billing interval" })
+    errorMap: () => ({ message: "Invalid billing interval" }),
   }),
-  intervalCount: z.string().transform((val) => parseInt(val)).pipe(z.number().int().positive("Interval count must be positive")).optional(),
-  startDate: z.string().datetime("Invalid start date format").transform((val) => new Date(val)).optional(),
+  intervalCount: z
+    .string()
+    .transform((val) => parseInt(val))
+    .pipe(z.number().int().positive("Interval count must be positive"))
+    .optional(),
+  startDate: z
+    .string()
+    .datetime("Invalid start date format")
+    .transform((val) => new Date(val))
+    .optional(),
   metadata: z.record(z.any()).optional(),
 });
 
@@ -55,8 +66,12 @@ export class SubscriptionController {
 
       const data = validationResult.data;
 
-      const amount = typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount;
-      const intervalCount = data.intervalCount && typeof data.intervalCount === 'string' ? parseInt(data.intervalCount) : data.intervalCount;
+      const amount =
+        typeof data.amount === "string" ? parseFloat(data.amount) : data.amount;
+      const intervalCount =
+        data.intervalCount && typeof data.intervalCount === "string"
+          ? parseInt(data.intervalCount)
+          : data.intervalCount;
 
       const subscription = await this.subscriptionService.createSubscription({
         customerId: data.customerId,
@@ -86,7 +101,11 @@ export class SubscriptionController {
     }
   }
 
-  async getSubscription(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getSubscription(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       // Validate request using Zod
       const validationResult = subscriptionIdSchema.safeParse(req.params);
@@ -101,7 +120,8 @@ export class SubscriptionController {
       }
 
       const { subscriptionId } = validationResult.data;
-      const subscription = await this.subscriptionService.getSubscription(subscriptionId);
+      const subscription =
+        await this.subscriptionService.getSubscription(subscriptionId);
 
       res.status(200).json({
         success: true,
@@ -113,7 +133,11 @@ export class SubscriptionController {
     }
   }
 
-  async getMerchantSubscriptions(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getMerchantSubscriptions(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       // Validate request using Zod
       const validationResult = merchantIdSchema.safeParse(req.query);
@@ -128,7 +152,8 @@ export class SubscriptionController {
       }
 
       const { merchantId } = validationResult.data;
-      const subscriptions = await this.subscriptionService.getSubscriptionsByMerchant(merchantId);
+      const subscriptions =
+        await this.subscriptionService.getSubscriptionsByMerchant(merchantId);
 
       res.status(200).json({
         success: true,
@@ -141,7 +166,11 @@ export class SubscriptionController {
     }
   }
 
-  async pauseSubscription(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async pauseSubscription(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       // Validate request using Zod
       const validationResult = subscriptionIdSchema.safeParse(req.params);
@@ -156,7 +185,8 @@ export class SubscriptionController {
       }
 
       const { subscriptionId } = validationResult.data;
-      const subscription = await this.subscriptionService.pauseSubscription(subscriptionId);
+      const subscription =
+        await this.subscriptionService.pauseSubscription(subscriptionId);
 
       logger.info(`Subscription paused: ${subscriptionId}`);
 
@@ -171,7 +201,11 @@ export class SubscriptionController {
     }
   }
 
-  async resumeSubscription(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async resumeSubscription(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       // Validate request using Zod
       const validationResult = subscriptionIdSchema.safeParse(req.params);
@@ -186,7 +220,8 @@ export class SubscriptionController {
       }
 
       const { subscriptionId } = validationResult.data;
-      const subscription = await this.subscriptionService.resumeSubscription(subscriptionId);
+      const subscription =
+        await this.subscriptionService.resumeSubscription(subscriptionId);
 
       logger.info(`Subscription resumed: ${subscriptionId}`);
 
@@ -201,7 +236,11 @@ export class SubscriptionController {
     }
   }
 
-  async cancelSubscription(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async cancelSubscription(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       // Validate request using Zod
       const validationResult = subscriptionIdSchema.safeParse(req.params);
@@ -216,7 +255,8 @@ export class SubscriptionController {
       }
 
       const { subscriptionId } = validationResult.data;
-      const subscription = await this.subscriptionService.cancelSubscription(subscriptionId);
+      const subscription =
+        await this.subscriptionService.cancelSubscription(subscriptionId);
 
       logger.info(`Subscription cancelled: ${subscriptionId}`);
 
