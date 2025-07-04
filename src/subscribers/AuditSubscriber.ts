@@ -5,7 +5,7 @@ import {
   UpdateEvent,
   RemoveEvent,
 } from "typeorm";
-import { getAuditService, AuditContext } from "../services/AuditService";
+import { auditService, AuditContext } from "../services/AuditService";
 import { User } from "../entities/User";
 import { PaymentLink } from "../entities/PaymentLink";
 import { MerchantEntity } from "../entities/Merchant.entity";
@@ -52,7 +52,7 @@ export class AuditSubscriber
     if (!this.shouldAuditEntity(event.entity)) return;
 
     try {
-      await getAuditService().createAuditLog({
+      await auditService.createAuditLog({
         entityType: event.metadata.name,
         entityId: this.getEntityId(event.entity),
         action: "CREATE",
@@ -75,7 +75,7 @@ export class AuditSubscriber
     if (!this.shouldAuditEntity(event.entity)) return;
 
     try {
-      await getAuditService().createAuditLog({
+      await auditService.createAuditLog({
         entityType: event.metadata.name,
         entityId: this.getEntityId(event.entity),
         action: "UPDATE",
@@ -99,7 +99,7 @@ export class AuditSubscriber
     if (!this.shouldAuditEntity(entityToCheck)) return;
 
     try {
-      await getAuditService().createAuditLog({
+      await auditService.createAuditLog({
         entityType: event.metadata.name,
         entityId: this.getEntityId(entityToCheck),
         action: "DELETE",

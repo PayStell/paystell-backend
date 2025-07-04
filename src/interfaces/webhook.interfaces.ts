@@ -13,13 +13,6 @@ export type WebhookPayload = {
   reqMethod: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 };
 
-export interface WebhookResponse {
-  success: boolean;
-  statusCode?: number;
-  response?: Record<string, unknown>;
-  errorMessage?: string;
-}
-
 export type MerchantWebhook = {
   id: string;
   merchantId: string;

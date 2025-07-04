@@ -1,8 +1,7 @@
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import {
   WebhookPayload,
   MerchantWebhook,
-  WebhookResponse,
 } from "../interfaces/webhook.interfaces";
 import { validateWebhookUrl } from "../validators/webhook.validators";
 import { MerchantAuthService } from "./merchant.service";
@@ -29,17 +28,13 @@ export class WebhookNotificationService {
     webhookUrl: string,
     payload: WebhookPayload,
     id: string,
-  ): Promise<WebhookResponse> {
+  ): Promise<boolean> {
     try {
       const merchant = await this.merchantAuthService.getMerchantById(id);
 
       if (!merchant || !merchant.secret) {
-        const errorMessage = "Invalid merchant or missing secret";
-        console.error(errorMessage);
-        return {
-          success: false,
-          errorMessage,
-        };
+        console.error("Invalid merchant or missing secret");
+        return false;
       }
 
       const signature =
@@ -48,7 +43,7 @@ export class WebhookNotificationService {
           merchant.secret,
         );
 
-      const response = await axios.post(webhookUrl, payload, {
+      await axios.post(webhookUrl, payload, {
         headers: {
           "Content-Type": "application/json",
           "X-Webhook-Signature": signature,
@@ -56,52 +51,28 @@ export class WebhookNotificationService {
         timeout: 5000,
       });
 
-      return {
-        success: true,
-        statusCode: response.status,
-        response: response.data,
-      };
+      return true;
     } catch (err) {
       console.error("Failed to send webhook notification", err);
-
-      if (err instanceof AxiosError) {
-        return {
-          success: false,
-          statusCode: err.response?.status,
-          response: err.response?.data,
-          errorMessage: err.message,
-        };
-      }
-
-      return {
-        success: false,
-        errorMessage: err instanceof Error ? err.message : "Unknown error",
-      };
+      return false;
     }
   }
 
   async notifyPaymentUpdate(
     merchantWebhook: MerchantWebhook,
     paymentDetails: Omit<WebhookPayload, "timestamp">,
-  ): Promise<WebhookResponse> {
+  ): Promise<boolean> {
     const merchant = await this.merchantAuthService.getMerchantById(
       merchantWebhook.merchantId,
     );
 
     if (!merchant) {
-      const errorMessage = "Merchant not found";
-      console.error(errorMessage);
-      return {
-        success: false,
-        errorMessage,
-      };
+      console.error("Merchant not found");
+      return false;
     }
 
     if (!merchantWebhook.isActive || !validateWebhookUrl(merchantWebhook.url)) {
-      return {
-        success: false,
-        errorMessage: "Webhook is inactive or URL is invalid",
-      };
+      return false;
     }
 
     const webhookPayload: WebhookPayload = {

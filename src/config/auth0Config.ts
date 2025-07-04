@@ -4,7 +4,7 @@ export const oauthConfig = {
   baseURL: process.env.BASE_URL || "http://localhost:8080", // app base URL
   clientID: process.env.AUTH0_CLIENT_ID || "", // Auth0 client ID
   clientSecret: process.env.AUTH0_CLIENT_SECRET || "", // Auth0 client secret
-  issuerBaseURL: process.env.AUTH0_DOMAIN || "https://dev-example.auth0.com", // Auth0 domain URL
+  issuerBaseURL: process.env.AUTH0_DOMAIN, // Auth0 domain URL
   secret: process.env.SESSION_SECRET || "a-long-randomly-generated-string", // session secret
   authorizationParams: {
     response_type: "code", // OAuth2 response type
