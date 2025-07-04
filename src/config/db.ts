@@ -14,6 +14,16 @@ import { Referral } from "../entities/Referral";
 import { ReferralReward } from "../entities/ReferralReward";
 import { ReferralProgram } from "../entities/ReferralProgram";
 import { AuditLog } from "../entities/AuditLog";
+import { WebhookLog } from "../entities/WebhookLog";
+import { Subscription } from "../entities/Subscription";
+import { BillingCycle } from "../entities/BillingCycle";
+import { SubscriptionEvent } from "../entities/SubscriptionEvent";
+import { Transaction } from "../entities/Transaction";
+import { Payment } from "../entities/Payment";
+import { InAppNotificationEntity } from "../entities/InAppNotification.entity";
+import { FraudAlert } from "../entities/FraudAlert";
+import { MerchantFraudConfig } from "../entities/MerchantFraudConfig";
+import { RateLimitEvent } from "../entities/RateLimitEvent";
 import { AuditSubscriber } from "../subscribers/AuditSubscriber";
 
 dotenv.config();
@@ -43,6 +53,16 @@ const AppDataSource = new DataSource({
     ReferralReward,
     ReferralProgram,
     AuditLog,
+    WebhookLog,
+    Subscription,
+    BillingCycle,
+    SubscriptionEvent,
+    Transaction,
+    Payment,
+    InAppNotificationEntity,
+    FraudAlert,
+    MerchantFraudConfig,
+    RateLimitEvent,
   ],
   subscribers: [AuditSubscriber],
   migrations: ["src/migrations/*.ts"],

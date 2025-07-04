@@ -1,13 +1,14 @@
 import "reflect-metadata";
-import app from "./app";
 import AppDataSource from "./config/db";
 
 async function main() {
   try {
-    
-    // Initialize the database connection
+    // Initialize the database connection FIRST
     await AppDataSource.initialize();
     console.log("✅ Database connected successfully");
+
+    // Import app AFTER database is initialized
+    const { default: app } = await import("./app");
 
     // Start the server
     const PORT = process.env.PORT || 4000;
