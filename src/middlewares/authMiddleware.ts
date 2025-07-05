@@ -10,18 +10,8 @@ import { UserService } from "../services/UserService";
 import { redisClient } from "../config/redisConfig";
 import { MerchantEntity } from "../entities/Merchant.entity";
 
-declare module "express" {
-  interface Request {
-    user?: {
-      id: number;
-      email: string;
-      tokenExp?: number;
-      jti?: string;
-      role?: UserRole;
-    };
-    merchant?: MerchantEntity;
-  }
-}
+// Request interface extensions are now handled in src/types/express.d.ts
+import "../types/express"; // Import type augmentation
 
 export const authMiddleware = async (
   req: Request,
