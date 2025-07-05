@@ -15,7 +15,7 @@ import {
 import { fraudDetectionMiddleware } from "../middlewares/fraudDetection.middleware";
 import { requirePermission } from "../middlewares/permissionMiddleware";
 import { PermissionResource, PermissionAction } from "../entities/Permission";
-import "../types/express"; // Import type augmentation
+// Request interface extensions are now handled in src/types/express.d.ts
 
 const router = Router();
 const paymentController = new PaymentController();

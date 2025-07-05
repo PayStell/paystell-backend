@@ -11,7 +11,6 @@ import { redisClient } from "../config/redisConfig";
 import { MerchantEntity } from "../entities/Merchant.entity";
 
 // Request interface extensions are now handled in src/types/express.d.ts
-import "../types/express"; // Import type augmentation
 
 export const authMiddleware = async (
   req: Request,

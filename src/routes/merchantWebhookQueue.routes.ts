@@ -10,7 +10,7 @@ import {
   authMiddleware,
   isUserAuthorized,
 } from "../middlewares/authMiddleware";
-import "../types/express"; // Import type augmentation
+// Request interface extensions are now handled in src/types/express.d.ts
 
 const router = express.Router();
 const merchantWebhookQueueController = new MerchantWebhookQueueController();

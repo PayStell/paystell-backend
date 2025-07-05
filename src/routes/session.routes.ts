@@ -5,7 +5,7 @@ import {
   deleteSession,
 } from "../controllers/session.controller";
 import { UserRole } from "../enums/UserRole";
-import "../types/express"; // Import type augmentation
+// Request interface extensions are now handled in src/types/express.d.ts
 
 const router = express.Router();
 

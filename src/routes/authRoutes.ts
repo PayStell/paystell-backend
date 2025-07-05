@@ -20,7 +20,7 @@ import {
 import { UserRole } from "../enums/UserRole";
 import { auth } from "express-openid-connect";
 import { oauthConfig } from "../config/auth0Config";
-import "../types/express"; // Import type augmentation
+// Request interface extensions are now handled in src/types/express.d.ts
 
 const router = Router();
 const authController = new AuthController();

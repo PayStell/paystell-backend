@@ -9,7 +9,7 @@ import { PaymentLinkController } from "../controllers/PaymentLink.controller";
 import { UserRole } from "../enums/UserRole";
 import { paymentLinkLimiter } from "../middleware/rateLimiter";
 import { authMiddleware } from "../middlewares/authMiddleware";
-import "../types/express"; // Import type augmentation
+// Request interface extensions are now handled in src/types/express.d.ts
 
 const router = Router();
 const paymentLinkController = new PaymentLinkController();

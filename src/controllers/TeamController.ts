@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { RBACService } from "../services/RBACService";
 import { AuditContext } from "../services/AuditService";
-import "../types/express"; // Import type augmentation
+// Request interface extensions are now handled in src/types/express.d.ts
 
 export class TeamController {
   private rbacService: RBACService;

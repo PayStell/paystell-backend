@@ -6,8 +6,6 @@ import { AppError } from "../utils/AppError";
 import logger from "../utils/logger";
 import { UserRole } from "../enums/UserRole";
 import { Merchant } from "../interfaces/webhook.interfaces";
-import "../types/express"; // Import type augmentation
-
 // Request interface extensions are now handled in src/types/express.d.ts
 
 const merchantAuthService = new MerchantAuthService();

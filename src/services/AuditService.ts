@@ -1,8 +1,8 @@
 import { Repository } from "typeorm";
 import AppDataSource from "../config/db";
 import { AuditLog } from "../entities/AuditLog";
-import { Request } from "express";
-import "../types/express"; // Import type augmentation
+import { Request } from "express-serve-static-core";
+// Request interface extensions are now handled in src/types/express.d.ts
 
 export interface AuditContext {
   userId?: string;
