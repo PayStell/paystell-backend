@@ -52,7 +52,7 @@ export class SubscriptionService {
     params: CreateSubscriptionParams,
   ): Promise<Subscription> {
     const subscription = new Subscription();
-    subscription.subscriptionId = generatePaymentId();
+    subscription.subscriptionId = await generatePaymentId();
     subscription.customerId = params.customerId;
     subscription.customerEmail = params.customerEmail;
     subscription.merchantId = params.merchantId;
@@ -184,7 +184,7 @@ export class SubscriptionService {
         cycle.subscription.tokenAddress,
         `sub_${cycle.id}`,
         Math.floor(Date.now() / 1000) + 3600, // 1 hour expiration
-        generatePaymentId(),
+        await generatePaymentId(),
       );
 
       cycle.status = BillingCycleStatus.COMPLETED;

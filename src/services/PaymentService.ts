@@ -34,7 +34,7 @@ export class PaymentService {
 
     let isUnique = false;
     while (!isUnique) {
-      payment.paymentId = generatePaymentId();
+      payment.paymentId = await generatePaymentId();
       const existingPayment = await this.paymentRepository.findOne({
         where: { paymentId: payment.paymentId },
       });

@@ -90,13 +90,29 @@ export class StellarContractService {
       logger.info("Connected to Redis");
     });
 
-    if (!process.env.CONTRACT_ADMIN_SECRET) {
+    // Validate CONTRACT_ADMIN_SECRET format
+    const adminSecret = process.env.CONTRACT_ADMIN_SECRET;
+    if (!adminSecret || adminSecret.trim() === "") {
       console.warn(
         "⚠️  CONTRACT_ADMIN_SECRET not configured - Using random keypair for development",
       );
       this.adminKeypair = Keypair.random();
+    } else if (!this.isValidStellarSecretKey(adminSecret)) {
+      console.warn(
+        "⚠️  CONTRACT_ADMIN_SECRET has invalid format - Using random keypair for development",
+      );
+      console.warn("   Expected format: Stellar secret key starting with 'S' (56 characters)");
+      this.adminKeypair = Keypair.random();
     } else {
-      this.adminKeypair = Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET);
+      try {
+        this.adminKeypair = Keypair.fromSecret(adminSecret);
+      } catch (error) {
+        console.warn(
+          "⚠️  Failed to parse CONTRACT_ADMIN_SECRET - Using random keypair for development",
+        );
+        console.warn("   Error:", error instanceof Error ? error.message : error);
+        this.adminKeypair = Keypair.random();
+      }
     }
   }
 
@@ -332,5 +348,24 @@ export class StellarContractService {
     paymentOrder: PaymentOrderDTO | PaymentOrder,
   ): string {
     return JSON.stringify(paymentOrder);
+  }
+
+  /**
+   * Validate if a string is a valid Stellar secret key format
+   */
+  private isValidStellarSecretKey(secretKey: string): boolean {
+    try {
+      // Stellar secret keys start with 'S' and are 56 characters long
+      if (!secretKey || secretKey.length !== 56 || !secretKey.startsWith('S')) {
+        return false;
+      }
+      
+      // Additional validation by trying to decode it
+      // This will throw if the format is invalid
+      Keypair.fromSecret(secretKey);
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
