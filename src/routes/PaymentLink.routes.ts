@@ -9,21 +9,13 @@ import { PaymentLinkController } from "../controllers/PaymentLink.controller";
 import { UserRole } from "../enums/UserRole";
 import { paymentLinkLimiter } from "../middleware/rateLimiter";
 import { authMiddleware } from "../middlewares/authMiddleware";
-
-interface CustomRequest extends Request {
-  user?: {
-    id: number;
-    email: string;
-    tokenExp?: number;
-    role?: UserRole;
-  };
-}
+import "../types/express"; // Import type augmentation
 
 const router = Router();
 const paymentLinkController = new PaymentLinkController();
 
 type AsyncRouteHandler<T = void> = (
-  req: CustomRequest,
+  req: Request,
   res: Response,
   next: NextFunction,
 ) => Promise<T>;
@@ -36,7 +28,7 @@ const asyncHandler = <T>(fn: AsyncRouteHandler<T>): RequestHandler => {
       params: req.params,
     });
 
-    Promise.resolve(fn(req as CustomRequest, res, next)).catch((error) => {
+    Promise.resolve(fn(req as Request, res, next)).catch((error) => {
       console.error(`[PaymentLink] Error in ${req.method} ${req.path}:`, error);
       next(error);
     });
@@ -70,7 +62,7 @@ router.post(
 // Put specific routes before parameterized routes
 router.get(
   "/user",
-  asyncHandler(async (req: CustomRequest, res: Response) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ message: "User not authenticated" });
