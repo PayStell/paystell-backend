@@ -2,6 +2,7 @@ import { Repository } from "typeorm";
 import AppDataSource from "../config/db";
 import { AuditLog } from "../entities/AuditLog";
 import { Request } from "express";
+import "../types/express"; // Import type augmentation
 
 export interface AuditContext {
   userId?: string;
