@@ -3,24 +3,14 @@ import { getRBACService } from "../services/RBACService";
 import { PermissionResource, PermissionAction } from "../entities/Permission";
 import { UserRole } from "../enums/UserRole";
 import { MerchantEntity } from "../entities/Merchant.entity";
-
-export interface AuthenticatedRequest extends Request {
-  user?: {
-    id: number;
-    email: string;
-    tokenExp?: number;
-    jti?: string;
-    role?: UserRole;
-  };
-  merchant?: MerchantEntity;
-}
+import "../types/express"; // Import type augmentation
 
 export const requirePermission = (
   resource: PermissionResource,
   action: PermissionAction,
 ) => {
   return async (
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
@@ -69,11 +59,7 @@ export const requireAnyPermission = (
     action: PermissionAction;
   }>,
 ) => {
-  return async (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction,
-  ) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id;
       const merchantId =

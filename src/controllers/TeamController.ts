@@ -1,7 +1,7 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { RBACService } from "../services/RBACService";
-import { AuthenticatedRequest } from "../middlewares/permissionMiddleware";
 import { AuditContext } from "../services/AuditService";
+import "../types/express"; // Import type augmentation
 
 export class TeamController {
   private rbacService: RBACService;
@@ -11,7 +11,7 @@ export class TeamController {
   }
 
   // Role Management
-  private getAuditContext(req: AuthenticatedRequest): AuditContext {
+  private getAuditContext(req: Request): AuditContext {
     return {
       userId: req.user?.id?.toString(),
       ipAddress: req.ip || req.connection.remoteAddress || "",
@@ -19,7 +19,7 @@ export class TeamController {
     };
   }
 
-  async createRole(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async createRole(req: Request, res: Response): Promise<void> {
     try {
       const { name, description } = req.body;
       const merchantId = req.merchant?.id;
@@ -46,7 +46,7 @@ export class TeamController {
     }
   }
 
-  async getRoles(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async getRoles(req: Request, res: Response): Promise<void> {
     try {
       const merchantId = req.merchant?.id || req.params.merchantId;
 
@@ -66,7 +66,7 @@ export class TeamController {
     }
   }
 
-  async updateRole(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async updateRole(req: Request, res: Response): Promise<void> {
     try {
       const { roleId } = req.params;
       const updates = req.body;
@@ -102,7 +102,7 @@ export class TeamController {
     }
   }
 
-  async deleteRole(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async deleteRole(req: Request, res: Response): Promise<void> {
     try {
       const { roleId } = req.params;
       const merchantId = req.merchant?.id || req.params.merchantId;
@@ -132,7 +132,7 @@ export class TeamController {
 
   // Permission Management
   async assignPermission(
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
   ): Promise<void> {
     try {
@@ -167,7 +167,7 @@ export class TeamController {
   }
 
   async removePermission(
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
   ): Promise<void> {
     try {
@@ -203,7 +203,7 @@ export class TeamController {
 
   // User Role Management
   async assignUserRole(
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
   ): Promise<void> {
     try {
@@ -239,7 +239,7 @@ export class TeamController {
   }
 
   async removeUserRole(
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
   ): Promise<void> {
     try {
@@ -275,7 +275,7 @@ export class TeamController {
   }
 
   async getUserPermissions(
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
   ): Promise<void> {
     try {

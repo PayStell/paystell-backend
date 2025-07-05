@@ -20,17 +20,7 @@ import {
 import { UserRole } from "../enums/UserRole";
 import { auth } from "express-openid-connect";
 import { oauthConfig } from "../config/auth0Config";
-
-// Define CustomRequest interface for proper typing of req.user
-interface CustomRequest extends Request {
-  user?: {
-    id: number;
-    email: string;
-    tokenExp?: number;
-    jti?: string;
-    role?: UserRole;
-  };
-}
+import "../types/express"; // Import type augmentation
 
 const router = Router();
 const authController = new AuthController();
@@ -70,10 +60,10 @@ const verifyTokenSchema = {
 
 // Helper function to wrap async route handlers
 const asyncHandler = (
-  fn: (req: CustomRequest, res: Response, next: NextFunction) => Promise<void>,
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<void>,
 ): RequestHandler => {
   return (req, res, next) => {
-    Promise.resolve(fn(req as CustomRequest, res, next)).catch(next);
+    Promise.resolve(fn(req as Request, res, next)).catch(next);
   };
 };
 

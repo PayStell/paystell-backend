@@ -1,4 +1,4 @@
-import { Router, RequestHandler, Response, NextFunction } from "express";
+import { Router, RequestHandler, Response, NextFunction, Request } from "express";
 import { PaymentController } from "../controllers/PaymentController";
 import { handleValidationErrors } from "../middlewares/validationErrorHandler";
 import {
@@ -13,11 +13,9 @@ import {
   validateTransactionVerification,
 } from "../validators/paymentValidators";
 import { fraudDetectionMiddleware } from "../middlewares/fraudDetection.middleware";
-import {
-  requirePermission,
-  AuthenticatedRequest,
-} from "../middlewares/permissionMiddleware";
+import { requirePermission } from "../middlewares/permissionMiddleware";
 import { PermissionResource, PermissionAction } from "../entities/Permission";
+import "../types/express"; // Import type augmentation
 
 const router = Router();
 const paymentController = new PaymentController();
@@ -107,7 +105,7 @@ router.get(
   "/",
   requirePermission(PermissionResource.PAYMENTS, PermissionAction.READ),
   async (
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
@@ -125,7 +123,7 @@ router.post(
   requirePermission(PermissionResource.PAYMENTS, PermissionAction.CREATE),
   paymentCreationRateLimit,
   async (
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
