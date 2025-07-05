@@ -16,12 +16,26 @@ export class Balance {
 
   @Column("decimal", { precision: 20, scale: 7 })
   balance: string
+  @Column({ nullable: true })
+  assetType: string
 
-  @Column("decimal", { precision: 20, scale: 7, nullable: true })
-  buyingLiabilities: string
+  @Column({ default: true })
+  isAuthorized: boolean
 
-  @Column("decimal", { precision: 20, scale: 7, nullable: true })
-  sellingLiabilities: string
+  @Column({ default: true })
+  isAuthorizedToMaintainLiabilities: boolean
+
+  @Column({ default: false })
+  isClawbackEnabled: boolean
+
+  @Column({ nullable: true })
+  lastModifiedLedger: string
+
+  @Column({ nullable: true })
+  limit: string
+
+  @Column({ nullable: true })
+  sponsor: string
 
   @CreateDateColumn()
   createdAt: Date
