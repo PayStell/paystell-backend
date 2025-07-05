@@ -18,7 +18,7 @@ export async function generatePaymentId(): Promise<string> {
 // Fallback ID generator
 function generateFallbackId(): string {
   const chars = alphabet;
-  let result = '';
+  let result = "";
   for (let i = 0; i < 12; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }

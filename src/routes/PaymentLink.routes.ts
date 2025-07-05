@@ -10,7 +10,6 @@ import { UserRole } from "../enums/UserRole";
 import { paymentLinkLimiter } from "../middleware/rateLimiter";
 import { authMiddleware } from "../middlewares/authMiddleware";
 
-
 const router = Router();
 const paymentLinkController = new PaymentLinkController();
 

@@ -101,7 +101,9 @@ export class StellarContractService {
       console.warn(
         "⚠️  CONTRACT_ADMIN_SECRET has invalid format - Using random keypair for development",
       );
-      console.warn("   Expected format: Stellar secret key starting with 'S' (56 characters)");
+      console.warn(
+        "   Expected format: Stellar secret key starting with 'S' (56 characters)",
+      );
       this.adminKeypair = Keypair.random();
     } else {
       try {
@@ -110,7 +112,10 @@ export class StellarContractService {
         console.warn(
           "⚠️  Failed to parse CONTRACT_ADMIN_SECRET - Using random keypair for development",
         );
-        console.warn("   Error:", error instanceof Error ? error.message : error);
+        console.warn(
+          "   Error:",
+          error instanceof Error ? error.message : error,
+        );
         this.adminKeypair = Keypair.random();
       }
     }
@@ -356,10 +361,10 @@ export class StellarContractService {
   private isValidStellarSecretKey(secretKey: string): boolean {
     try {
       // Stellar secret keys start with 'S' and are 56 characters long
-      if (!secretKey || secretKey.length !== 56 || !secretKey.startsWith('S')) {
+      if (!secretKey || secretKey.length !== 56 || !secretKey.startsWith("S")) {
         return false;
       }
-      
+
       // Additional validation by trying to decode it
       // This will throw if the format is invalid
       Keypair.fromSecret(secretKey);

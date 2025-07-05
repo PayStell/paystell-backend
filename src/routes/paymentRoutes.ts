@@ -1,4 +1,10 @@
-import { Router, RequestHandler, Request, Response, NextFunction } from "express";
+import {
+  Router,
+  RequestHandler,
+  Request,
+  Response,
+  NextFunction,
+} from "express";
 import { PaymentController } from "../controllers/PaymentController";
 import { handleValidationErrors } from "../middlewares/validationErrorHandler";
 import {
@@ -13,9 +19,7 @@ import {
   validateTransactionVerification,
 } from "../validators/paymentValidators";
 import { fraudDetectionMiddleware } from "../middlewares/fraudDetection.middleware";
-import {
-  requirePermission,
-} from "../middlewares/permissionMiddleware";
+import { requirePermission } from "../middlewares/permissionMiddleware";
 
 import { PermissionResource, PermissionAction } from "../entities/Permission";
 
@@ -106,11 +110,7 @@ router.get(
 router.get(
   "/",
   requirePermission(PermissionResource.PAYMENTS, PermissionAction.READ),
-  async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       await paymentController.getPayments(req, res, next);
     } catch (error) {
@@ -124,11 +124,7 @@ router.post(
   "/",
   requirePermission(PermissionResource.PAYMENTS, PermissionAction.CREATE),
   paymentCreationRateLimit,
-  async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       await paymentController.createPayment(req, res, next);
     } catch (error) {

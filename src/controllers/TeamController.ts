@@ -131,10 +131,7 @@ export class TeamController {
   }
 
   // Permission Management
-  async assignPermission(
-    req: Request,
-    res: Response,
-  ): Promise<void> {
+  async assignPermission(req: Request, res: Response): Promise<void> {
     try {
       const { roleId, permissionId } = req.body;
       const merchantId = req.merchant?.id;
@@ -166,10 +163,7 @@ export class TeamController {
     }
   }
 
-  async removePermission(
-    req: Request,
-    res: Response,
-  ): Promise<void> {
+  async removePermission(req: Request, res: Response): Promise<void> {
     try {
       const { roleId, permissionId } = req.body;
       const merchantId = req.merchant?.id;
@@ -202,10 +196,7 @@ export class TeamController {
   }
 
   // User Role Management
-  async assignUserRole(
-    req: Request,
-    res: Response,
-  ): Promise<void> {
+  async assignUserRole(req: Request, res: Response): Promise<void> {
     try {
       const { userId, roleId } = req.body;
       const merchantId = req.merchant?.id;
@@ -238,10 +229,7 @@ export class TeamController {
     }
   }
 
-  async removeUserRole(
-    req: Request,
-    res: Response,
-  ): Promise<void> {
+  async removeUserRole(req: Request, res: Response): Promise<void> {
     try {
       const { userId, roleId } = req.body;
       const merchantId = req.merchant?.id;
@@ -274,10 +262,7 @@ export class TeamController {
     }
   }
 
-  async getUserPermissions(
-    req: Request,
-    res: Response,
-  ): Promise<void> {
+  async getUserPermissions(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
       const merchantId = req.merchant?.id || req.params.merchantId;

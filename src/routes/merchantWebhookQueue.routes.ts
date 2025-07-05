@@ -11,17 +11,11 @@ import {
   isUserAuthorized,
 } from "../middlewares/authMiddleware";
 
-
 const router = express.Router();
 const merchantWebhookQueueController = new MerchantWebhookQueueController();
 
 const asyncHandler = (
-  fn: (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => Promise<unknown>,
-
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>,
 ): RequestHandler => {
   return (req, res, next) => {
     Promise.resolve(fn(req as Request, res, next)).catch(next);
