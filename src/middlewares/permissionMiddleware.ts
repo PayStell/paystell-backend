@@ -3,7 +3,17 @@ import { getRBACService } from "../services/RBACService";
 import { PermissionResource, PermissionAction } from "../entities/Permission";
 import { UserRole } from "../enums/UserRole";
 import { MerchantEntity } from "../entities/Merchant.entity";
-// Request interface extensions are now handled in src/types/express.d.ts
+
+export interface AuthenticatedRequest extends Request {
+  user?: {
+    id: number;
+    email: string;
+    tokenExp?: number;
+    jti?: string;
+    role?: UserRole;
+  };
+  merchant?: MerchantEntity;
+}
 
 export const requirePermission = (
   resource: PermissionResource,

@@ -20,7 +20,17 @@ import {
 import { UserRole } from "../enums/UserRole";
 import { auth } from "express-openid-connect";
 import { oauthConfig } from "../config/auth0Config";
-// Request interface extensions are now handled in src/types/express.d.ts
+
+// Define CustomRequest interface for proper typing of req.user
+interface CustomRequest extends Request {
+  user?: {
+    id: number;
+    email: string;
+    tokenExp?: number;
+    jti?: string;
+    role?: UserRole;
+  };
+}
 
 const router = Router();
 const authController = new AuthController();
