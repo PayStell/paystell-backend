@@ -10,14 +10,6 @@ import { UserRole } from "../enums/UserRole";
 import { paymentLinkLimiter } from "../middleware/rateLimiter";
 import { authMiddleware } from "../middlewares/authMiddleware";
 
-interface CustomRequest extends Request {
-  user?: {
-    id: number;
-    email: string;
-    tokenExp?: number;
-    role?: UserRole;
-  };
-}
 
 const router = Router();
 const paymentLinkController = new PaymentLinkController();

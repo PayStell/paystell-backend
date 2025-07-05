@@ -1,4 +1,4 @@
-import { Router, RequestHandler, Response, NextFunction, Request } from "express";
+import { Router, RequestHandler, Request, Response, NextFunction } from "express";
 import { PaymentController } from "../controllers/PaymentController";
 import { handleValidationErrors } from "../middlewares/validationErrorHandler";
 import {
@@ -13,9 +13,11 @@ import {
   validateTransactionVerification,
 } from "../validators/paymentValidators";
 import { fraudDetectionMiddleware } from "../middlewares/fraudDetection.middleware";
-import { requirePermission } from "../middlewares/permissionMiddleware";
+import {
+  requirePermission,
+} from "../middlewares/permissionMiddleware";
+
 import { PermissionResource, PermissionAction } from "../entities/Permission";
-// Request interface extensions are now handled in src/types/express.d.ts
 
 const router = Router();
 const paymentController = new PaymentController();

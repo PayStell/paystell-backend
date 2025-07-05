@@ -69,7 +69,13 @@ export const requireAnyPermission = (
     action: PermissionAction;
   }>,
 ) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+
     try {
       const userId = req.user?.id;
       const merchantId =
