@@ -123,9 +123,9 @@ app.use("/users", userRoutes);
 app.use("/merchants", merchantRoutes);
 app.use("/webhook-queue/merchant", merchantWebhookQueueRoutes);
 app.use("/reports/transactions", transactionReportsRoutes);
-// app.use("/api/v1/stellar", stellarContractRoutes);
-// app.use("/token", tokenRoutes);
-// app.use("/payment", paymentRouter);
+app.use("/api/v1/stellar", stellarContractRoutes);
+app.use("/token", tokenRoutes);
+app.use("/payment", paymentRouter);
 app.use("/subscriptions", subscriptionRouter);
 app.use("/", routes);
 
