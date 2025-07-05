@@ -4,6 +4,7 @@ import salesSummaryRoutes from "./salesSummary.routes";
 import referralRoutes from "./referralRoutes";
 import referralProgramRoutes from "./referralProgramRoutes";
 import auditRoutes from "./audit.routes";
+import walletRoutes from "./wallet"
 import { subscriptionRouter } from "./subscriptionRoutes";
 
 const router = Router();
@@ -14,5 +15,5 @@ router.use("/api", referralRoutes);
 router.use("/api", referralProgramRoutes);
 router.use("/subscriptions", subscriptionRouter);
 router.use("/audit", auditRoutes);
-
+router.use("/wallet", walletRoutes)
 export default router;
