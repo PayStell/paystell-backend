@@ -1,3 +1,5 @@
+import { MerchantWebhookEntity } from "../entities/MerchantWebhook.entity";
+
 export type WebhookPayload = {
   transactionId: string;
   transactionType: string | undefined;
@@ -12,6 +14,13 @@ export type WebhookPayload = {
   eventType: string; // 'payment.success' | 'payment.failure' | 'payment.pending'
   reqMethod: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 };
+
+export interface WebhookResponse {
+  success: boolean;
+  statusCode?: number;
+  response?: Record<string, unknown>;
+  errorMessage?: string;
+}
 
 export type MerchantWebhook = {
   id: string;
@@ -29,14 +38,15 @@ export type Merchant = {
   name: string;
   email: string;
   isActive: boolean;
+  business_name: string | null;
+  business_description: string | null;
+  business_address: string | null;
+  business_phone: string | null;
+  business_email: string | null;
+  business_logo_url: string | null;
   createdAt: Date;
-  business_name?: string;
-  business_description?: string;
-  business_address?: string;
-  business_phone?: string;
-  business_email?: string;
-  business_logo_url?: string;
   updatedAt: Date;
+  webhooks: MerchantWebhookEntity[];
 };
 
 const _transactionStatusValues = [

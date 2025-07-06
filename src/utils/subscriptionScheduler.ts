@@ -5,7 +5,7 @@ import { logInfo, logError } from "./logger";
 export class SubscriptionScheduler {
   private subscriptionService: SubscriptionService;
   private isRunning: boolean = false;
-  private cronTasks: any[] = [];
+  private cronTasks: cron.ScheduledTask[] = [];
 
   constructor(subscriptionService?: SubscriptionService) {
     this.subscriptionService = subscriptionService || new SubscriptionService();

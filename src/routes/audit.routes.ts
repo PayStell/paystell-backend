@@ -17,7 +17,7 @@ router.get("/logs", auditController.getAuditLogs);
 router.get(
   "/entity/:entityType/:entityId",
   validateEntityParams,
-  auditController.getEntityAuditHistory,
+  auditController.getEntityAuditLogs,
 );
 
 export default router;

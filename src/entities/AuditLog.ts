@@ -22,9 +22,30 @@ export class AuditLog {
 
   @Column({
     type: "enum",
-    enum: ["CREATE", "UPDATE", "DELETE"],
+    enum: [
+      "CREATE",
+      "UPDATE",
+      "DELETE",
+      "CREATE_ROLE",
+      "UPDATE_ROLE",
+      "DELETE_ROLE",
+      "ASSIGN_PERMISSION",
+      "REMOVE_PERMISSION",
+      "ASSIGN_USER_ROLE",
+      "REMOVE_USER_ROLE",
+    ],
   })
-  action: "CREATE" | "UPDATE" | "DELETE";
+  action:
+    | "CREATE"
+    | "UPDATE"
+    | "DELETE"
+    | "CREATE_ROLE"
+    | "UPDATE_ROLE"
+    | "DELETE_ROLE"
+    | "ASSIGN_PERMISSION"
+    | "REMOVE_PERMISSION"
+    | "ASSIGN_USER_ROLE"
+    | "REMOVE_USER_ROLE";
 
   @Column("json", { nullable: true })
   oldValues?: Record<string, unknown>;

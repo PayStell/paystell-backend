@@ -1,7 +1,8 @@
 import { Repository } from "typeorm";
 import AppDataSource from "../config/db";
 import { AuditLog } from "../entities/AuditLog";
-import { Request } from "express";
+import { Request } from "express-serve-static-core";
+// Request interface extensions are now handled in src/types/express.d.ts
 
 export interface AuditContext {
   userId?: string;
@@ -14,7 +15,17 @@ export interface AuditContext {
 export interface CreateAuditLogParams {
   entityType: string;
   entityId: string;
-  action: "CREATE" | "UPDATE" | "DELETE";
+  action:
+    | "CREATE"
+    | "UPDATE"
+    | "DELETE"
+    | "CREATE_ROLE"
+    | "UPDATE_ROLE"
+    | "DELETE_ROLE"
+    | "ASSIGN_PERMISSION"
+    | "REMOVE_PERMISSION"
+    | "ASSIGN_USER_ROLE"
+    | "REMOVE_USER_ROLE";
   oldValues?: Record<string, unknown>;
   newValues?: Record<string, unknown>;
   context: AuditContext;
@@ -158,14 +169,14 @@ export class AuditService {
   }
 }
 
-// Create a singleton instance that will be lazy-loaded
+// Remove this line:
+// export const auditService = new AuditService();
+
 let auditServiceInstance: AuditService | null = null;
 
-export const auditService = {
-  getInstance(): AuditService {
-    if (!auditServiceInstance) {
-      auditServiceInstance = new AuditService();
-    }
-    return auditServiceInstance;
+export const getAuditService = (): AuditService => {
+  if (!auditServiceInstance) {
+    auditServiceInstance = new AuditService();
   }
+  return auditServiceInstance;
 };

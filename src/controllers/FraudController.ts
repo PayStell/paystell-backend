@@ -2,10 +2,10 @@ import { Request, Response } from "express";
 import { validate } from "class-validator";
 import { plainToClass } from "class-transformer";
 import { FraudDetectionService } from "../services/FraudDetectionService";
-import { 
-  ReviewFraudAlertDTO, 
-  GetFraudAlertsQueryDTO, 
-  GetFraudStatsQueryDTO 
+import {
+  ReviewFraudAlertDTO,
+  GetFraudAlertsQueryDTO,
+  GetFraudStatsQueryDTO,
 } from "../dtos/FraudDetection.dto";
 
 export class FraudController {
@@ -25,19 +25,19 @@ export class FraudController {
         return res.status(400).json({
           success: false,
           error: "Validation failed",
-          details: errors.map(error => ({
+          details: errors.map((error) => ({
             property: error.property,
-            constraints: error.constraints
-          }))
+            constraints: error.constraints,
+          })),
         });
       }
 
       const { merchantId, status, limit = 50 } = queryDto;
-      
+
       const alerts = await this.fraudService.getFraudAlerts(
         merchantId,
         status,
-        limit
+        limit,
       );
 
       res.json({
@@ -46,7 +46,8 @@ export class FraudController {
         count: alerts.length,
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
       res.status(500).json({
         success: false,
         error: errorMessage,
@@ -64,10 +65,10 @@ export class FraudController {
         return res.status(400).json({
           success: false,
           error: "Validation failed",
-          details: errors.map(error => ({
+          details: errors.map((error) => ({
             property: error.property,
-            constraints: error.constraints
-          }))
+            constraints: error.constraints,
+          })),
         });
       }
 
@@ -79,7 +80,7 @@ export class FraudController {
         alertId,
         status,
         reviewNotes,
-        reviewedBy
+        reviewedBy,
       );
 
       res.json({
@@ -87,7 +88,8 @@ export class FraudController {
         data: alert,
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
       res.status(500).json({
         success: false,
         error: errorMessage,
@@ -106,7 +108,8 @@ export class FraudController {
         data: config,
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
       res.status(500).json({
         success: false,
         error: errorMessage,
@@ -120,14 +123,18 @@ export class FraudController {
       const { merchantId } = req.params;
       const updates = req.body;
 
-      const config = await this.fraudService.updateMerchantConfig(merchantId, updates);
+      const config = await this.fraudService.updateMerchantConfig(
+        merchantId,
+        updates,
+      );
 
       res.json({
         success: true,
         data: config,
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
       res.status(500).json({
         success: false,
         error: errorMessage,
@@ -145,15 +152,15 @@ export class FraudController {
         return res.status(400).json({
           success: false,
           error: "Validation failed",
-          details: errors.map(error => ({
+          details: errors.map((error) => ({
             property: error.property,
-            constraints: error.constraints
-          }))
+            constraints: error.constraints,
+          })),
         });
       }
 
       const { merchantId, days = 30 } = statsDto;
-      
+
       const stats = await this.fraudService.getFraudStats(merchantId, days);
 
       res.json({
@@ -163,7 +170,8 @@ export class FraudController {
         ...(merchantId && { merchantId }),
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
       res.status(500).json({
         success: false,
         error: errorMessage,
