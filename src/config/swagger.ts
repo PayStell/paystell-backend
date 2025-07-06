@@ -38,9 +38,12 @@ const options: swaggerJsdoc.Options = {
           type: 'oauth2',
           flows: {
             authorizationCode: {
-              authorizationUrl: 'https://your-auth0-domain.auth0.com/authorize',
-              tokenUrl: 'https://your-auth0-domain.auth0.com/oauth/token',
+              authorizationUrl: `${process.env.AUTH0_DOMAIN || 'https://dev-example.auth0.com'}/authorize`,
+              tokenUrl: `${process.env.AUTH0_DOMAIN || 'https://dev-example.auth0.com'}/oauth/token`,
               scopes: {
+                'openid': 'OpenID Connect scope',
+                'profile': 'Access to user profile information',
+                'email': 'Access to user email address',
                 'read:users': 'Read user information',
                 'write:users': 'Create and update users',
                 'read:payments': 'Read payment information',

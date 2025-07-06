@@ -16,52 +16,12 @@ const swaggerJsdoc = require('swagger-jsdoc');
 
 console.log('🔍 Validating OpenAPI Documentation...\n');
 
-// Define the swagger options inline to avoid TypeScript import issues
+// Import the actual swagger configuration
+const { specs: existingSpecs } = require('../dist/config/swagger.js');
+
+// Use the existing swagger configuration
 const options = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'PayStell API',
-      version: '1.0.0',
-      description: 'Comprehensive API documentation for the PayStell backend service.',
-    },
-    servers: [
-      {
-        url: 'http://localhost:3000',
-        description: 'Development server',
-      },
-    ],
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-        },
-      },
-      schemas: {
-        User: {
-          type: 'object',
-          properties: {
-            id: { type: 'integer' },
-            name: { type: 'string' },
-            email: { type: 'string', format: 'email' },
-            role: { type: 'string', enum: ['USER', 'ADMIN', 'MERCHANT'] },
-          },
-          required: ['id', 'name', 'email', 'role'],
-        },
-        Error: {
-          type: 'object',
-          properties: {
-            error: { type: 'string' },
-            message: { type: 'string' },
-          },
-          required: ['error', 'message'],
-        },
-      },
-    },
-    security: [{ bearerAuth: [] }],
-  },
+  definition: existingSpecs,
   apis: [
     './src/routes/*.ts',
     './src/controllers/*.ts',
@@ -207,17 +167,18 @@ Object.entries(specs.paths).forEach(([path, methods]) => {
 // Check for missing required fields in request bodies
 Object.entries(specs.paths).forEach(([path, methods]) => {
   Object.entries(methods).forEach(([method, config]) => {
-    if (config.requestBody && config.requestBody.content) {
-      Object.values(config.requestBody.content).forEach(content => {
-        if (content.schema && content.schema.$ref) {
-          const schemaName = content.schema.$ref.split('/').pop();
-          if (!specs.components.schemas[schemaName]) {
-            console.warn(`⚠️  Warning: Referenced schema '${schemaName}' not found in path '${method.toUpperCase()} ${path}'`);
-            issues++;
-          }
+    Object.values(config.requestBody?.content ?? {}).forEach(content => {
+      const ref = content.schema?.$ref;
+      if (ref) {
+        const schemaName = ref.split('/').pop();
+        if (!specs.components.schemas[schemaName]) {
+          console.warn(
+            `⚠️  Warning: Referenced schema '${schemaName}' not found in path '${method.toUpperCase()} ${path}'`
+          );
+          issues++;
         }
-      });
-    }
+      }
+    });
   });
 });
 
