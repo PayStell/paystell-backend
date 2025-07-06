@@ -1,11 +1,23 @@
 import { SubscriptionService } from "../../services/SubscriptionService";
-import { BillingInterval, SubscriptionStatus } from "../../entities/Subscription";
-import { BillingCycleStatus } from "../../entities/BillingCycle";
-import { SubscriptionEventType } from "../../entities/SubscriptionEvent";
-import { NotificationType, NotificationCategory } from "../../entities/InAppNotification.entity";
+import {
+  BillingInterval,
+  Subscription,
+  SubscriptionStatus,
+} from "../../entities/Subscription";
+import { BillingCycle, BillingCycleStatus } from "../../entities/BillingCycle";
+import {
+  SubscriptionEvent,
+  SubscriptionEventType,
+} from "../../entities/SubscriptionEvent";
+import {
+  NotificationType,
+  NotificationCategory,
+} from "../../entities/InAppNotification.entity";
 import AppDataSource from "../../config/db";
 import { AppError } from "../../utils/AppError";
-import { LessThanOrEqual } from "typeorm";
+import { LessThanOrEqual, Repository } from "typeorm";
+import { PaymentService } from "../../services/PaymentService";
+import { NotificationService } from "../../services/inAppNotificationService";
 
 // Mock dependencies
 jest.mock("../../config/db");
@@ -24,11 +36,11 @@ jest.mock("../../utils/generatePaymentId", () => ({
 
 describe("SubscriptionService", () => {
   let subscriptionService: SubscriptionService;
-  let mockSubscriptionRepository: any;
-  let mockBillingCycleRepository: any;
-  let mockEventRepository: any;
-  let mockPaymentService: any;
-  let mockNotificationService: any;
+  let mockSubscriptionRepository: Partial<Repository<Subscription>>;
+  let mockBillingCycleRepository: Partial<Repository<BillingCycle>>;
+  let mockEventRepository: Partial<Repository<SubscriptionEvent>>;
+  let mockPaymentService: Partial<PaymentService>;
+  let mockNotificationService: Partial<NotificationService>;
 
   const mockSubscriptionData = {
     id: "sub_123",
@@ -81,12 +93,23 @@ describe("SubscriptionService", () => {
     });
 
     // Mock the service instances
-    const SubscriptionServiceClass = require("../../services/SubscriptionService").SubscriptionService;
+    const SubscriptionServiceClass =
+      require("../../services/SubscriptionService").SubscriptionService;
     subscriptionService = new SubscriptionServiceClass();
-    
+
     // Replace the service instances with mocks
-    (subscriptionService as any).paymentService = mockPaymentService;
-    (subscriptionService as any).notificationService = mockNotificationService;
+    (
+      subscriptionService as unknown as {
+        paymentService: unknown;
+        notificationService: unknown;
+      }
+    ).paymentService = mockPaymentService;
+    (
+      subscriptionService as unknown as {
+        paymentService: unknown;
+        notificationService: unknown;
+      }
+    ).notificationService = mockNotificationService;
   });
 
   describe("createSubscription", () => {
@@ -101,14 +124,18 @@ describe("SubscriptionService", () => {
     };
 
     it("should create a new subscription successfully", async () => {
-      mockSubscriptionRepository.save.mockResolvedValueOnce(mockSubscriptionData);
-      mockBillingCycleRepository.save.mockResolvedValueOnce({
+      (mockSubscriptionRepository.save as jest.Mock).mockResolvedValueOnce(
+        mockSubscriptionData,
+      );
+      (mockBillingCycleRepository.save as jest.Mock).mockResolvedValueOnce({
         id: "cycle_1",
         subscriptionId: mockSubscriptionData.id,
         status: BillingCycleStatus.PENDING,
       });
-      mockEventRepository.save.mockResolvedValueOnce({});
-      mockNotificationService.createNotification.mockResolvedValueOnce({});
+      (mockEventRepository.save as jest.Mock).mockResolvedValueOnce({});
+      (
+        mockNotificationService.createNotification as jest.Mock
+      ).mockResolvedValueOnce({});
 
       const result = await subscriptionService.createSubscription(createParams);
 
@@ -118,7 +145,7 @@ describe("SubscriptionService", () => {
         expect.objectContaining({
           subscriptionId: mockSubscriptionData.id,
           eventType: SubscriptionEventType.CREATED,
-        })
+        }),
       );
       expect(mockNotificationService.createNotification).toHaveBeenCalledWith({
         title: "Subscription Created",
@@ -135,50 +162,74 @@ describe("SubscriptionService", () => {
       const startDate = new Date("2024-01-01");
       const paramsWithStartDate = { ...createParams, startDate };
 
-      mockSubscriptionRepository.save.mockResolvedValueOnce(mockSubscriptionData);
-      mockBillingCycleRepository.save.mockResolvedValueOnce({});
-      mockEventRepository.save.mockResolvedValueOnce({});
-      mockNotificationService.createNotification.mockResolvedValueOnce({});
+      (mockSubscriptionRepository.save as jest.Mock).mockResolvedValueOnce(
+        mockSubscriptionData,
+      );
+      (mockBillingCycleRepository.save as jest.Mock).mockResolvedValueOnce({});
+      (mockEventRepository.save as jest.Mock).mockResolvedValueOnce({});
+      (
+        mockNotificationService.createNotification as jest.Mock
+      ).mockResolvedValueOnce({});
 
       await subscriptionService.createSubscription(paramsWithStartDate);
 
-      const savedSubscription = mockSubscriptionRepository.save.mock.calls[0][0];
+      const savedSubscription = (mockSubscriptionRepository.save as jest.Mock)
+        .mock.calls[0][0];
       expect(savedSubscription.nextBillingDate.getMonth()).toBe(1); // February (0-indexed)
       expect(savedSubscription.nextBillingDate.getDate()).toBe(1);
     });
 
     it("should calculate next billing date correctly for weekly subscription", async () => {
-      const weeklyParams = { ...createParams, billingInterval: BillingInterval.WEEKLY };
+      const weeklyParams = {
+        ...createParams,
+        billingInterval: BillingInterval.WEEKLY,
+      };
       const startDate = new Date("2024-01-01");
       const expectedNextDate = new Date("2024-01-08");
 
-      mockSubscriptionRepository.save.mockResolvedValueOnce({
+      (mockSubscriptionRepository.save as jest.Mock).mockResolvedValueOnce({
         ...mockSubscriptionData,
         billingInterval: BillingInterval.WEEKLY,
         nextBillingDate: expectedNextDate,
       });
-      mockBillingCycleRepository.save.mockResolvedValueOnce({});
-      mockEventRepository.save.mockResolvedValueOnce({});
-      mockNotificationService.createNotification.mockResolvedValueOnce({});
+      (mockBillingCycleRepository.save as jest.Mock).mockResolvedValueOnce({});
+      (mockEventRepository.save as jest.Mock).mockResolvedValueOnce({});
+      (
+        mockNotificationService.createNotification as jest.Mock
+      ).mockResolvedValueOnce({});
 
-      await subscriptionService.createSubscription({ ...weeklyParams, startDate });
+      await subscriptionService.createSubscription({
+        ...weeklyParams,
+        startDate,
+      });
 
-      const savedSubscription = mockSubscriptionRepository.save.mock.calls[0][0];
-      expect(savedSubscription.nextBillingDate.getTime()).toBe(expectedNextDate.getTime());
+      const savedSubscription = (mockSubscriptionRepository.save as jest.Mock)
+        .mock.calls[0][0];
+      expect(savedSubscription.nextBillingDate.getTime()).toBe(
+        expectedNextDate.getTime(),
+      );
     });
 
     it("should handle custom interval count", async () => {
       const customParams = { ...createParams, intervalCount: 3 };
       const startDate = new Date("2024-01-01");
 
-      mockSubscriptionRepository.save.mockResolvedValueOnce(mockSubscriptionData);
-      mockBillingCycleRepository.save.mockResolvedValueOnce({});
-      mockEventRepository.save.mockResolvedValueOnce({});
-      mockNotificationService.createNotification.mockResolvedValueOnce({});
+      (mockSubscriptionRepository.save as jest.Mock).mockResolvedValueOnce(
+        mockSubscriptionData,
+      );
+      (mockBillingCycleRepository.save as jest.Mock).mockResolvedValueOnce({});
+      (mockEventRepository.save as jest.Mock).mockResolvedValueOnce({});
+      (
+        mockNotificationService.createNotification as jest.Mock
+      ).mockResolvedValueOnce({});
 
-      await subscriptionService.createSubscription({ ...customParams, startDate });
+      await subscriptionService.createSubscription({
+        ...customParams,
+        startDate,
+      });
 
-      const savedSubscription = mockSubscriptionRepository.save.mock.calls[0][0];
+      const savedSubscription = (mockSubscriptionRepository.save as jest.Mock)
+        .mock.calls[0][0];
       expect(savedSubscription.intervalCount).toBe(3);
       expect(savedSubscription.nextBillingDate.getMonth()).toBe(3); // April (3 months later)
     });
@@ -187,12 +238,18 @@ describe("SubscriptionService", () => {
       const metadata = { customField: "value", userId: 123 };
       const paramsWithMetadata = { ...createParams, metadata };
 
-      mockSubscriptionRepository.save.mockResolvedValueOnce({ ...mockSubscriptionData, metadata });
-      mockBillingCycleRepository.save.mockResolvedValueOnce({});
-      mockEventRepository.save.mockResolvedValueOnce({});
-      mockNotificationService.createNotification.mockResolvedValueOnce({});
+      (mockSubscriptionRepository.save as jest.Mock).mockResolvedValueOnce({
+        ...mockSubscriptionData,
+        metadata,
+      });
+      (mockBillingCycleRepository.save as jest.Mock).mockResolvedValueOnce({});
+      (mockEventRepository.save as jest.Mock).mockResolvedValueOnce({});
+      (
+        mockNotificationService.createNotification as jest.Mock
+      ).mockResolvedValueOnce({});
 
-      const result = await subscriptionService.createSubscription(paramsWithMetadata);
+      const result =
+        await subscriptionService.createSubscription(paramsWithMetadata);
 
       expect(result.metadata).toEqual(metadata);
     });
@@ -200,7 +257,9 @@ describe("SubscriptionService", () => {
 
   describe("getSubscription", () => {
     it("should retrieve subscription with relations", async () => {
-      mockSubscriptionRepository.findOne.mockResolvedValueOnce(mockSubscriptionData);
+      (mockSubscriptionRepository.findOne as jest.Mock).mockResolvedValueOnce(
+        mockSubscriptionData,
+      );
 
       const result = await subscriptionService.getSubscription("sub_abc123");
 
@@ -212,10 +271,12 @@ describe("SubscriptionService", () => {
     });
 
     it("should throw AppError if subscription not found", async () => {
-      mockSubscriptionRepository.findOne.mockResolvedValueOnce(null);
+      (mockSubscriptionRepository.findOne as jest.Mock).mockResolvedValueOnce(
+        null,
+      );
 
       await expect(
-        subscriptionService.getSubscription("non_existent")
+        subscriptionService.getSubscription("non_existent"),
       ).rejects.toThrow(AppError);
     });
   });
@@ -223,9 +284,12 @@ describe("SubscriptionService", () => {
   describe("getSubscriptionsByMerchant", () => {
     it("should retrieve subscriptions for merchant", async () => {
       const subscriptions = [mockSubscriptionData];
-      mockSubscriptionRepository.find.mockResolvedValueOnce(subscriptions);
+      (mockSubscriptionRepository.find as jest.Mock).mockResolvedValueOnce(
+        subscriptions,
+      );
 
-      const result = await subscriptionService.getSubscriptionsByMerchant("merchant_123");
+      const result =
+        await subscriptionService.getSubscriptionsByMerchant("merchant_123");
 
       expect(mockSubscriptionRepository.find).toHaveBeenCalledWith({
         where: { merchantId: "merchant_123" },
@@ -238,12 +302,22 @@ describe("SubscriptionService", () => {
 
   describe("pauseSubscription", () => {
     it("should pause an active subscription", async () => {
-      const activeSubscription = { ...mockSubscriptionData, status: SubscriptionStatus.ACTIVE };
-      const pausedSubscription = { ...activeSubscription, status: SubscriptionStatus.PAUSED };
+      const activeSubscription = {
+        ...mockSubscriptionData,
+        status: SubscriptionStatus.ACTIVE,
+      };
+      const pausedSubscription = {
+        ...activeSubscription,
+        status: SubscriptionStatus.PAUSED,
+      };
 
-      mockSubscriptionRepository.findOne.mockResolvedValueOnce(activeSubscription);
-      mockSubscriptionRepository.save.mockResolvedValueOnce(pausedSubscription);
-      mockEventRepository.save.mockResolvedValueOnce({});
+      (mockSubscriptionRepository.findOne as jest.Mock).mockResolvedValueOnce(
+        activeSubscription,
+      );
+      (mockSubscriptionRepository.save as jest.Mock).mockResolvedValueOnce(
+        pausedSubscription,
+      );
+      (mockEventRepository.save as jest.Mock).mockResolvedValueOnce({});
 
       const result = await subscriptionService.pauseSubscription("sub_abc123");
 
@@ -251,28 +325,40 @@ describe("SubscriptionService", () => {
         expect.objectContaining({
           subscriptionId: activeSubscription.id,
           eventType: SubscriptionEventType.PAUSED,
-        })
+        }),
       );
       expect(result.status).toBe(SubscriptionStatus.PAUSED);
     });
 
     it("should throw error if subscription not found", async () => {
-      mockSubscriptionRepository.findOne.mockResolvedValueOnce(null);
+      (mockSubscriptionRepository.findOne as jest.Mock).mockResolvedValueOnce(
+        null,
+      );
 
       await expect(
-        subscriptionService.pauseSubscription("non_existent")
+        subscriptionService.pauseSubscription("non_existent"),
       ).rejects.toThrow(AppError);
     });
   });
 
   describe("resumeSubscription", () => {
     it("should resume a paused subscription", async () => {
-      const pausedSubscription = { ...mockSubscriptionData, status: SubscriptionStatus.PAUSED };
-      const activeSubscription = { ...pausedSubscription, status: SubscriptionStatus.ACTIVE };
+      const pausedSubscription = {
+        ...mockSubscriptionData,
+        status: SubscriptionStatus.PAUSED,
+      };
+      const activeSubscription = {
+        ...pausedSubscription,
+        status: SubscriptionStatus.ACTIVE,
+      };
 
-      mockSubscriptionRepository.findOne.mockResolvedValueOnce(pausedSubscription);
-      mockSubscriptionRepository.save.mockResolvedValueOnce(activeSubscription);
-      mockEventRepository.save.mockResolvedValueOnce({});
+      (mockSubscriptionRepository.findOne as jest.Mock).mockResolvedValueOnce(
+        pausedSubscription,
+      );
+      (mockSubscriptionRepository.save as jest.Mock).mockResolvedValueOnce(
+        activeSubscription,
+      );
+      (mockEventRepository.save as jest.Mock).mockResolvedValueOnce({});
 
       const result = await subscriptionService.resumeSubscription("sub_abc123");
 
@@ -281,41 +367,56 @@ describe("SubscriptionService", () => {
         expect.objectContaining({
           subscriptionId: pausedSubscription.id,
           eventType: SubscriptionEventType.RESUMED,
-        })
+        }),
       );
     });
 
     it("should update next billing date when resuming", async () => {
-      const pausedSubscription = { ...mockSubscriptionData, status: SubscriptionStatus.PAUSED };
-      
-      mockSubscriptionRepository.findOne.mockResolvedValueOnce(pausedSubscription);
-      mockSubscriptionRepository.save.mockResolvedValueOnce(pausedSubscription);
-      mockEventRepository.save.mockResolvedValueOnce({});
+      const pausedSubscription = {
+        ...mockSubscriptionData,
+        status: SubscriptionStatus.PAUSED,
+      };
+
+      (mockSubscriptionRepository.findOne as jest.Mock).mockResolvedValueOnce(
+        pausedSubscription,
+      );
+      (mockSubscriptionRepository.save as jest.Mock).mockResolvedValueOnce(
+        pausedSubscription,
+      );
+      (mockEventRepository.save as jest.Mock).mockResolvedValueOnce({});
 
       const beforeResume = Date.now();
       await subscriptionService.resumeSubscription("sub_abc123");
       const afterResume = Date.now();
 
-      const savedSubscription = mockSubscriptionRepository.save.mock.calls[0][0];
+      const savedSubscription = (mockSubscriptionRepository.save as jest.Mock)
+        .mock.calls[0][0];
       const nextBillingTime = savedSubscription.nextBillingDate.getTime();
-      
+
       // Next billing date should be approximately one month from now
       expect(nextBillingTime).toBeGreaterThan(beforeResume);
-      expect(nextBillingTime).toBeLessThan(afterResume + (32 * 24 * 60 * 60 * 1000)); // 32 days
+      expect(nextBillingTime).toBeLessThan(
+        afterResume + 32 * 24 * 60 * 60 * 1000,
+      ); // 32 days
     });
   });
 
   describe("cancelSubscription", () => {
     it("should cancel an active subscription", async () => {
-      const activeSubscription = { ...mockSubscriptionData, status: SubscriptionStatus.ACTIVE };
-      
-      mockSubscriptionRepository.findOne.mockResolvedValueOnce(activeSubscription);
-      mockSubscriptionRepository.save.mockResolvedValueOnce({
+      const activeSubscription = {
+        ...mockSubscriptionData,
+        status: SubscriptionStatus.ACTIVE,
+      };
+
+      (mockSubscriptionRepository.findOne as jest.Mock).mockResolvedValueOnce(
+        activeSubscription,
+      );
+      (mockSubscriptionRepository.save as jest.Mock).mockResolvedValueOnce({
         ...activeSubscription,
         status: SubscriptionStatus.CANCELLED,
         endDate: expect.any(Date),
       });
-      mockEventRepository.save.mockResolvedValueOnce({});
+      (mockEventRepository.save as jest.Mock).mockResolvedValueOnce({});
 
       const result = await subscriptionService.cancelSubscription("sub_abc123");
 
@@ -324,7 +425,7 @@ describe("SubscriptionService", () => {
         expect.objectContaining({
           subscriptionId: activeSubscription.id,
           eventType: SubscriptionEventType.CANCELLED,
-        })
+        }),
       );
     });
   });
@@ -349,11 +450,15 @@ describe("SubscriptionService", () => {
     };
 
     it("should process due billing cycles successfully", async () => {
-      mockBillingCycleRepository.find.mockResolvedValueOnce([mockBillingCycle]);
-      mockBillingCycleRepository.save.mockResolvedValue({});
-      mockPaymentService.processPayment.mockResolvedValueOnce({});
-      mockEventRepository.save.mockResolvedValueOnce({});
-      mockSubscriptionRepository.save.mockResolvedValueOnce({});
+      (mockBillingCycleRepository.find as jest.Mock).mockResolvedValueOnce([
+        mockBillingCycle,
+      ]);
+      (mockBillingCycleRepository.save as jest.Mock).mockResolvedValue({});
+      (mockPaymentService.processPayment as jest.Mock).mockResolvedValueOnce(
+        {},
+      );
+      (mockEventRepository.save as jest.Mock).mockResolvedValueOnce({});
+      (mockSubscriptionRepository.save as jest.Mock).mockResolvedValueOnce({});
 
       await subscriptionService.processScheduledPayments();
 
@@ -371,16 +476,20 @@ describe("SubscriptionService", () => {
         mockBillingCycle.subscription.tokenAddress,
         `sub_${mockBillingCycle.id}`,
         expect.any(Number), // expiration timestamp
-        expect.any(String) // payment ID
+        expect.any(String), // payment ID
       );
     });
 
     it("should handle payment success correctly", async () => {
-      mockBillingCycleRepository.find.mockResolvedValueOnce([mockBillingCycle]);
-      mockBillingCycleRepository.save.mockResolvedValue({});
-      mockPaymentService.processPayment.mockResolvedValueOnce({});
-      mockEventRepository.save.mockResolvedValueOnce({});
-      mockSubscriptionRepository.save.mockResolvedValueOnce({});
+      (mockBillingCycleRepository.find as jest.Mock).mockResolvedValueOnce([
+        mockBillingCycle,
+      ]);
+      (mockBillingCycleRepository.save as jest.Mock).mockResolvedValue({});
+      (mockPaymentService.processPayment as jest.Mock).mockResolvedValueOnce(
+        {},
+      );
+      (mockEventRepository.save as jest.Mock).mockResolvedValueOnce({});
+      (mockSubscriptionRepository.save as jest.Mock).mockResolvedValueOnce({});
 
       await subscriptionService.processScheduledPayments();
 
@@ -390,18 +499,22 @@ describe("SubscriptionService", () => {
           subscriptionId: mockBillingCycle.subscription.id,
           eventType: SubscriptionEventType.PAYMENT_SUCCESS,
           eventData: { billingCycleId: mockBillingCycle.id },
-        })
+        }),
       );
     });
 
     it("should handle payment failure and retry", async () => {
       const failingCycle = { ...mockBillingCycle, retryCount: 0 };
-      
-      mockBillingCycleRepository.find.mockResolvedValueOnce([failingCycle]);
-      mockBillingCycleRepository.save.mockResolvedValue({});
-      mockPaymentService.processPayment.mockRejectedValueOnce(new Error("Payment failed"));
-      mockEventRepository.save.mockResolvedValueOnce({});
-      mockSubscriptionRepository.save.mockResolvedValueOnce({});
+
+      (mockBillingCycleRepository.find as jest.Mock).mockResolvedValueOnce([
+        failingCycle,
+      ]);
+      (mockBillingCycleRepository.save as jest.Mock).mockResolvedValue({});
+      (mockPaymentService.processPayment as jest.Mock).mockRejectedValueOnce(
+        new Error("Payment failed"),
+      );
+      (mockEventRepository.save as jest.Mock).mockResolvedValueOnce({});
+      (mockSubscriptionRepository.save as jest.Mock).mockResolvedValueOnce({});
 
       await subscriptionService.processScheduledPayments();
 
@@ -411,19 +524,25 @@ describe("SubscriptionService", () => {
           subscriptionId: failingCycle.subscription.id,
           eventType: SubscriptionEventType.PAYMENT_RETRY,
           eventData: { billingCycleId: failingCycle.id, retryCount: 1 },
-        })
+        }),
       );
     });
 
     it("should start dunning process after max retries", async () => {
       const maxRetriedCycle = { ...mockBillingCycle, retryCount: 3 };
-      
-      mockBillingCycleRepository.find.mockResolvedValueOnce([maxRetriedCycle]);
-      mockBillingCycleRepository.save.mockResolvedValue({});
-      mockPaymentService.processPayment.mockRejectedValueOnce(new Error("Payment failed"));
-      mockEventRepository.save.mockResolvedValueOnce({});
-      mockSubscriptionRepository.save.mockResolvedValueOnce({});
-      mockNotificationService.createNotification.mockResolvedValueOnce({});
+
+      (mockBillingCycleRepository.find as jest.Mock).mockResolvedValueOnce([
+        maxRetriedCycle,
+      ]);
+      (mockBillingCycleRepository.save as jest.Mock).mockResolvedValue({});
+      (mockPaymentService.processPayment as jest.Mock).mockRejectedValueOnce(
+        new Error("Payment failed"),
+      );
+      (mockEventRepository.save as jest.Mock).mockResolvedValueOnce({});
+      (mockSubscriptionRepository.save as jest.Mock).mockResolvedValueOnce({});
+      (
+        mockNotificationService.createNotification as jest.Mock
+      ).mockResolvedValueOnce({});
 
       await subscriptionService.processScheduledPayments();
 
@@ -433,7 +552,7 @@ describe("SubscriptionService", () => {
           subscriptionId: maxRetriedCycle.subscription.id,
           eventType: SubscriptionEventType.DUNNING_STARTED,
           eventData: { billingCycleId: maxRetriedCycle.id },
-        })
+        }),
       );
 
       // Verify notification sent
@@ -443,12 +562,14 @@ describe("SubscriptionService", () => {
         notificationType: NotificationType.MERCHANT,
         category: NotificationCategory.ERROR,
         recipientId: maxRetriedCycle.subscription.merchantId,
-        metadata: { subscriptionId: maxRetriedCycle.subscription.subscriptionId },
+        metadata: {
+          subscriptionId: maxRetriedCycle.subscription.subscriptionId,
+        },
       });
     });
 
     it("should handle empty billing cycles", async () => {
-      mockBillingCycleRepository.find.mockResolvedValueOnce([]);
+      (mockBillingCycleRepository.find as jest.Mock).mockResolvedValueOnce([]);
 
       await subscriptionService.processScheduledPayments();
 
@@ -458,7 +579,9 @@ describe("SubscriptionService", () => {
 
   describe("edge cases and error handling", () => {
     it("should handle database errors gracefully", async () => {
-      mockSubscriptionRepository.save.mockRejectedValueOnce(new Error("Database error"));
+      (mockSubscriptionRepository.save as jest.Mock).mockRejectedValueOnce(
+        new Error("Database error"),
+      );
 
       await expect(
         subscriptionService.createSubscription({
@@ -469,7 +592,7 @@ describe("SubscriptionService", () => {
           currency: "USD",
           tokenAddress: "token_abc",
           billingInterval: BillingInterval.MONTHLY,
-        })
+        }),
       ).rejects.toThrow("Database error");
     });
 
@@ -485,18 +608,21 @@ describe("SubscriptionService", () => {
         startDate: new Date("2024-01-01"),
       };
 
-      mockSubscriptionRepository.save.mockResolvedValueOnce({
+      (mockSubscriptionRepository.save as jest.Mock).mockResolvedValueOnce({
         ...mockSubscriptionData,
         billingInterval: BillingInterval.YEARLY,
         amount: 99.99,
       });
-      mockBillingCycleRepository.save.mockResolvedValueOnce({});
-      mockEventRepository.save.mockResolvedValueOnce({});
-      mockNotificationService.createNotification.mockResolvedValueOnce({});
+      (mockBillingCycleRepository.save as jest.Mock).mockResolvedValueOnce({});
+      (mockEventRepository.save as jest.Mock).mockResolvedValueOnce({});
+      (
+        mockNotificationService.createNotification as jest.Mock
+      ).mockResolvedValueOnce({});
 
       await subscriptionService.createSubscription(yearlyParams);
 
-      const savedSubscription = mockSubscriptionRepository.save.mock.calls[0][0];
+      const savedSubscription = (mockSubscriptionRepository.save as jest.Mock)
+        .mock.calls[0][0];
       expect(savedSubscription.nextBillingDate.getFullYear()).toBe(2025);
     });
   });

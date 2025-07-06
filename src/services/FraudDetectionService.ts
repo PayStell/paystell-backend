@@ -1,15 +1,19 @@
 import { Repository, MoreThanOrEqual } from "typeorm";
 import AppDataSource from "../config/db";
 import { Transaction, TransactionStatus } from "../entities/Transaction";
-import { FraudAlert, FraudAlertStatus, RiskLevel } from "../entities/FraudAlert";
+import {
+  FraudAlert,
+  FraudAlertStatus,
+  RiskLevel,
+} from "../entities/FraudAlert";
 import { MerchantFraudConfig } from "../entities/MerchantFraudConfig";
 import { MerchantEntity } from "../entities/Merchant.entity";
-import { 
-  FraudCheckResultDTO, 
-  TransactionContextDTO, 
+import {
+  FraudCheckResultDTO,
+  TransactionContextDTO,
   FraudStatsDTO,
   RiskLevelBreakdownDTO,
-  TopTriggeredRuleDTO
+  TopTriggeredRuleDTO,
 } from "../dtos/FraudDetection.dto";
 
 export class FraudDetectionService {
@@ -25,15 +29,21 @@ export class FraudDetectionService {
     this.merchantRepo = AppDataSource.getRepository(MerchantEntity);
   }
 
-  async checkTransaction(context: TransactionContextDTO): Promise<FraudCheckResultDTO> {
+  async checkTransaction(
+    context: TransactionContextDTO,
+  ): Promise<FraudCheckResultDTO> {
     const { transaction } = context;
     const config = await this.getMerchantConfig(transaction.merchantId);
-    
+
     let riskScore = 0;
     const rulesTriggered: string[] = [];
 
     // Rule 1: Transaction amount checks
-    riskScore += await this.checkTransactionAmount(transaction, config, rulesTriggered);
+    riskScore += await this.checkTransactionAmount(
+      transaction,
+      config,
+      rulesTriggered,
+    );
 
     // Rule 2: Velocity checks
     riskScore += await this.checkVelocity(transaction, config, rulesTriggered);
@@ -42,7 +52,11 @@ export class FraudDetectionService {
     riskScore += await this.checkPatterns(transaction, config, rulesTriggered);
 
     // Rule 4: Failed attempts check
-    riskScore += await this.checkFailedAttempts(transaction, config, rulesTriggered);
+    riskScore += await this.checkFailedAttempts(
+      transaction,
+      config,
+      rulesTriggered,
+    );
 
     // Rule 5: Time-based anomalies
     riskScore += await this.checkTimeAnomalies(transaction, rulesTriggered);
@@ -69,11 +83,15 @@ export class FraudDetectionService {
     return result;
   }
 
-  async getFraudStats(merchantId?: string, days: number = 30): Promise<FraudStatsDTO> {
+  async getFraudStats(
+    merchantId?: string,
+    days: number = 30,
+  ): Promise<FraudStatsDTO> {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const baseQuery = this.fraudAlertRepo.createQueryBuilder("alert")
+    const baseQuery = this.fraudAlertRepo
+      .createQueryBuilder("alert")
       .where("alert.createdAt >= :startDate", { startDate });
 
     if (merchantId) {
@@ -85,27 +103,33 @@ export class FraudDetectionService {
 
     // Calculate basic stats
     const totalAlerts = alerts.length;
-    const blockedTransactions = alerts.filter(a => a.status === FraudAlertStatus.BLOCKED).length;
-    const pendingReviews = alerts.filter(a => a.status === FraudAlertStatus.PENDING).length;
+    const blockedTransactions = alerts.filter(
+      (a) => a.status === FraudAlertStatus.BLOCKED,
+    ).length;
+    const pendingReviews = alerts.filter(
+      (a) => a.status === FraudAlertStatus.PENDING,
+    ).length;
 
     // Calculate average risk score
-    const averageRiskScore = alerts.length > 0 
-      ? alerts.reduce((sum, alert) => sum + alert.riskScore, 0) / alerts.length 
-      : 0;
+    const averageRiskScore =
+      alerts.length > 0
+        ? alerts.reduce((sum, alert) => sum + alert.riskScore, 0) /
+          alerts.length
+        : 0;
 
     // Risk level breakdown
     const riskLevelBreakdown: RiskLevelBreakdownDTO = {
-      low: alerts.filter(a => a.riskLevel === RiskLevel.LOW).length,
-      medium: alerts.filter(a => a.riskLevel === RiskLevel.MEDIUM).length,
-      high: alerts.filter(a => a.riskLevel === RiskLevel.HIGH).length,
-      critical: alerts.filter(a => a.riskLevel === RiskLevel.CRITICAL).length,
+      low: alerts.filter((a) => a.riskLevel === RiskLevel.LOW).length,
+      medium: alerts.filter((a) => a.riskLevel === RiskLevel.MEDIUM).length,
+      high: alerts.filter((a) => a.riskLevel === RiskLevel.HIGH).length,
+      critical: alerts.filter((a) => a.riskLevel === RiskLevel.CRITICAL).length,
     };
 
     // Top triggered rules
     const ruleCount: { [key: string]: number } = {};
-    alerts.forEach(alert => {
+    alerts.forEach((alert) => {
       if (alert.rulesTriggered && Array.isArray(alert.rulesTriggered)) {
-        alert.rulesTriggered.forEach(rule => {
+        alert.rulesTriggered.forEach((rule) => {
           ruleCount[rule] = (ruleCount[rule] || 0) + 1;
         });
       }
@@ -118,7 +142,7 @@ export class FraudDetectionService {
 
     const totalAmount = alerts.reduce((sum, alert) => sum + alert.amount, 0);
     const blockedAmount = alerts
-      .filter(a => a.status === FraudAlertStatus.BLOCKED)
+      .filter((a) => a.status === FraudAlertStatus.BLOCKED)
       .reduce((sum, alert) => sum + alert.amount, 0);
 
     return {
@@ -136,7 +160,7 @@ export class FraudDetectionService {
   private async checkTransactionAmount(
     transaction: Transaction,
     config: MerchantFraudConfig,
-    rulesTriggered: string[]
+    rulesTriggered: string[],
   ): Promise<number> {
     let score = 0;
 
@@ -147,7 +171,9 @@ export class FraudDetectionService {
     }
 
     // Unusually high for merchant
-    const avgAmount = await this.getAverageTransactionAmount(transaction.merchantId);
+    const avgAmount = await this.getAverageTransactionAmount(
+      transaction.merchantId,
+    );
     if (avgAmount && transaction.amount > avgAmount * 5) {
       score += 40; // Additional score for unusual amount
       rulesTriggered.push("AMOUNT_UNUSUAL_HIGH");
@@ -159,7 +185,7 @@ export class FraudDetectionService {
   private async checkVelocity(
     transaction: Transaction,
     config: MerchantFraudConfig,
-    rulesTriggered: string[]
+    rulesTriggered: string[],
   ): Promise<number> {
     let score = 0;
     const now = new Date();
@@ -200,7 +226,10 @@ export class FraudDetectionService {
       .andWhere("transaction.createdAt >= :oneDayAgo", { oneDayAgo })
       .getRawOne();
 
-    if (dailyAmount?.total && parseFloat(dailyAmount.total) + transaction.amount > config.dailyLimit) {
+    if (
+      dailyAmount?.total &&
+      parseFloat(dailyAmount.total) + transaction.amount > config.dailyLimit
+    ) {
       score += 30; // Increased scoring
       rulesTriggered.push("DAILY_AMOUNT_LIMIT_EXCEEDED");
     }
@@ -211,7 +240,7 @@ export class FraudDetectionService {
   private async checkPatterns(
     transaction: Transaction,
     config: MerchantFraudConfig,
-    rulesTriggered: string[]
+    rulesTriggered: string[],
   ): Promise<number> {
     let score = 0;
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
@@ -242,7 +271,7 @@ export class FraudDetectionService {
   private async checkFailedAttempts(
     transaction: Transaction,
     config: MerchantFraudConfig,
-    rulesTriggered: string[]
+    rulesTriggered: string[],
   ): Promise<number> {
     let score = 0;
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
@@ -265,7 +294,7 @@ export class FraudDetectionService {
 
   private async checkTimeAnomalies(
     transaction: Transaction,
-    rulesTriggered: string[]
+    rulesTriggered: string[],
   ): Promise<number> {
     let score = 0;
     const hour = new Date().getHours();
@@ -281,7 +310,7 @@ export class FraudDetectionService {
 
   private async checkMLAnomalies(
     transaction: Transaction,
-    rulesTriggered: string[]
+    rulesTriggered: string[],
   ): Promise<number> {
     // Basic anomaly detection(proper ML model needed)
     let score = 0;
@@ -294,10 +323,11 @@ export class FraudDetectionService {
     });
 
     if (recentTransactions.length > 10) {
-      const amounts = recentTransactions.map(t => t.amount);
+      const amounts = recentTransactions.map((t) => t.amount);
       const mean = amounts.reduce((a, b) => a + b, 0) / amounts.length;
       const stdDev = Math.sqrt(
-        amounts.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / amounts.length
+        amounts.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) /
+          amounts.length,
       );
 
       // If transaction is more than 2 standard deviations from mean
@@ -310,14 +340,20 @@ export class FraudDetectionService {
     return score;
   }
 
-  private calculateRiskLevel(riskScore: number, config: MerchantFraudConfig): RiskLevel {
+  private calculateRiskLevel(
+    riskScore: number,
+    config: MerchantFraudConfig,
+  ): RiskLevel {
     if (riskScore >= config.criticalRiskThreshold) return RiskLevel.CRITICAL;
     if (riskScore >= config.highRiskThreshold) return RiskLevel.HIGH;
     if (riskScore >= config.mediumRiskThreshold) return RiskLevel.MEDIUM;
     return RiskLevel.LOW;
   }
 
-  private shouldBlockTransaction(riskLevel: RiskLevel, config: MerchantFraudConfig): boolean {
+  private shouldBlockTransaction(
+    riskLevel: RiskLevel,
+    config: MerchantFraudConfig,
+  ): boolean {
     return (
       (riskLevel === RiskLevel.CRITICAL && config.autoBlockCritical) ||
       (riskLevel === RiskLevel.HIGH && config.autoBlockHighRisk)
@@ -326,7 +362,7 @@ export class FraudDetectionService {
 
   async createFraudAlert(
     transaction: Transaction,
-    result: FraudCheckResultDTO
+    result: FraudCheckResultDTO,
   ): Promise<FraudAlert> {
     const alert = new FraudAlert();
     alert.transactionId = transaction.id;
@@ -335,7 +371,9 @@ export class FraudDetectionService {
     alert.amount = transaction.amount;
     alert.riskScore = result.riskScore;
     alert.riskLevel = result.riskLevel;
-    alert.status = result.shouldBlock ? FraudAlertStatus.BLOCKED : FraudAlertStatus.PENDING;
+    alert.status = result.shouldBlock
+      ? FraudAlertStatus.BLOCKED
+      : FraudAlertStatus.PENDING;
     alert.rulesTriggered = result.rulesTriggered;
     alert.metadata = transaction.metadata || {};
 
@@ -359,7 +397,7 @@ export class FraudDetectionService {
 
   async updateMerchantConfig(
     merchantId: string,
-    updates: Partial<MerchantFraudConfig>
+    updates: Partial<MerchantFraudConfig>,
   ): Promise<MerchantFraudConfig> {
     let config = await this.getMerchantConfig(merchantId);
     Object.assign(config, updates);
@@ -369,29 +407,26 @@ export class FraudDetectionService {
   async getFraudAlerts(
     merchantId?: string,
     status?: FraudAlertStatus,
-    limit: number = 50
+    limit: number = 50,
   ): Promise<FraudAlert[]> {
     const query = this.fraudAlertRepo.createQueryBuilder("alert");
-    
+
     if (merchantId) {
       query.where("alert.merchantId = :merchantId", { merchantId });
     }
-    
+
     if (status) {
       query.andWhere("alert.status = :status", { status });
     }
 
-    return query
-      .orderBy("alert.createdAt", "DESC")
-      .limit(limit)
-      .getMany();
+    return query.orderBy("alert.createdAt", "DESC").limit(limit).getMany();
   }
 
   async reviewFraudAlert(
     alertId: string,
     status: FraudAlertStatus,
     reviewNotes?: string,
-    reviewedBy?: string
+    reviewedBy?: string,
   ): Promise<FraudAlert> {
     const alert = await this.fraudAlertRepo.findOne({ where: { id: alertId } });
     if (!alert) throw new Error("Fraud alert not found");
@@ -409,12 +444,16 @@ export class FraudDetectionService {
     return await this.fraudAlertRepo.save(alert);
   }
 
-  private async getAverageTransactionAmount(merchantId: string): Promise<number | null> {
+  private async getAverageTransactionAmount(
+    merchantId: string,
+  ): Promise<number | null> {
     const result = await this.transactionRepo
       .createQueryBuilder("transaction")
       .select("AVG(transaction.amount)", "average")
       .where("transaction.merchantId = :merchantId", { merchantId })
-      .andWhere("transaction.status = :status", { status: TransactionStatus.SUCCESS })
+      .andWhere("transaction.status = :status", {
+        status: TransactionStatus.SUCCESS,
+      })
       .getRawOne();
 
     return result?.average ? parseFloat(result.average) : null;

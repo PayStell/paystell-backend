@@ -86,8 +86,15 @@ export class MerchantWebhookQueueService {
             );
 
           // If notification fails but doesn't throw an error
+<<<<<<< HEAD
           if (!result) {
             throw new Error("Webhook notification failed");
+=======
+          if (!result.success) {
+            throw new Error(
+              result.errorMessage || "Webhook notification failed",
+            );
+>>>>>>> a7bf88e5e90b13b619038597690907d8b98b32bb
           }
 
           // Update database record on successful delivery
@@ -112,6 +119,20 @@ export class MerchantWebhookQueueService {
           const maxAttempts = job.opts.attempts ?? 5;
           const isLastAttempt = attemptsMade >= maxAttempts;
 
+<<<<<<< HEAD
+=======
+          // Create webhook log entry for failed delivery
+          const webhookLog = new WebhookLog();
+          webhookLog.merchantId = merchantWebhook.merchantId;
+          webhookLog.webhookUrl = merchantWebhook.url;
+          webhookLog.status = "failed";
+          webhookLog.payload = webhookPayload;
+          webhookLog.errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+          webhookLog.retryCount = attemptsMade;
+          await this.webhookLogRepository.save(webhookLog);
+
+>>>>>>> a7bf88e5e90b13b619038597690907d8b98b32bb
           await this.merchantWebhookEventRepository.update(
             { jobId: job.id.toString() },
             {

@@ -3,7 +3,10 @@ import { validate } from "class-validator";
 import { plainToClass } from "class-transformer";
 import { FraudDetectionService } from "../services/FraudDetectionService";
 import { Transaction } from "../entities/Transaction";
-import { TransactionContextDTO, FraudCheckResultDTO } from "../dtos/FraudDetection.dto";
+import {
+  TransactionContextDTO,
+  FraudCheckResultDTO,
+} from "../dtos/FraudDetection.dto";
 
 interface FraudRequest extends Request {
   fraudCheck?: FraudCheckResultDTO;
@@ -12,7 +15,7 @@ interface FraudRequest extends Request {
 export const fraudDetectionMiddleware = async (
   req: FraudRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     // Only check if this is a payment/transaction request
@@ -21,7 +24,7 @@ export const fraudDetectionMiddleware = async (
     }
 
     const fraudService = new FraudDetectionService();
-    
+
     //transaction context for fraud checking
     const transaction = new Transaction();
     transaction.merchantId = req.body.merchantId;
@@ -44,10 +47,10 @@ export const fraudDetectionMiddleware = async (
       return res.status(400).json({
         success: false,
         error: "Invalid transaction context",
-        details: errors.map(error => ({
+        details: errors.map((error) => ({
           property: error.property,
-          constraints: error.constraints
-        }))
+          constraints: error.constraints,
+        })),
       });
     }
 
@@ -55,7 +58,7 @@ export const fraudDetectionMiddleware = async (
 
     req.fraudCheck = fraudResult;
 
-    if (fraudResult.shouldBlock) {    
+    if (fraudResult.shouldBlock) {
       return res.status(403).json({
         success: false,
         error: "Transaction blocked due to fraud detection",

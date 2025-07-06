@@ -6,21 +6,7 @@ import { AppError } from "../utils/AppError";
 import logger from "../utils/logger";
 import { UserRole } from "../enums/UserRole";
 import { Merchant } from "../interfaces/webhook.interfaces";
-
-// Extend the Express Request interface through module augmentation
-// This approach aligns with TypeScript best practices
-declare module "express-serve-static-core" {
-  interface Request {
-    merchant?: Merchant;
-    user?: {
-      id: number;
-      email: string;
-      tokenExp?: number;
-      role?: UserRole;
-      jti?: string;
-    };
-  }
-}
+// Request interface extensions are now handled in src/types/express.d.ts
 
 const merchantAuthService = new MerchantAuthService();
 
@@ -37,14 +23,7 @@ export const asyncHandler = (fn: AsyncRequestHandler): RequestHandler => {
   };
 };
 
-// Extending Express types
-import "express";
-declare module "express" {
-  interface Request {
-    merchant?: Merchant; // Making merchant optional
-    requestId?: string;
-  }
-}
+// Request interface extensions are now handled in src/types/express.d.ts
 
 export const authenticateMerchant = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {

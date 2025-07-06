@@ -1,7 +1,12 @@
 import { Repository } from "typeorm";
 import AppDataSource from "../config/db";
 import { AuditLog } from "../entities/AuditLog";
+<<<<<<< HEAD
 import { Request } from "express";
+=======
+import { Request } from "express-serve-static-core";
+// Request interface extensions are now handled in src/types/express.d.ts
+>>>>>>> a7bf88e5e90b13b619038597690907d8b98b32bb
 
 export interface AuditContext {
   userId?: string;
@@ -14,7 +19,17 @@ export interface AuditContext {
 export interface CreateAuditLogParams {
   entityType: string;
   entityId: string;
-  action: "CREATE" | "UPDATE" | "DELETE";
+  action:
+    | "CREATE"
+    | "UPDATE"
+    | "DELETE"
+    | "CREATE_ROLE"
+    | "UPDATE_ROLE"
+    | "DELETE_ROLE"
+    | "ASSIGN_PERMISSION"
+    | "REMOVE_PERMISSION"
+    | "ASSIGN_USER_ROLE"
+    | "REMOVE_USER_ROLE";
   oldValues?: Record<string, unknown>;
   newValues?: Record<string, unknown>;
   context: AuditContext;
@@ -149,4 +164,18 @@ export class AuditService {
   }
 }
 
+<<<<<<< HEAD
 export const auditService = new AuditService();
+=======
+// Remove this line:
+// export const auditService = new AuditService();
+
+let auditServiceInstance: AuditService | null = null;
+
+export const getAuditService = (): AuditService => {
+  if (!auditServiceInstance) {
+    auditServiceInstance = new AuditService();
+  }
+  return auditServiceInstance;
+};
+>>>>>>> a7bf88e5e90b13b619038597690907d8b98b32bb

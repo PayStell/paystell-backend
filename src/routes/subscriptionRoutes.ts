@@ -9,21 +9,44 @@ const subscriptionController = new SubscriptionController();
 
 // Validation rules
 const createSubscriptionValidation = [
-  body("customerId").isString().notEmpty().withMessage("Customer ID is required"),
-  body("customerEmail").isEmail().withMessage("Valid customer email is required"),
-  body("merchantId").isString().notEmpty().withMessage("Merchant ID is required"),
-  body("amount").isNumeric().isFloat({ min: 0.01 }).withMessage("Amount must be greater than 0"),
+  body("customerId")
+    .isString()
+    .notEmpty()
+    .withMessage("Customer ID is required"),
+  body("customerEmail")
+    .isEmail()
+    .withMessage("Valid customer email is required"),
+  body("merchantId")
+    .isString()
+    .notEmpty()
+    .withMessage("Merchant ID is required"),
+  body("amount")
+    .isNumeric()
+    .isFloat({ min: 0.01 })
+    .withMessage("Amount must be greater than 0"),
   body("currency").isString().notEmpty().withMessage("Currency is required"),
-  body("tokenAddress").isString().notEmpty().withMessage("Token address is required"),
+  body("tokenAddress")
+    .isString()
+    .notEmpty()
+    .withMessage("Token address is required"),
   body("billingInterval")
     .isIn(["monthly", "yearly", "weekly", "custom"])
     .withMessage("Invalid billing interval"),
-  body("intervalCount").optional().isInt({ min: 1 }).withMessage("Interval count must be positive"),
-  body("startDate").optional().isISO8601().withMessage("Invalid start date format"),
+  body("intervalCount")
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage("Interval count must be positive"),
+  body("startDate")
+    .optional()
+    .isISO8601()
+    .withMessage("Invalid start date format"),
 ];
 
 const subscriptionIdValidation = [
-  param("subscriptionId").isString().notEmpty().withMessage("Subscription ID is required"),
+  param("subscriptionId")
+    .isString()
+    .notEmpty()
+    .withMessage("Subscription ID is required"),
 ];
 
 /**
@@ -36,7 +59,9 @@ router.post(
   authMiddleware as RequestHandler,
   createSubscriptionValidation,
   handleValidationErrors,
-  subscriptionController.createSubscription.bind(subscriptionController) as RequestHandler
+  subscriptionController.createSubscription.bind(
+    subscriptionController,
+  ) as RequestHandler,
 );
 
 /**
@@ -47,7 +72,9 @@ router.post(
 router.get(
   "/merchant",
   authMiddleware as RequestHandler,
-  subscriptionController.getMerchantSubscriptions.bind(subscriptionController) as RequestHandler
+  subscriptionController.getMerchantSubscriptions.bind(
+    subscriptionController,
+  ) as RequestHandler,
 );
 
 /**
@@ -60,7 +87,9 @@ router.get(
   authMiddleware as RequestHandler,
   subscriptionIdValidation,
   handleValidationErrors,
-  subscriptionController.getSubscription.bind(subscriptionController) as RequestHandler
+  subscriptionController.getSubscription.bind(
+    subscriptionController,
+  ) as RequestHandler,
 );
 
 /**
@@ -73,7 +102,9 @@ router.patch(
   authMiddleware as RequestHandler,
   subscriptionIdValidation,
   handleValidationErrors,
-  subscriptionController.pauseSubscription.bind(subscriptionController) as RequestHandler
+  subscriptionController.pauseSubscription.bind(
+    subscriptionController,
+  ) as RequestHandler,
 );
 
 /**
@@ -86,7 +117,9 @@ router.patch(
   authMiddleware as RequestHandler,
   subscriptionIdValidation,
   handleValidationErrors,
-  subscriptionController.resumeSubscription.bind(subscriptionController) as RequestHandler
+  subscriptionController.resumeSubscription.bind(
+    subscriptionController,
+  ) as RequestHandler,
 );
 
 /**
@@ -99,7 +132,9 @@ router.patch(
   authMiddleware as RequestHandler,
   subscriptionIdValidation,
   handleValidationErrors,
-  subscriptionController.cancelSubscription.bind(subscriptionController) as RequestHandler
+  subscriptionController.cancelSubscription.bind(
+    subscriptionController,
+  ) as RequestHandler,
 );
 
 export { router as subscriptionRouter };

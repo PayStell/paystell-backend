@@ -8,18 +8,7 @@ import {
 import { UserRole } from "../enums/UserRole";
 import { UserService } from "../services/UserService";
 import { redisClient } from "../config/redisConfig";
-
-declare module "express" {
-  interface Request {
-    user?: {
-      id: number;
-      email: string;
-      tokenExp?: number;
-      jti?: string;
-      role?: UserRole;
-    };
-  }
-}
+import { MerchantEntity } from "../entities/Merchant.entity";
 
 export const authMiddleware = async (
   req: Request,

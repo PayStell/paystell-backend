@@ -5,27 +5,15 @@ import {
   deleteSession,
 } from "../controllers/session.controller";
 import { UserRole } from "../enums/UserRole";
+// Request interface extensions are now handled in src/types/express.d.ts
 
 const router = express.Router();
 
-interface CustomRequest extends Request {
-  user?: {
-    id: number;
-    email: string;
-    tokenExp?: number;
-    role?: UserRole;
-  };
-}
-
 const asyncHandler = (
-  fn: (
-    req: CustomRequest,
-    res: Response,
-    next: NextFunction,
-  ) => Promise<unknown>,
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>,
 ): RequestHandler => {
   return (req, res, next) => {
-    Promise.resolve(fn(req as CustomRequest, res, next)).catch(next);
+    Promise.resolve(fn(req as Request, res, next)).catch(next);
   };
 };
 

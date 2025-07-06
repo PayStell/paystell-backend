@@ -1,4 +1,3 @@
-import { IsEmail, IsNotEmpty, IsEnum, MinLength } from "class-validator";
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -9,6 +8,7 @@ import {
   OneToOne,
   OneToMany,
 } from "typeorm";
+import { IsNotEmpty, IsEmail, MinLength, IsEnum } from "class-validator";
 import { UserRole } from "../enums/UserRole";
 import { Session } from "./Session";
 import { EmailVerification } from "./emailVerification";

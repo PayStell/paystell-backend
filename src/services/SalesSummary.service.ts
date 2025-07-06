@@ -5,10 +5,65 @@ import { User } from "../entities/User";
 import { MerchantEntity } from "../entities/Merchant.entity";
 
 export class SalesSummaryService {
+<<<<<<< HEAD
   private paymentRepository = getRepository(Payment);
   private paymentLinkRepository = getRepository(PaymentLink);
   private userRepository = getRepository(User);
   private merchantRepository = getRepository(MerchantEntity);
+=======
+  private _paymentRepository?: Repository<Payment>;
+  private _paymentLinkRepository?: Repository<PaymentLink>;
+  private _userRepository?: Repository<User>;
+  private _merchantRepository?: Repository<MerchantEntity>;
+
+  private get paymentRepository(): Repository<Payment> {
+    if (!this._paymentRepository) {
+      if (!AppDataSource.isInitialized) {
+        throw new Error(
+          "Database connection not initialized. Cannot access payment repository.",
+        );
+      }
+      this._paymentRepository = AppDataSource.getRepository(Payment);
+    }
+    return this._paymentRepository;
+  }
+
+  private get paymentLinkRepository(): Repository<PaymentLink> {
+    if (!this._paymentLinkRepository) {
+      if (!AppDataSource.isInitialized) {
+        throw new Error(
+          "Database connection not initialized. Cannot access payment link repository.",
+        );
+      }
+      this._paymentLinkRepository = AppDataSource.getRepository(PaymentLink);
+    }
+    return this._paymentLinkRepository;
+  }
+
+  private get userRepository(): Repository<User> {
+    if (!this._userRepository) {
+      if (!AppDataSource.isInitialized) {
+        throw new Error(
+          "Database connection not initialized. Cannot access user repository.",
+        );
+      }
+      this._userRepository = AppDataSource.getRepository(User);
+    }
+    return this._userRepository;
+  }
+
+  private get merchantRepository(): Repository<MerchantEntity> {
+    if (!this._merchantRepository) {
+      if (!AppDataSource.isInitialized) {
+        throw new Error(
+          "Database connection not initialized. Cannot access merchant repository.",
+        );
+      }
+      this._merchantRepository = AppDataSource.getRepository(MerchantEntity);
+    }
+    return this._merchantRepository;
+  }
+>>>>>>> a7bf88e5e90b13b619038597690907d8b98b32bb
 
   /**
    * Get merchant's total sales

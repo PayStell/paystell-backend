@@ -3,7 +3,7 @@ import { WebhookService } from "../../services/webhook.service";
 import { NotificationService } from "../../services/inAppNotificationService";
 import { MerchantWebhookEventEntityStatus } from "../../enums/MerchantWebhookEventStatus";
 import * as Bull from "bull";
-import { WebhookPayload } from "src/interfaces/webhook.interfaces";
+import { WebhookPayload } from "../../interfaces/webhook.interfaces";
 
 // Mocks
 jest.mock("bull");
@@ -107,7 +107,7 @@ describe("MerchantWebhookQueueService", () => {
       getDelayedCount: jest.fn().mockResolvedValue(1),
       getWaitingCount: jest.fn().mockResolvedValue(3),
     };
-    (Bull.default as jest.Mock).mockImplementation(() => mockQueue);
+    (Bull as unknown as jest.Mock).mockImplementation(() => mockQueue);
 
     // Setup service
     service = new MerchantWebhookQueueService();

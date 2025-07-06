@@ -1,5 +1,5 @@
 import { Merchant } from "../interfaces/webhook.interfaces";
-import { Repository, DataSource } from "typeorm";
+import { Repository, DataSource, QueryRunner } from "typeorm";
 import { validate } from "class-validator";
 import { MerchantEntity } from "../entities/Merchant.entity";
 import { MerchantFraudConfig } from "../entities/MerchantFraudConfig";
@@ -18,7 +18,8 @@ export class MerchantAuthService {
   constructor() {
     this.dataSource = AppDataSource;
     this.merchantRepository = this.dataSource.getRepository(MerchantEntity);
-    this.fraudConfigRepository = this.dataSource.getRepository(MerchantFraudConfig);
+    this.fraudConfigRepository =
+      this.dataSource.getRepository(MerchantFraudConfig);
   }
 
   async register(merchantData: CreateMerchantDTO): Promise<Merchant> {
@@ -62,19 +63,20 @@ export class MerchantAuthService {
 
   private async initializeDefaultFraudConfig(
     merchantId: string,
-    queryRunner: any
+    queryRunner: QueryRunner,
   ): Promise<void> {
     try {
       // Create default fraud configuration DTO
       const fraudConfigData = new CreateMerchantFraudConfigDTO();
       fraudConfigData.merchantId = merchantId;
-      
+
       // Validate the DTO
       const errors = await validate(fraudConfigData);
       if (errors.length > 0) {
         throw new Error(
-          `Fraud config validation failed: ${errors.map((err) => 
-            Object.values(err.constraints || {})).join(", ")}`
+          `Fraud config validation failed: ${errors
+            .map((err) => Object.values(err.constraints || {}))
+            .join(", ")}`,
         );
       }
 
@@ -82,9 +84,14 @@ export class MerchantAuthService {
       const fraudConfig = this.fraudConfigRepository.create(fraudConfigData);
       await queryRunner.manager.save(fraudConfig);
 
-      console.log(`Default fraud configuration initialized for merchant: ${merchantId}`);
+      console.log(
+        `Default fraud configuration initialized for merchant: ${merchantId}`,
+      );
     } catch (error) {
-      console.error(`Failed to initialize fraud config for merchant ${merchantId}:`, error);
+      console.error(
+        `Failed to initialize fraud config for merchant ${merchantId}:`,
+        error,
+      );
       throw error;
     }
   }
