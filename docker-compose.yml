@@ -4,7 +4,33 @@ services:
     container_name: paystell-backend
     ports:
       - "4000:4000"
-    env_file: .env.docker
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DATABASE=paystell
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PORT=4000
+      - NODE_ENV=production
+      - AUTH0_SECRET=your-auth0-secret
+      - AUTH0_BASE_URL=http://localhost:4000
+      - AUTH0_ISSUER_BASE_URL=https://dev-wu6ywz3z0p1tpbkp.us.auth0.com
+      - AUTH0_CLIENT_ID=dO2W6eUGpJmQx4IWhDtytcdG8nhej9mDg3g9Y4TAL-pyIootyoR8Z_jnB0gjUpiK   
+      - AUTH0_CLIENT_SECRET=TPaq6yv0MBcpuP2fFJcSUDsaqnrYbzo2
+      - JWT_SECRET=your-jwt-secret
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=your-email@gmail.com
+      - SMTP_PASS=your-email-password
+      - STELLAR_NETWORK=testnet
+      - STELLAR_HORIZON_URL=https://horizon-testnet.stellar.org
+      - RATE_LIMIT_WINDOW_MS=900000
+      - RATE_LIMIT_MAX_REQUESTS=100
+      - MAX_FILE_SIZE=5242880
+      - UPLOAD_PATH=./uploads
+      - LOG_LEVEL=info
     depends_on:
       postgres:
         condition: service_healthy

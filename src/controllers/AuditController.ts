@@ -46,7 +46,7 @@ export class AuditController {
         limit: this.parsePositiveInt(limit as string, 50),
       };
 
-      const result = await auditService.getAuditLogs(filters);
+      const result = await auditService.getInstance().getAuditLogs(filters);
 
       res.status(200).json({
         status: "success",
@@ -83,7 +83,7 @@ export class AuditController {
       const { entityType, entityId } = req.params;
       const { page = 1, limit = 50 } = req.query;
 
-      const result = await auditService.getAuditLogs({
+      const result = await auditService.getInstance().getAuditLogs({
         entityType,
         entityId,
         page: this.parsePositiveInt(page as string, 1),

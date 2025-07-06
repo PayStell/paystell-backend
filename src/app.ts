@@ -7,6 +7,8 @@ import express, {
 } from "express";
 import morgan from "morgan";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
+import { specs } from "./config/swagger";
 
 // Route imports
 import sessionRouter from "./routes/session.routes";
@@ -95,6 +97,19 @@ app.use(auth(oauthConfig));
 
 // Add audit middleware after auth middleware but before routes
 app.use(auditMiddleware);
+
+// Swagger UI setup
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'PayStell API Documentation',
+  customfavIcon: '/favicon.ico',
+  swaggerOptions: {
+    persistAuthorization: true,
+    displayRequestDuration: true,
+    filter: true,
+    deepLinking: true,
+  },
+}));
 
 // Define routes
 app.use("/health", healthRouter);

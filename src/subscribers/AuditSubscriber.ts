@@ -52,7 +52,7 @@ export class AuditSubscriber
     if (!this.shouldAuditEntity(event.entity)) return;
 
     try {
-      await auditService.createAuditLog({
+      await auditService.getInstance().createAuditLog({
         entityType: event.metadata.name,
         entityId: this.getEntityId(event.entity),
         action: "CREATE",
@@ -75,7 +75,7 @@ export class AuditSubscriber
     if (!this.shouldAuditEntity(event.entity)) return;
 
     try {
-      await auditService.createAuditLog({
+      await auditService.getInstance().createAuditLog({
         entityType: event.metadata.name,
         entityId: this.getEntityId(event.entity),
         action: "UPDATE",
@@ -99,7 +99,7 @@ export class AuditSubscriber
     if (!this.shouldAuditEntity(entityToCheck)) return;
 
     try {
-      await auditService.createAuditLog({
+      await auditService.getInstance().createAuditLog({
         entityType: event.metadata.name,
         entityId: this.getEntityId(entityToCheck),
         action: "DELETE",

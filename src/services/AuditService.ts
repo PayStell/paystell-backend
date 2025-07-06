@@ -21,14 +21,22 @@ export interface CreateAuditLogParams {
 }
 
 export class AuditService {
-  private auditLogRepository: Repository<AuditLog>;
+  private auditLogRepository: Repository<AuditLog> | null = null;
 
-  constructor() {
-    this.auditLogRepository = AppDataSource.getRepository(AuditLog);
+  private getRepository(): Repository<AuditLog> {
+    if (!this.auditLogRepository) {
+      if (!AppDataSource.isInitialized) {
+        throw new Error("Database connection not initialized");
+      }
+      this.auditLogRepository = AppDataSource.getRepository(AuditLog);
+    }
+    return this.auditLogRepository;
   }
 
   async createAuditLog(params: CreateAuditLogParams): Promise<AuditLog> {
-    const auditLog = this.auditLogRepository.create({
+    const repository = this.getRepository();
+    
+    const auditLog = repository.create({
       entityType: params.entityType,
       entityId: params.entityId,
       action: params.action,
@@ -41,7 +49,7 @@ export class AuditService {
       sessionId: params.context.sessionId,
     });
 
-    return await this.auditLogRepository.save(auditLog);
+    return await repository.save(auditLog);
   }
 
   async getAuditLogs(filters: {
@@ -54,7 +62,8 @@ export class AuditService {
     page?: number;
     limit?: number;
   }) {
-    const queryBuilder = this.auditLogRepository.createQueryBuilder("audit");
+    const repository = this.getRepository();
+    const queryBuilder = repository.createQueryBuilder("audit");
 
     if (filters.entityType) {
       queryBuilder.andWhere("audit.entityType = :entityType", {
@@ -149,4 +158,14 @@ export class AuditService {
   }
 }
 
-export const auditService = new AuditService();
+// Create a singleton instance that will be lazy-loaded
+let auditServiceInstance: AuditService | null = null;
+
+export const auditService = {
+  getInstance(): AuditService {
+    if (!auditServiceInstance) {
+      auditServiceInstance = new AuditService();
+    }
+    return auditServiceInstance;
+  }
+};
