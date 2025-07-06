@@ -4,7 +4,7 @@
  * OpenAPI Documentation Validation Script
  * 
  * This script validates that:
- * 1. The OpenAPI specification can be generated
+ * 1. The OpenAPI specification can be loaded
  * 2. All required schemas are defined
  * 3. All endpoints have proper documentation
  * 4. The specification is valid OpenAPI 3.0
@@ -12,26 +12,22 @@
 
 const fs = require('fs');
 const path = require('path');
-const swaggerJsdoc = require('swagger-jsdoc');
 
 console.log('🔍 Validating OpenAPI Documentation...\n');
 
-// Import the actual swagger configuration
-const { specs: existingSpecs } = require('../dist/config/swagger.js');
+// Load existing swagger configuration with error handling
+let existingSpecs;
+try {
+  const swaggerConfig = require('../dist/config/swagger.js');
+  existingSpecs = swaggerConfig.specs;
+} catch (error) {
+  console.error('❌ Error: Could not load swagger configuration. Please run "npm run build" first.');
+  console.error(error.message);
+  process.exit(1);
+}
 
-// Use the existing swagger configuration
-const options = {
-  definition: existingSpecs,
-  apis: [
-    './src/routes/*.ts',
-    './src/controllers/*.ts',
-    './src/dtos/*.ts',
-    './src/entities/*.ts',
-  ],
-};
-
-// Generate the specification
-const specs = swaggerJsdoc(options);
+// Use existing specs directly for validation
+const specs = existingSpecs;
 
 // Check if specs were generated
 if (!specs || !specs.paths) {
@@ -39,7 +35,7 @@ if (!specs || !specs.paths) {
   process.exit(1);
 }
 
-console.log('✅ OpenAPI specification generated successfully');
+console.log('✅ OpenAPI specification loaded successfully');
 
 // Validate basic structure
 const requiredTopLevelKeys = ['openapi', 'info', 'paths', 'components'];
@@ -135,9 +131,14 @@ if (undocumentedEndpoints > 0) {
 
 // Save the specification to a file for inspection
 const outputPath = path.join(__dirname, '../openapi-spec.json');
-fs.writeFileSync(outputPath, JSON.stringify(specs, null, 2));
-
-console.log(`\n📄 OpenAPI specification saved to: ${outputPath}`);
+try {
+  fs.writeFileSync(outputPath, JSON.stringify(specs, null, 2));
+  console.log(`\n📄 OpenAPI specification saved to: ${outputPath}`);
+} catch (error) {
+  console.error(`❌ Error: Could not save specification to ${outputPath}`);
+  console.error(error.message);
+  process.exit(1);
+}
 
 // Validate the specification using a simple JSON schema check
 try {
