@@ -4,7 +4,10 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-} from "typeorm";
+  ManyToOne,
+  JoinColumn,
+} from "typeorm"
+import { Wallet } from "./Wallet"
 
 export enum TransactionStatus {
   PENDING = "pending",
@@ -18,45 +21,93 @@ export enum PaymentMethod {
   WALLET = "wallet",
 }
 
+export enum TransactionType {
+  PAYMENT = "payment",
+  CREATE_ACCOUNT = "create_account",
+  PATH_PAYMENT = "path_payment",
+  MERCHANT_PAYMENT = "merchant_payment", 
+}
+
 @Entity("transactions")
 export class Transaction {
   @PrimaryGeneratedColumn("uuid")
-  id: string;
+  id: string
 
-  @Column({ type: "uuid" })
-  merchantId: string;
+  // Existing fields
+  @Column({ type: "uuid", nullable: true })
+  merchantId: string
 
-  @Column({ type: "uuid" })
-  payerId: string;
+  @Column({ type: "uuid", nullable: true })
+  payerId: string
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
-  amount: number;
+  amount: number
 
   @Column({
     type: "enum",
     enum: TransactionStatus,
     default: TransactionStatus.PENDING,
   })
-  status: TransactionStatus;
+  status: TransactionStatus
 
   @Column({
     type: "enum",
     enum: PaymentMethod,
+    nullable: true,
   })
-  paymentMethod: PaymentMethod;
+  paymentMethod: PaymentMethod
 
   @Column({ type: "jsonb", nullable: true })
-  metadata: Record<string, unknown>;
+  metadata: Record<string, unknown>
 
   @Column({ nullable: true })
-  description: string;
+  description: string
 
   @Column({ nullable: true })
-  reference: string;
+  reference: string
+
+  // New wallet-specific fields
+  @Column({ nullable: true })
+  hash: string 
+
+  @Column({ nullable: true })
+  walletId: string 
+
+  @ManyToOne(
+    () => Wallet,
+    (wallet) => wallet.transactions,
+    { nullable: true },
+  )
+  @JoinColumn({ name: "walletId" })
+  wallet: Wallet
+
+  @Column({
+    type: "enum",
+    enum: TransactionType,
+    nullable: true,
+  })
+  type: TransactionType
+
+  @Column({ nullable: true })
+  sourceAccount: string 
+
+  @Column({ nullable: true })
+  destinationAccount: string 
+
+  @Column({ nullable: true })
+  assetCode: string
+
+  @Column({ nullable: true })
+  assetIssuer: string 
+
+  @Column("decimal", { precision: 20, scale: 7, nullable: true })
+  fee: string 
+  @Column({ nullable: true })
+  memo: string
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt: Date
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt: Date
 }

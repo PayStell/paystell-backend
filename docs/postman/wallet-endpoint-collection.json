@@ -1,0 +1,335 @@
+{
+  "info": {
+    "_postman_id": "f89a45bc-8664-4e6a-bb59-d4c28f6b76e4",
+    "name": "Wallet API Endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get or Create Wallet",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwt_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/wallet",
+          "host": ["{{base_url}}"],
+          "path": ["api", "wallet"]
+        },
+        "description": "Get user's wallet or create one if it doesn't exist. Returns wallet details including status, public key, and settings."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Wallet Address",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwt_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/wallet/address",
+          "host": ["{{base_url}}"],
+          "path": ["api", "wallet", "address"]
+        },
+        "description": "Get the wallet's public address (Stellar public key) for receiving payments."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Wallet Balance",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwt_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/wallet/balance",
+          "host": ["{{base_url}}"],
+          "path": ["api", "wallet", "balance"]
+        },
+        "description": "Get all asset balances for the user's wallet including XLM and other Stellar assets."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Wallet Info",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwt_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/wallet/info",
+          "host": ["{{base_url}}"],
+          "path": ["api", "wallet", "info"]
+        },
+        "description": "Get detailed wallet information from the Stellar network including account details and status."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Transaction History",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwt_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/wallet/transactions?page=1&limit=20&sort=desc",
+          "host": ["{{base_url}}"],
+          "path": ["api", "wallet", "transactions"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "20"
+            },
+            {
+              "key": "sort",
+              "value": "desc"
+            }
+          ]
+        },
+        "description": "Get paginated transaction history for the user's wallet with optional sorting and filtering."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Single Transaction",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwt_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/wallet/transactions/{{transaction_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "wallet", "transactions", "{{transaction_id}}"]
+        },
+        "description": "Get details of a specific transaction by its UUID."
+      },
+      "response": []
+    },
+    {
+      "name": "Send Payment",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwt_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"destinationAddress\": \"GDQP2KPQGKIHYJGXNUIYOMHARUARCA7DJT5FO2FFOOKY3B2WSQHG4W37\",\n  \"amount\": \"10.5000000\",\n  \"assetCode\": \"XLM\",\n  \"memo\": \"Payment for services\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/wallet/send",
+          "host": ["{{base_url}}"],
+          "path": ["api", "wallet", "send"]
+        },
+        "description": "Send a payment from the user's wallet to another Stellar address."
+      },
+      "response": []
+    },
+    {
+      "name": "Activate Wallet",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwt_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/wallet/activate",
+          "host": ["{{base_url}}"],
+          "path": ["api", "wallet", "activate"]
+        },
+        "description": "Activate the user's wallet to enable transaction capabilities."
+      },
+      "response": []
+    },
+    {
+      "name": "Verify Wallet",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwt_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/wallet/verify",
+          "host": ["{{base_url}}"],
+          "path": ["api", "wallet", "verify"]
+        },
+        "description": "Verify the user's wallet for enhanced features and higher transaction limits."
+      },
+      "response": []
+    },
+    {
+      "name": "Update Wallet Settings",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwt_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"displayPreferences\": {\n    \"currency\": \"USD\",\n    \"theme\": \"dark\",\n    \"language\": \"en\"\n  },\n  \"notifications\": true,\n  \"emailNotifications\": false\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/wallet/settings",
+          "host": ["{{base_url}}"],
+          "path": ["api", "wallet", "settings"]
+        },
+        "description": "Update wallet preferences and notification settings."
+      },
+      "response": []
+    },
+    {
+      "name": "Estimate Transaction Fee",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwt_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/wallet/estimate-fee?operations=1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "wallet", "estimate-fee"],
+          "query": [
+            {
+              "key": "operations",
+              "value": "1"
+            }
+          ]
+        },
+        "description": "Estimate the fee for a transaction based on the number of operations."
+      },
+      "response": []
+    },
+    {
+      "name": "Sync Transactions",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{jwt_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/wallet/sync",
+          "host": ["{{base_url}}"],
+          "path": ["api", "wallet", "sync"]
+        },
+        "description": "Sync transactions from the Stellar blockchain to the local database."
+      },
+      "response": []
+    }
+  ]
+}

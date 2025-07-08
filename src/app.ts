@@ -87,11 +87,27 @@ startExpiredSessionCleanupCronJobs();
 
 // Start subscription scheduler
 subscriptionScheduler.start();
+try {
+    startExpiredSessionCleanupCronJobs();
+  subscriptionScheduler.start();
+} catch (error) {
+  console.error("❌ Error starting cron jobs or subscription scheduler:", error);
+  process.exit(1);
+}
 
 // Log application startup
 logger.info("Application started successfully");
-
-app.use(auth(oauthConfig));
+console.log("Auth0 Config:", {
+  baseURL: oauthConfig.baseURL,
+  clientID: oauthConfig.clientID,
+  issuerBaseURL: oauthConfig.issuerBaseURL,
+});
+try {
+  app.use(auth(oauthConfig));
+} catch (error) {
+    console.error("❌ Error initializing Auth0 middleware:", error);
+  process.exit(1);
+}
 
 // Add audit middleware after auth middleware but before routes
 app.use(auditMiddleware);

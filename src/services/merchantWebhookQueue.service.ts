@@ -5,7 +5,6 @@ import {
   MerchantWebhook,
 } from "../interfaces/webhook.interfaces";
 import { MerchantWebhookEventEntity } from "../entities/MerchantWebhookEvent.entity";
-import { WebhookLog } from "../entities/WebhookLog";
 import AppDataSource from "../config/db";
 import { MerchantWebhookEventEntityStatus } from "../enums/MerchantWebhookEventStatus";
 import { NotificationService } from "./inAppNotificationService";
@@ -34,7 +33,6 @@ const notificationService = new NotificationService();
 export class MerchantWebhookQueueService {
   private webhookQueue: Queue.Queue;
   private merchantWebhookEventRepository: Repository<MerchantWebhookEventEntity>;
-  private webhookLogRepository: Repository<WebhookLog>;
   private webhookNotificationService: WebhookNotificationService;
   private readonly MERCHANT_WEBHOOK_QUEUE = "merchant-webhook-queue";
 
@@ -60,7 +58,6 @@ export class MerchantWebhookQueueService {
     this.merchantWebhookEventRepository = AppDataSource.getRepository(
       MerchantWebhookEventEntity,
     );
-    this.webhookLogRepository = AppDataSource.getRepository(WebhookLog);
 
     // Create webhook notification service for sending webhooks
     this.webhookNotificationService = new WebhookNotificationService();
@@ -89,22 +86,16 @@ export class MerchantWebhookQueueService {
             );
 
           // If notification fails but doesn't throw an error
+<<<<<<< HEAD
+          if (!result) {
+            throw new Error("Webhook notification failed");
+=======
           if (!result.success) {
             throw new Error(
               result.errorMessage || "Webhook notification failed",
             );
+>>>>>>> a7bf88e5e90b13b619038597690907d8b98b32bb
           }
-
-          // Create webhook log entry for successful delivery
-          const webhookLog = new WebhookLog();
-          webhookLog.merchantId = merchantWebhook.merchantId;
-          webhookLog.webhookUrl = merchantWebhook.url;
-          webhookLog.status = "success";
-          webhookLog.payload = webhookPayload;
-          webhookLog.response = result.response;
-          webhookLog.statusCode = result.statusCode;
-          webhookLog.retryCount = attemptsMade;
-          await this.webhookLogRepository.save(webhookLog);
 
           // Update database record on successful delivery
           await this.merchantWebhookEventRepository.update(
@@ -128,6 +119,8 @@ export class MerchantWebhookQueueService {
           const maxAttempts = job.opts.attempts ?? 5;
           const isLastAttempt = attemptsMade >= maxAttempts;
 
+<<<<<<< HEAD
+=======
           // Create webhook log entry for failed delivery
           const webhookLog = new WebhookLog();
           webhookLog.merchantId = merchantWebhook.merchantId;
@@ -139,6 +132,7 @@ export class MerchantWebhookQueueService {
           webhookLog.retryCount = attemptsMade;
           await this.webhookLogRepository.save(webhookLog);
 
+>>>>>>> a7bf88e5e90b13b619038597690907d8b98b32bb
           await this.merchantWebhookEventRepository.update(
             { jobId: job.id.toString() },
             {
