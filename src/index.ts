@@ -13,6 +13,9 @@ async function main() {
     const PORT = process.env.PORT || 4000;
     const server = app.listen(PORT, () => {
       console.log(`🚀 Server is listening on port ${PORT}`);
+      console.log(
+        `📚 API Documentation available at: http://localhost:${PORT}/api-docs`,
+      );
     });
 
     // Handle server startup errors
@@ -27,6 +30,11 @@ async function main() {
     });
   } catch (error) {
     console.error("❌ Failed to start the server:", error);
+    if (error instanceof Error) {
+      console.error(error.stack);
+    } else {
+      console.error(error);
+    }
     process.exit(1); // Exit the process if the database fails to initialize
   }
 }

@@ -27,9 +27,60 @@ const router = Router();
 const paymentController = new PaymentController();
 
 /**
- * @route POST /api/payments
- * @desc Create a new payment
- * @access Public
+ * @swagger
+ * /payment:
+ *   post:
+ *     summary: Create a new payment
+ *     description: Creates a new payment record in the system
+ *     tags: [Payments]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 minimum: 0.01
+ *                 description: Payment amount
+ *               currency:
+ *                 type: string
+ *                 description: Payment currency (e.g., USD, EUR)
+ *               description:
+ *                 type: string
+ *                 description: Payment description
+ *               metadata:
+ *                 type: object
+ *                 description: Additional payment metadata
+ *             required:
+ *               - amount
+ *               - currency
+ *     responses:
+ *       201:
+ *         description: Payment created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Payment'
+ *       400:
+ *         description: Bad request - validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
+ *       429:
+ *         description: Too many requests - rate limit exceeded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post(
   "/",
@@ -38,9 +89,84 @@ router.post(
 );
 
 /**
- * @route POST /api/payments/process
- * @desc Process a payment with signature verification
- * @access Public
+ * @swagger
+ * /payment/process:
+ *   post:
+ *     summary: Process a payment with signature verification
+ *     description: Processes a payment with cryptographic signature verification for security
+ *     tags: [Payments]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               paymentId:
+ *                 type: string
+ *                 description: Unique payment identifier
+ *               signature:
+ *                 type: string
+ *                 description: Cryptographic signature for verification
+ *               publicKey:
+ *                 type: string
+ *                 description: Public key used for signature verification
+ *               amount:
+ *                 type: number
+ *                 minimum: 0.01
+ *                 description: Payment amount
+ *               currency:
+ *                 type: string
+ *                 description: Payment currency
+ *             required:
+ *               - paymentId
+ *               - signature
+ *               - publicKey
+ *               - amount
+ *               - currency
+ *     responses:
+ *       200:
+ *         description: Payment processed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Payment processed successfully"
+ *                 transactionHash:
+ *                   type: string
+ *                   description: Blockchain transaction hash
+ *                 payment:
+ *                   $ref: '#/components/schemas/Payment'
+ *       400:
+ *         description: Bad request - validation error or invalid signature
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
+ *       401:
+ *         description: Unauthorized - signature verification failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Too many requests - rate limit exceeded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post(
   "/process",
@@ -52,9 +178,44 @@ router.post(
 );
 
 /**
- * @route GET /api/payments/:paymentId
- * @desc Get payment by ID
- * @access Public
+ * @swagger
+ * /payment/{paymentId}:
+ *   get:
+ *     summary: Get payment by ID
+ *     description: Retrieves payment details by its unique identifier
+ *     tags: [Payments]
+ *     parameters:
+ *       - in: path
+ *         name: paymentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Payment ID
+ *     responses:
+ *       200:
+ *         description: Payment found successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Payment'
+ *       400:
+ *         description: Bad request - invalid payment ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
+ *       404:
+ *         description: Payment not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get(
   "/:paymentId",
@@ -64,9 +225,68 @@ router.get(
 );
 
 /**
- * @route PUT /api/payments/:paymentId/status
- * @desc Update payment status
- * @access Private
+ * @swagger
+ * /payment/{paymentId}/status:
+ *   put:
+ *     summary: Update payment status
+ *     description: Updates the status of an existing payment
+ *     tags: [Payments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: paymentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Payment ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [pending, completed, failed]
+ *                 description: New payment status
+ *               reason:
+ *                 type: string
+ *                 description: Reason for status change (optional)
+ *             required:
+ *               - status
+ *     responses:
+ *       200:
+ *         description: Payment status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Payment'
+ *       400:
+ *         description: Bad request - validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
+ *       401:
+ *         description: Unauthorized - authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Payment not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.put(
   "/:paymentId/status",
@@ -79,9 +299,69 @@ router.put(
 );
 
 /**
- * @route POST /api/payments/verify-transaction
- * @desc Verify a transaction on the Stellar network
- * @access Public
+ * @swagger
+ * /payment/verify-transaction:
+ *   post:
+ *     summary: Verify a transaction on the Stellar network
+ *     description: Verifies a transaction on the Stellar blockchain network
+ *     tags: [Payments]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               transactionHash:
+ *                 type: string
+ *                 description: Stellar transaction hash
+ *               paymentId:
+ *                 type: string
+ *                 description: Associated payment ID
+ *             required:
+ *               - transactionHash
+ *               - paymentId
+ *     responses:
+ *       200:
+ *         description: Transaction verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 verified:
+ *                   type: boolean
+ *                   description: Whether the transaction is verified
+ *                 message:
+ *                   type: string
+ *                   description: Verification result message
+ *                 transactionDetails:
+ *                   type: object
+ *                   description: Transaction details from Stellar network
+ *       400:
+ *         description: Bad request - validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
+ *       404:
+ *         description: Transaction not found on Stellar network
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Too many requests - rate limit exceeded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post(
   "/verify-transaction",
@@ -92,9 +372,39 @@ router.post(
 );
 
 /**
- * @route GET /api/payments/generate-nonce
- * @desc Generate a secure nonce for payment requests
- * @access Public
+ * @swagger
+ * /payment/generate-nonce:
+ *   get:
+ *     summary: Generate a secure nonce for payment requests
+ *     description: Generates a cryptographically secure nonce for payment request signing
+ *     tags: [Payments]
+ *     responses:
+ *       200:
+ *         description: Nonce generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 nonce:
+ *                   type: string
+ *                   description: Generated nonce value
+ *                 expiresAt:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Nonce expiration timestamp
+ *       429:
+ *         description: Too many requests - rate limit exceeded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get(
   "/generate-nonce",

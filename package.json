@@ -12,6 +12,7 @@
     "format:fix": "prettier --write 'src/**/*.ts'",
     "test:coverage": "jest --coverage",
     "migration:run": "npx typeorm-ts-node-commonjs migration:run -d src/config/db.ts",
+    "validate:openapi": "node scripts/validate-openapi.js",
     "init-rbac": "ts-node src/scripts/initializeRBAC.ts"
   },
   "dependencies": {
@@ -78,6 +79,8 @@
     "@types/redis": "^4.0.11",
     "@types/speakeasy": "^2.0.10",
     "@types/supertest": "^6.0.3",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "@types/uuid": "^10.0.0",
     "@types/winston": "^2.4.4",
     "@typescript-eslint/eslint-plugin": "^8.26.1",

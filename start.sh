@@ -14,10 +14,14 @@ while ! nc -z redis 6379; do
 done
 echo "Redis is ready!"
 
-# Run migrations
+# Run migrations using compiled JavaScript files
 echo "Running migrations..."
-npm run migration:run
+npx typeorm-ts-node-commonjs migration:run -d dist/config/db.js
 
-# Start the application
+# Start the application with debugging
 echo "Starting the application..."
+echo "Current directory: $(pwd)"
+echo "Listing dist directory:"
+ls -la dist/
+echo "Starting Node.js application..."
 node dist/index.js 
