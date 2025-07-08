@@ -13,8 +13,38 @@ import {
   Max,
   Length,
   IsDateString,
-} from "class-validator"
-import { Type, Transform } from "class-transformer"
+} from "class-validator";
+import { Type, Transform } from "class-transformer";
+
+// Type definitions for better type safety
+export interface WalletDisplayPreferences {
+  currency?: string;
+  theme?: "light" | "dark";
+  language?: string;
+  showBalanceInFiat?: boolean;
+}
+
+export interface TransactionMetadata {
+  stellarResult?: Record<string, unknown>;
+  stellarTransaction?: Record<string, unknown>;
+  syncedFromBlockchain?: boolean;
+  error?: string;
+  [key: string]: unknown;
+}
+
+export interface ApiMetadata {
+  requestId?: string;
+  processingTime?: number;
+  version?: string;
+  [key: string]: unknown;
+}
+
+export interface ErrorDetails {
+  field?: string;
+  value?: unknown;
+  constraint?: string;
+  [key: string]: unknown;
+}
 
 // Enums
 export enum WalletStatus {
@@ -38,158 +68,160 @@ export enum TransactionStatus {
 // Wallet DTOs
 export class CreateWalletDto {
   @IsString()
-  userId: string
+  userId: string;
 }
 
 export class WalletResponseDto {
   @IsUUID()
-  id: string
+  id: string;
 
   @IsEnum(WalletStatus)
-  status: WalletStatus
+  status: WalletStatus;
 
   @IsString()
-  publicKey: string
+  publicKey: string;
 
   @IsBoolean()
-  isVerified: boolean
+  isVerified: boolean;
 
   @IsOptional()
   @IsObject()
   settings?: {
-    displayPreferences?: any
-    notifications?: boolean
-  }
+    displayPreferences?: WalletDisplayPreferences;
+    notifications?: boolean;
+  };
 
   @IsString()
-  createdAt: string
+  createdAt: string;
 
   @IsString()
-  updatedAt: string
+  updatedAt: string;
 }
 
 export class UpdateWalletSettingsDto {
   @IsOptional()
   @IsObject()
   displayPreferences?: {
-    currency?: string
-    theme?: "light" | "dark"
-    language?: string
-    showBalanceInFiat?: boolean
-  }
+    currency?: string;
+    theme?: "light" | "dark";
+    language?: string;
+    showBalanceInFiat?: boolean;
+  };
 
   @IsOptional()
   @IsBoolean()
-  notifications?: boolean
+  notifications?: boolean;
 
   @IsOptional()
   @IsBoolean()
-  emailNotifications?: boolean
+  emailNotifications?: boolean;
 
   @IsOptional()
   @IsBoolean()
-  pushNotifications?: boolean
+  pushNotifications?: boolean;
 }
 
 export class WalletAddressResponseDto {
   @IsString()
-  address: string
+  address: string;
 }
 
 // Balance DTOs
 export class BalanceDto {
   @IsString()
-  assetCode: string
+  assetCode: string;
 
   @IsOptional()
   @IsString()
-  assetIssuer?: string
+  assetIssuer?: string;
 
   @IsDecimal({ decimal_digits: "0,7" })
-  balance: string
-
-  @IsOptional()
-  @IsDecimal({ decimal_digits: "0,7" })
-  buyingLiabilities?: string
+  balance: string;
 
   @IsOptional()
   @IsDecimal({ decimal_digits: "0,7" })
-  sellingLiabilities?: string
+  buyingLiabilities?: string;
+
+  @IsOptional()
+  @IsDecimal({ decimal_digits: "0,7" })
+  sellingLiabilities?: string;
 }
 
 // Transaction DTOs
 export class SendPaymentDto {
   @IsString()
-  @Length(56, 56, { message: "Destination address must be exactly 56 characters" })
-  destinationAddress: string
+  @Length(56, 56, {
+    message: "Destination address must be exactly 56 characters",
+  })
+  destinationAddress: string;
 
   @IsDecimal({ decimal_digits: "0,7" })
   @Transform(({ value }) => Number.parseFloat(value))
-  amount: string
+  amount: string;
 
   @IsOptional()
   @IsString()
   @Length(1, 12)
-  assetCode?: string = "XLM"
+  assetCode?: string = "XLM";
 
   @IsOptional()
   @IsString()
   @Length(56, 56)
-  assetIssuer?: string
+  assetIssuer?: string;
 
   @IsOptional()
   @IsString()
   @Length(0, 28, { message: "Memo must be 28 characters or less" })
-  memo?: string
+  memo?: string;
 
   @IsOptional()
   @IsObject()
-  metadata?: any
+  metadata?: TransactionMetadata;
 }
 
 export class TransactionDto {
   @IsUUID()
-  id: string
+  id: string;
 
   @IsString()
-  hash: string
+  hash: string;
 
   @IsEnum(TransactionType)
-  type: TransactionType
+  type: TransactionType;
 
   @IsEnum(TransactionStatus)
-  status: TransactionStatus
+  status: TransactionStatus;
 
   @IsString()
-  sourceAccount: string
+  sourceAccount: string;
 
   @IsString()
-  destinationAccount: string
+  destinationAccount: string;
 
   @IsDecimal({ decimal_digits: "0,7" })
-  amount: string
+  amount: string;
 
   @IsString()
-  assetCode: string
+  assetCode: string;
 
   @IsOptional()
   @IsString()
-  assetIssuer?: string
+  assetIssuer?: string;
 
   @IsOptional()
   @IsDecimal({ decimal_digits: "0,7" })
-  fee?: string
+  fee?: string;
 
   @IsOptional()
   @IsString()
-  memo?: string
+  memo?: string;
 
   @IsOptional()
   @IsObject()
-  metadata?: any
+  metadata?: TransactionMetadata;
 
   @IsDateString()
-  createdAt: string
+  createdAt: string;
 }
 
 export class GetTransactionsQueryDto {
@@ -197,113 +229,113 @@ export class GetTransactionsQueryDto {
   @IsInt()
   @Min(1)
   @Transform(({ value }) => Number.parseInt(value))
-  page?: number = 1
+  page?: number = 1;
 
   @IsOptional()
   @IsInt()
   @Min(1)
   @Max(100)
   @Transform(({ value }) => Number.parseInt(value))
-  limit?: number = 20
+  limit?: number = 20;
 
   @IsOptional()
   @IsEnum(["asc", "desc"])
-  sort?: "asc" | "desc" = "desc"
+  sort?: "asc" | "desc" = "desc";
 
   @IsOptional()
   @IsEnum(TransactionType)
-  type?: TransactionType
+  type?: TransactionType;
 
   @IsOptional()
   @IsEnum(TransactionStatus)
-  status?: TransactionStatus
+  status?: TransactionStatus;
 
   @IsOptional()
   @IsString()
-  assetCode?: string
+  assetCode?: string;
 
   @IsOptional()
   @IsDateString()
-  startDate?: string
+  startDate?: string;
 
   @IsOptional()
   @IsDateString()
-  endDate?: string
+  endDate?: string;
 }
 
 export class PaginationDto {
   @IsInt()
   @Min(1)
-  page: number
+  page: number;
 
   @IsInt()
   @Min(1)
   @Max(100)
-  limit: number
+  limit: number;
 
   @IsInt()
   @Min(0)
-  total: number
+  total: number;
 
   @IsInt()
   @Min(0)
-  totalPages: number
+  totalPages: number;
 
   @IsOptional()
   @IsString()
-  nextCursor?: string
+  nextCursor?: string;
 
   @IsOptional()
   @IsString()
-  prevCursor?: string
+  prevCursor?: string;
 }
 
 export class TransactionResponseDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => TransactionDto)
-  transactions: TransactionDto[]
+  transactions: TransactionDto[];
 
   @ValidateNested()
   @Type(() => PaginationDto)
-  pagination: PaginationDto
+  pagination: PaginationDto;
 }
 
 // Common Response DTOs
 export class ApiResponseDto<T> {
   @IsOptional()
-  data?: T
+  data?: T;
 
   @IsOptional()
   @IsString()
-  message?: string
+  message?: string;
 
   @IsOptional()
   @IsString()
-  error?: string
+  error?: string;
 
   @IsOptional()
   @IsObject()
-  meta?: any
+  meta?: ApiMetadata;
 
   @IsDateString()
-  timestamp: string
+  timestamp: string;
 }
 
 export class ErrorResponseDto {
   @IsString()
-  error: string
+  error: string;
 
   @IsOptional()
   @IsString()
-  code?: string
+  code?: string;
 
   @IsOptional()
   @IsObject()
-  details?: any
+  details?: ErrorDetails;
 
   @IsDateString()
-  timestamp: string
+  timestamp: string;
 }
 
 // Utility functions
@@ -311,22 +343,22 @@ export const createApiResponse = <T>(
   data?: T,
   message?: string,
   error?: string,
-  meta?: any
+  meta?: ApiMetadata,
 ) => ({
   data,
   message,
   error,
   meta,
   timestamp: new Date().toISOString(),
-})
+});
 
 export const createErrorResponse = (
   error: string,
   code?: string,
-  details?: any
+  details?: ErrorDetails,
 ) => ({
   error,
   code,
   details,
   timestamp: new Date().toISOString(),
-})
+});

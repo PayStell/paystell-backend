@@ -1,5 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm"
-import { Transaction } from "./Transaction"
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from "typeorm";
+import { Transaction } from "./Transaction";
 
 export enum WalletStatus {
   ACTIVE = "ACTIVE",
@@ -10,42 +17,44 @@ export enum WalletStatus {
 @Entity("wallets")
 export class Wallet {
   @PrimaryGeneratedColumn("uuid")
-  id: string
+  id: string;
 
   @Column({ unique: true })
-  userId: string
+  userId: string;
 
   @Column({ unique: true })
-  publicKey: string
+  publicKey: string;
 
   @Column({ nullable: true })
-  encryptedSecretKey: string
+  encryptedSecretKey: string;
 
   @Column({
     type: "enum",
     enum: WalletStatus,
     default: WalletStatus.INACTIVE,
   })
-  status: WalletStatus
+  status: WalletStatus;
 
-  @Column({ type: "jsonb", nullable: true })
-  settings: {
-    displayPreferences?: any
-    notifications?: boolean
-  }
+  @Column({ type: "json", nullable: true })
+  settings?: {
+    notifications?: boolean;
+    displayPreferences?: {
+      currency?: string;
+      theme?: "light" | "dark";
+      language?: string;
+      showBalanceInFiat?: boolean;
+    };
+  };
 
   @Column({ default: false })
-  isVerified: boolean
+  isVerified: boolean;
 
-  @OneToMany(
-    () => Transaction,
-    (transaction) => transaction.wallet,
-  )
-  transactions: Transaction[]
+  @OneToMany(() => Transaction, (transaction) => transaction.wallet)
+  transactions: Transaction[];
 
   @CreateDateColumn()
-  createdAt: Date
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date
+  updatedAt: Date;
 }

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { auditService } from "../services/AuditService";
+import { getAuditService } from "../services/AuditService";
 import { UserRole } from "../enums/UserRole";
 
 export class AuditController {
@@ -47,6 +47,7 @@ export class AuditController {
         limit: this.parsePositiveInt(limit as string, 50),
       };
 
+      const auditService = getAuditService();
       const result = await auditService.getAuditLogs(filters);
 
       res.status(200).json({
@@ -76,6 +77,7 @@ export class AuditController {
       const { entityType, entityId } = req.params;
       const { page = 1, limit = 50 } = req.query;
 
+      const auditService = getAuditService();
       const result = await auditService.getAuditLogs({
         entityType,
         entityId,

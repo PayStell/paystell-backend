@@ -50,10 +50,6 @@ export class StellarContractService {
     this.server = options?.server || new Server(config.STELLAR_HORIZON_URL);
 
     const contractId = config.SOROBAN_CONTRACT_ID;
-<<<<<<< HEAD
-    if (!contractId) {
-      throw new AppError("SOROBAN_CONTRACT_ID is not configured", 500);
-=======
     if (!contractId || contractId === "") {
       console.warn(
         "⚠️  SOROBAN_CONTRACT_ID not configured - Stellar features will be disabled",
@@ -61,7 +57,6 @@ export class StellarContractService {
       this.contractId = ""; // Empty string to indicate no contract
     } else {
       this.contractId = contractId;
->>>>>>> a7bf88e5e90b13b619038597690907d8b98b32bb
     }
     this.contractId = contractId;
 
@@ -93,10 +88,6 @@ export class StellarContractService {
       logger.info("Connected to Redis");
     });
 
-<<<<<<< HEAD
-    if (!process.env.CONTRACT_ADMIN_SECRET) {
-      throw new AppError("CONTRACT_ADMIN_SECRET is not configured", 500);
-=======
     // Validate CONTRACT_ADMIN_SECRET format
     const adminSecret = process.env.CONTRACT_ADMIN_SECRET;
     if (!adminSecret || adminSecret.trim() === "") {
@@ -125,9 +116,10 @@ export class StellarContractService {
         );
         this.adminKeypair = Keypair.random();
       }
->>>>>>> a7bf88e5e90b13b619038597690907d8b98b32bb
     }
-    this.adminKeypair = Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET);
+    this.adminKeypair = Keypair.fromSecret(
+      process.env.CONTRACT_ADMIN_SECRET || "",
+    );
   }
 
   /**
