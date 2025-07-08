@@ -1,12 +1,8 @@
 import { Repository } from "typeorm";
 import AppDataSource from "../config/db";
 import { AuditLog } from "../entities/AuditLog";
-<<<<<<< HEAD
-import { Request } from "express";
-=======
 import { Request } from "express-serve-static-core";
 // Request interface extensions are now handled in src/types/express.d.ts
->>>>>>> a7bf88e5e90b13b619038597690907d8b98b32bb
 
 export interface AuditContext {
   userId?: string;
@@ -50,7 +46,7 @@ export class AuditService {
 
   async createAuditLog(params: CreateAuditLogParams): Promise<AuditLog> {
     const repository = this.getRepository();
-    
+
     const auditLog = repository.create({
       entityType: params.entityType,
       entityId: params.entityId,
@@ -173,9 +169,6 @@ export class AuditService {
   }
 }
 
-<<<<<<< HEAD
-export const auditService = new AuditService();
-=======
 // Remove this line:
 // export const auditService = new AuditService();
 
@@ -187,4 +180,3 @@ export const getAuditService = (): AuditService => {
   }
   return auditServiceInstance;
 };
->>>>>>> a7bf88e5e90b13b619038597690907d8b98b32bb

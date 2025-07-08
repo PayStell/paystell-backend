@@ -1,45 +1,51 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm"
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
 
 @Entity("balances")
 export class Balance {
   @PrimaryGeneratedColumn("uuid")
-  id: string
+  id: string;
 
   @Column()
-  walletId: string
+  walletId: string;
 
   @Column()
-  assetCode: string
+  assetCode: string;
 
   @Column({ nullable: true })
-  assetIssuer: string
+  assetIssuer: string;
 
   @Column("decimal", { precision: 20, scale: 7 })
-  balance: string
+  balance: string;
   @Column({ nullable: true })
-  assetType: string
+  assetType: string;
 
   @Column({ default: true })
-  isAuthorized: boolean
+  isAuthorized: boolean;
 
   @Column({ default: true })
-  isAuthorizedToMaintainLiabilities: boolean
+  isAuthorizedToMaintainLiabilities: boolean;
 
   @Column({ default: false })
-  isClawbackEnabled: boolean
+  isClawbackEnabled: boolean;
 
   @Column({ nullable: true })
-  lastModifiedLedger: string
+  lastModifiedLedger: string;
 
   @Column({ nullable: true })
-  limit: string
+  limit: string;
 
   @Column({ nullable: true })
-  sponsor: string
+  sponsor: string;
 
   @CreateDateColumn()
-  createdAt: Date
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date
+  updatedAt: Date;
 }

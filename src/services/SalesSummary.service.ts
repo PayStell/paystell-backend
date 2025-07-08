@@ -1,16 +1,11 @@
-import { getRepository } from "typeorm";
+import { getRepository, Repository } from "typeorm";
 import { Payment } from "../entities/Payment";
 import { PaymentLink } from "../entities/PaymentLink";
 import { User } from "../entities/User";
 import { MerchantEntity } from "../entities/Merchant.entity";
+import AppDataSource from "../config/db";
 
 export class SalesSummaryService {
-<<<<<<< HEAD
-  private paymentRepository = getRepository(Payment);
-  private paymentLinkRepository = getRepository(PaymentLink);
-  private userRepository = getRepository(User);
-  private merchantRepository = getRepository(MerchantEntity);
-=======
   private _paymentRepository?: Repository<Payment>;
   private _paymentLinkRepository?: Repository<PaymentLink>;
   private _userRepository?: Repository<User>;
@@ -63,7 +58,6 @@ export class SalesSummaryService {
     }
     return this._merchantRepository;
   }
->>>>>>> a7bf88e5e90b13b619038597690907d8b98b32bb
 
   /**
    * Get merchant's total sales

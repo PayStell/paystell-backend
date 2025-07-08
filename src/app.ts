@@ -90,10 +90,13 @@ startExpiredSessionCleanupCronJobs();
 // Start subscription scheduler
 subscriptionScheduler.start();
 try {
-    startExpiredSessionCleanupCronJobs();
+  startExpiredSessionCleanupCronJobs();
   subscriptionScheduler.start();
 } catch (error) {
-  console.error("❌ Error starting cron jobs or subscription scheduler:", error);
+  console.error(
+    "❌ Error starting cron jobs or subscription scheduler:",
+    error,
+  );
   process.exit(1);
 }
 
@@ -107,7 +110,7 @@ console.log("Auth0 Config:", {
 try {
   app.use(auth(oauthConfig));
 } catch (error) {
-    console.error("❌ Error initializing Auth0 middleware:", error);
+  console.error("❌ Error initializing Auth0 middleware:", error);
   process.exit(1);
 }
 
@@ -115,17 +118,21 @@ try {
 app.use(auditMiddleware);
 
 // Swagger UI setup
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'PayStell API Documentation',
-  customfavIcon: '/favicon.ico',
-  swaggerOptions: {
-    persistAuthorization: true,
-    displayRequestDuration: true,
-    filter: true,
-    deepLinking: true,
-  },
-}));
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(specs, {
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "PayStell API Documentation",
+    customfavIcon: "/favicon.ico",
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayRequestDuration: true,
+      filter: true,
+      deepLinking: true,
+    },
+  }),
+);
 
 // Define routes
 app.use("/health", healthRouter);

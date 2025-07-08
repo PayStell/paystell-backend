@@ -1,25 +1,25 @@
-import { Request, Response, Router } from "express"
-import { body, param, query } from "express-validator"
-import { WalletController } from "../controllers/walletController"
-import { authMiddleware } from "../middlewares/authMiddleware"
+import { Request, Response, Router } from "express";
+import { body, param, query } from "express-validator";
+import { WalletController } from "../controllers/walletController";
+import { authMiddleware } from "../middlewares/authMiddleware";
 
-const router = Router()
-const walletController = new WalletController()
+const router = Router();
+const walletController = new WalletController();
 
-router.use(authMiddleware)
+router.use(authMiddleware);
 
 // GET endpoints
 router.get("/", async (req, res) => {
-  await walletController.getWallet(req, res)
-})
+  await walletController.getWallet(req, res);
+});
 
 router.get("/balance", async (req, res) => {
-  await walletController.getBalance(req, res)
-})
+  await walletController.getBalance(req, res);
+});
 
 router.get("/address", async (req, res) => {
-  await walletController.getAddress(req, res)
-})
+  await walletController.getAddress(req, res);
+});
 
 router.get(
   "/transactions",
@@ -28,18 +28,18 @@ router.get(
     query("limit").optional().isInt({ min: 1, max: 100 }),
     query("sort").optional().isIn(["asc", "desc"]),
   ],
-  async (req : Request, res: Response) => {
-    await walletController.getTransactions(req, res)
+  async (req: Request, res: Response) => {
+    await walletController.getTransactions(req, res);
   },
-)
+);
 
 router.get(
-  "/transactions/:id", 
-  [param("id").isUUID()], 
+  "/transactions/:id",
+  [param("id").isUUID()],
   async (req: Request, res: Response) => {
-    await walletController.getTransaction(req, res)
-  }
-)
+    await walletController.getTransaction(req, res);
+  },
+);
 
 // POST endpoints
 router.post(
@@ -52,34 +52,34 @@ router.post(
     body("memo").optional().isString().isLength({ max: 28 }),
   ],
   async (req: Request, res: Response) => {
-    await walletController.sendPayment(req, res)
+    await walletController.sendPayment(req, res);
   },
-)
+);
 
 router.post("/activate", async (req, res) => {
-  await walletController.activateWallet(req, res)
-})
+  await walletController.activateWallet(req, res);
+});
 
 router.post("/verify", async (req, res) => {
-  await walletController.verifyWallet(req, res)
-})
+  await walletController.verifyWallet(req, res);
+});
 
 // PUT endpoints
 router.put("/settings", async (req, res) => {
-  await walletController.updateSettings(req, res)
-})
+  await walletController.updateSettings(req, res);
+});
 
 // Additional routes
 router.get("/info", async (req, res) => {
-  await walletController.getWalletInfo(req, res)
-})
+  await walletController.getWalletInfo(req, res);
+});
 
 router.get("/estimate-fee", async (req, res) => {
-  await walletController.estimateFee(req, res)
-})
+  await walletController.estimateFee(req, res);
+});
 
 router.post("/sync", async (req, res) => {
-  await walletController.syncTransactions(req, res)
-})
+  await walletController.syncTransactions(req, res);
+});
 
-export default router
+export default router;
