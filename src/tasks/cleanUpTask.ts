@@ -6,41 +6,41 @@ import AppDataSource from "src/config/db";
 export function startCleanupJob() {
   const fileUploadService = new FileUploadService();
   const fileRepo = AppDataSource.getRepository(FileMetadata);
-
   cron.schedule("0 2 * * *", async () => {
     console.log(`[Cleanup Job] Running cleanup at ${new Date().toISOString()}`);
-
     try {
       const batchSize = 100;
       let skip = 0;
       let hasMore = true;
-      const allFiles: FileMetadata[] = [];
-
       while (hasMore) {
         const files = await fileRepo.find({
           skip,
           take: batchSize,
         });
-
         if (files.length === 0) {
           hasMore = false;
           continue;
         }
-
-        allFiles.push(...files);
+        // Process files immediately within the batch
+        for (const file of files) {
+          const eligibleForDeletion = await isFileEligibleForDeletion(file);
+          if (eligibleForDeletion) {
+            console.log(
+              `[Cleanup Job] Deleting orphaned file: ${file.filename}`,
+            );
+            try {
+              await fileUploadService.deleteFile(file.filename);
+              await fileRepo.remove(file);
+            } catch (deleteError) {
+              console.error(
+                `[Cleanup Job] Failed to delete file ${file.filename}:`,
+                deleteError,
+              );
+            }
+          }
+        }
         skip += batchSize;
       }
-
-      for (const file of allFiles) {
-        const eligibleForDeletion = await isFileEligibleForDeletion(file);
-        if (eligibleForDeletion) {
-          console.log(`[Cleanup Job] Deleting orphaned file: ${file.filename}`);
-          await fileUploadService.deleteFile(file.filename);
-
-          await fileRepo.remove(file);
-        }
-      }
-
       console.log("[Cleanup Job] Completed successfully.");
     } catch (error) {
       console.error("[Cleanup Job] Error during cleanup:", error);
