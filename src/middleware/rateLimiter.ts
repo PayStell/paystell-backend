@@ -2,7 +2,7 @@ import rateLimit from "express-rate-limit";
 import { Request, Response } from "express";
 import rateLimitConfigService from "../services/rateLimitConfigService";
 import whitelistBlacklistService from "../services/whitelistBlacklistService";
-import { WhitelistType } from "src/entities/RateLimitWhiteList";
+import { WhitelistType } from "../entities/RateLimitWhiteList";
 import { BlacklistType } from "../entities/RateLimitBlacklist";
 import RateLimitMonitoringService from "../services/rateLimitMonitoring.service";
 import { redisClient } from "../config/redisConfig";
@@ -230,7 +230,6 @@ function determineMerchantType(merchant: any): string {
   return "standard";
 }
 
-// Enhanced fraud-specific rate limiters building on your existing pattern
 export const fraudAlertsRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: async (req: Request) => {
