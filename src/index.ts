@@ -1,13 +1,14 @@
 import "reflect-metadata";
 import app from "./app";
 import AppDataSource from "./config/db";
+import adaptiveRateLimitService from "./services/adaptiveRateLimitService";
 
 async function main() {
   try {
     // Initialize the database connection
     await AppDataSource.initialize();
     console.log("✅ Database connected successfully");
-
+    adaptiveRateLimitService.startAdjustment();
     // Start the server
     const PORT = process.env.PORT || 4000;
     const server = app.listen(PORT, () => {
