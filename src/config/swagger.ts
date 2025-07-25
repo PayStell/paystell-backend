@@ -146,7 +146,6 @@ const options: swaggerJsdoc.Options = {
             },
           },
         },
-
         // Payment related schemas
         Payment: {
           type: "object",
@@ -216,7 +215,6 @@ const options: swaggerJsdoc.Options = {
           },
           required: ["id", "title", "amount", "currency"],
         },
-
         // Merchant related schemas
         Merchant: {
           type: "object",
@@ -269,7 +267,6 @@ const options: swaggerJsdoc.Options = {
           },
           required: ["name", "email"],
         },
-
         // Authentication schemas
         LoginRequest: {
           type: "object",
@@ -310,7 +307,6 @@ const options: swaggerJsdoc.Options = {
           },
           required: ["accessToken", "refreshToken", "user"],
         },
-
         // Wallet verification schemas
         WalletVerification: {
           type: "object",
@@ -341,7 +337,6 @@ const options: swaggerJsdoc.Options = {
           },
           required: ["id", "walletAddress", "status"],
         },
-
         // Referral related schemas
         Referral: {
           type: "object",
@@ -377,7 +372,6 @@ const options: swaggerJsdoc.Options = {
           },
           required: ["id", "referrerId", "referredId", "status"],
         },
-
         // Error schemas
         Error: {
           type: "object",
@@ -410,7 +404,6 @@ const options: swaggerJsdoc.Options = {
           },
           required: ["error", "message"],
         },
-
         // Success response schemas
         SuccessResponse: {
           type: "object",
@@ -421,7 +414,6 @@ const options: swaggerJsdoc.Options = {
           },
           required: ["success", "message"],
         },
-
         // Pagination schemas
         PaginatedResponse: {
           type: "object",
@@ -450,6 +442,350 @@ const options: swaggerJsdoc.Options = {
           },
           required: ["data", "pagination"],
         },
+        // ====================================================================
+        // NEW Rate Limiting Schemas
+        // ====================================================================
+        RateLimitConfig: {
+          type: "object",
+          required: [
+            "merchantId",
+            "businessType",
+            "requestsPerSecond",
+            "requestsPerMinute",
+            "requestsPerHour",
+            "requestsPerDay",
+            "burstMultiplier",
+            "burstDurationSeconds",
+          ],
+          properties: {
+            id: {
+              type: "string",
+              format: "uuid",
+              description: "Unique identifier for the configuration.",
+            },
+            merchantId: {
+              type: "string",
+              description: "The ID of the merchant this configuration applies to.",
+            },
+            businessType: {
+              type: "string",
+              enum: ["standard", "premium", "enterprise"],
+              description: "The business type of the merchant, influencing default limits.",
+            },
+            requestsPerSecond: {
+              type: "number",
+              description: "Maximum requests allowed per second.",
+            },
+            requestsPerMinute: {
+              type: "number",
+              description: "Maximum requests allowed per minute.",
+            },
+            requestsPerHour: {
+              type: "number",
+              description: "Maximum requests allowed per hour.",
+            },
+            requestsPerDay: {
+              type: "number",
+              description: "Maximum requests allowed per day.",
+            },
+            burstMultiplier: {
+              type: "number",
+              format: "float",
+              description: "Multiplier for burst allowance (e.g., 1.5 for 50% more requests).",
+            },
+            burstDurationSeconds: {
+              type: "number",
+              description: "Duration in seconds for which burst mode is active.",
+            },
+            createdAt: {
+              type: "string",
+              format: "date-time",
+              description: "Timestamp when the configuration was created.",
+            },
+            updatedAt: {
+              type: "string",
+              format: "date-time",
+              description: "Timestamp when the configuration was last updated.",
+            },
+          },
+        },
+        RateLimitHistory: {
+          type: "object",
+          properties: {
+            id: {
+              type: "string",
+              format: "uuid",
+            },
+            userId: {
+              type: "string",
+              nullable: true,
+            },
+            userRole: {
+              type: "string",
+              nullable: true,
+            },
+            merchantId: {
+              type: "string",
+              nullable: true,
+            },
+            merchantType: {
+              type: "string",
+              nullable: true,
+            },
+            endpoint: {
+              type: "string",
+            },
+            ip: {
+              type: "string",
+            },
+            requestCount: {
+              type: "number",
+            },
+            limitUsed: {
+              type: "number",
+              nullable: true,
+            },
+            wasThrottled: {
+              type: "boolean",
+            },
+            wasBurst: {
+              type: "boolean",
+            },
+            userAgent: {
+              type: "string",
+              nullable: true,
+            },
+            timestamp: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+        },
+        RateLimitMetrics: {
+          type: "object",
+          properties: {
+            timeframe: {
+              type: "string",
+              enum: ["minute", "hour", "day"],
+            },
+            startTime: {
+              type: "string",
+              format: "date-time",
+            },
+            endTime: {
+              type: "string",
+              format: "date-time",
+            },
+            totalRequests: {
+              type: "number",
+            },
+            throttledRequests: {
+              type: "number",
+            },
+            throttleRate: {
+              type: "number",
+              format: "float",
+            },
+            burstRequests: {
+              type: "number",
+            },
+            burstRate: {
+              type: "number",
+              format: "float",
+            },
+            endpointStats: {
+              type: "object",
+              additionalProperties: {
+                type: "object",
+                properties: {
+                  total: {
+                    type: "number",
+                  },
+                  throttled: {
+                    type: "number",
+                  },
+                  burst: {
+                    type: "number",
+                  },
+                },
+              },
+            },
+            roleStats: {
+              type: "object",
+              additionalProperties: {
+                type: "object",
+                properties: {
+                  total: {
+                    type: "number",
+                  },
+                  throttled: {
+                    type: "number",
+                  },
+                  burst: {
+                    type: "number",
+                  },
+                },
+              },
+            },
+            topThrottledIPs: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  ip: {
+                    type: "string",
+                  },
+                  throttledCount: {
+                    type: "number",
+                  },
+                },
+              },
+            },
+            topThrottledUsers: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  userId: {
+                    type: "string",
+                  },
+                  throttledCount: {
+                    type: "number",
+                  },
+                },
+              },
+            },
+          },
+        },
+        RealTimeStatus: {
+          type: "object",
+          properties: {
+            activeRequests: {
+              type: "number",
+              description: "Number of active requests in the last minute.",
+            },
+            throttledRequests: {
+              type: "number",
+              description: "Number of throttled requests in the last minute.",
+            },
+            burstModeActive: {
+              type: "number",
+              description: "Number of requests that utilized burst mode in the last minute.",
+            },
+            activeBurstSessions: {
+              type: "number",
+              description: "Number of currently active burst sessions.",
+            },
+            timestamp: {
+              type: "string",
+              format: "date-time",
+              description: "The timestamp of when the status was retrieved.",
+            },
+            recentEvents: {
+              type: "number",
+              description: "Number of recent events tracked in memory.",
+            },
+          },
+        },
+        WhitelistEntry: {
+          type: "object",
+          required: ["type", "value"],
+          properties: {
+            id: {
+              type: "string",
+              format: "uuid",
+            },
+            type: {
+              type: "string",
+              enum: ["IP", "USER", "MERCHANT"],
+              description: "The type of entity being whitelisted.",
+            },
+            value: {
+              type: "string",
+              description: "The actual value (IP address, User ID, Merchant ID).",
+            },
+            reason: {
+              type: "string",
+              nullable: true,
+              description: "Reason for whitelisting.",
+            },
+            addedBy: {
+              type: "string",
+              nullable: true,
+              description: "User who added the entry.",
+            },
+            expiresAt: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+              description: "Optional expiration date for the whitelist entry.",
+            },
+            createdAt: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+        },
+        BlacklistEntry: {
+          type: "object",
+          required: ["type", "value", "reason"],
+          properties: {
+            id: {
+              type: "string",
+              format: "uuid",
+            },
+            type: {
+              type: "string",
+              enum: ["IP", "USER", "MERCHANT"],
+              description: "The type of entity being blacklisted.",
+            },
+            value: {
+              type: "string",
+              description: "The actual value (IP address, User ID, Merchant ID).",
+            },
+            reason: {
+              type: "string",
+              enum: ["ABUSE", "FRAUD", "MANUAL", "OTHER"],
+              description: "The reason for blacklisting.",
+            },
+            details: {
+              type: "string",
+              nullable: true,
+              description: "Additional details about the blacklist reason.",
+            },
+            addedBy: {
+              type: "string",
+              nullable: true,
+              description: "User who added the entry.",
+            },
+            expiresAt: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+              description: "Optional expiration date for the blacklist entry.",
+            },
+            createdAt: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+        },
+        RateLimitErrorResponse: {
+          type: "object",
+          properties: {
+            status: {
+              type: "string",
+              enum: ["error"],
+            },
+            message: {
+              type: "string",
+            },
+            error: {
+              type: "string",
+              nullable: true,
+            },
+          },
+        },
       },
     },
     security: [
@@ -460,6 +796,7 @@ const options: swaggerJsdoc.Options = {
   },
   apis: [
     "./src/routes/*.ts",
+    "./src/routes/rateLimitRoutes.ts",
     "./src/controllers/*.ts",
     "./src/dtos/*.ts",
     "./src/entities/*.ts",

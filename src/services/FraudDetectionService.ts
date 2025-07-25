@@ -15,6 +15,9 @@ import {
   RiskLevelBreakdownDTO,
   TopTriggeredRuleDTO,
 } from "../dtos/FraudDetection.dto";
+import whitelistBlacklistService from "./whitelistBlacklistService";
+import { BlacklistType, BlacklistReason } from "../entities/RateLimitBlacklist";
+import { RateLimitHistory } from "../entities/RateLimitHistory";
 
 export class FraudDetectionService {
   private transactionRepo: Repository<Transaction>;
@@ -457,5 +460,249 @@ export class FraudDetectionService {
       .getRawOne();
 
     return result?.average ? parseFloat(result.average) : null;
+  }
+
+
+  // ========================================
+  // Methods to check rate limiting
+  // ========================================
+
+  async checkRateLimitingPatterns(
+    userId: string,
+    ip: string,
+    merchantId: string
+  ): Promise<{ riskScore: number; rulesTriggered: string[] }> {
+    let riskScore = 0;
+    const rulesTriggered: string[] = [];
+
+    try {
+      // Check if user has been rate limited recently
+      const now = new Date();
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+
+      // Get rate limit history repository
+      const rateLimitHistoryRepo = AppDataSource.getRepository(RateLimitHistory);
+      
+      const recentRateLimits = await rateLimitHistoryRepo.count({
+        where: {
+          userId,
+          wasThrottled: true,
+          timestamp: MoreThanOrEqual(oneHourAgo),
+        },
+      });
+
+      if (recentRateLimits > 5) {
+        riskScore += 25;
+        rulesTriggered.push("EXCESSIVE_RATE_LIMITING");
+      }
+
+      // Check for IP-based rate limiting patterns
+      const ipRateLimits = await rateLimitHistoryRepo.count({
+        where: {
+          ip,
+          wasThrottled: true,
+          timestamp: MoreThanOrEqual(oneHourAgo),
+        },
+      });
+
+      if (ipRateLimits > 10) {
+        riskScore += 30;
+        rulesTriggered.push("IP_RATE_LIMIT_ABUSE");
+      }
+
+      // Check for burst mode abuse
+      const burstModeUsage = await rateLimitHistoryRepo.count({
+        where: {
+          userId,
+          wasBurst: true,
+          timestamp: MoreThanOrEqual(oneHourAgo),
+        },
+      });
+
+      if (burstModeUsage > 3) {
+        riskScore += 15;
+        rulesTriggered.push("BURST_MODE_ABUSE");
+      }
+
+      // Check for rapid endpoint switching (potential scraping)
+      const endpointSwitching = await rateLimitHistoryRepo
+        .createQueryBuilder("history")
+        .select("COUNT(DISTINCT history.endpoint)", "endpointCount")
+        .where("history.userId = :userId", { userId })
+        .andWhere("history.timestamp >= :oneHourAgo", { oneHourAgo })
+        .getRawOne();
+
+      if (endpointSwitching && parseInt(endpointSwitching.endpointCount) > 10) {
+        riskScore += 20;
+        rulesTriggered.push("RAPID_ENDPOINT_SWITCHING");
+      }
+
+      // Check for consistent high-volume usage patterns
+      const highVolumePattern = await rateLimitHistoryRepo.count({
+        where: {
+          userId,
+          requestCount: MoreThanOrEqual(50), // High request count per minute
+          timestamp: MoreThanOrEqual(oneHourAgo),
+        },
+      });
+
+      if (highVolumePattern > 5) {
+        riskScore += 20;
+        rulesTriggered.push("HIGH_VOLUME_PATTERN");
+      }
+
+      return { riskScore, rulesTriggered };
+    } catch (error) {
+      console.error(`Error checking rate limiting patterns: ${error}`);
+      return { riskScore: 0, rulesTriggered: [] };
+    }
+  }
+
+  async checkTransactionWithRateLimit(
+    context: TransactionContextDTO
+  ): Promise<FraudCheckResultDTO> {
+    // Get the original fraud check result
+    const originalResult = await this.checkTransaction(context);
+
+    // Add rate limiting pattern analysis
+    if (context.transaction.payerId) {
+      const rateLimitCheck = await this.checkRateLimitingPatterns(
+        context.transaction.payerId,
+        context.ipAddress || "0.0.0.0",
+        context.transaction.merchantId
+      );
+
+      // Combine scores
+      originalResult.riskScore = Math.min(originalResult.riskScore + rateLimitCheck.riskScore, 100);
+      originalResult.rulesTriggered.push(...rateLimitCheck.rulesTriggered);
+
+      // Recalculate risk level with new score
+      const config = await this.getMerchantConfig(context.transaction.merchantId);
+      originalResult.riskLevel = this.calculateRiskLevel(originalResult.riskScore, config);
+      originalResult.shouldBlock = this.shouldBlockTransaction(originalResult.riskLevel, config);
+
+      // If high risk due to rate limiting, add to blacklist
+      if (rateLimitCheck.riskScore > 30) {
+        try {
+          await whitelistBlacklistService.addToBlacklist(
+            BlacklistType.USER,
+            context.transaction.payerId,
+            BlacklistReason.ABUSE,
+            `High risk score from rate limiting patterns: ${rateLimitCheck.riskScore}. Rules triggered: ${rateLimitCheck.rulesTriggered.join(", ")}`,
+            "fraud-system",
+            new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hour ban
+          );
+
+          console.warn(`User ${context.transaction.payerId} blacklisted due to rate limiting fraud patterns`);
+        } catch (error) {
+          console.error(`Error blacklisting user for rate limit fraud: ${error}`);
+        }
+      }
+
+      // Also check IP if available
+      if (context.ipAddress && rateLimitCheck.riskScore > 25) {
+        try {
+          await whitelistBlacklistService.addToBlacklist(
+            BlacklistType.IP,
+            context.ipAddress,
+            BlacklistReason.ABUSE,
+            `IP associated with high-risk rate limiting patterns. Risk score: ${rateLimitCheck.riskScore}`,
+            "fraud-system",
+            new Date(Date.now() + 12 * 60 * 60 * 1000) // 12 hour ban for IP
+          );
+
+          console.warn(`IP ${context.ipAddress} blacklisted due to rate limiting fraud patterns`);
+        } catch (error) {
+          console.error(`Error blacklisting IP for rate limit fraud: ${error}`);
+        }
+      }
+    }
+
+    return originalResult;
+  }
+
+  // New method to get rate limiting fraud statistics
+  async getRateLimitFraudStats(merchantId?: string, days: number = 30): Promise<any> {
+    try {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      const rateLimitHistoryRepo = AppDataSource.getRepository(RateLimitHistory);
+
+      const baseQuery = rateLimitHistoryRepo
+        .createQueryBuilder("history")
+        .where("history.timestamp >= :startDate", { startDate });
+
+      if (merchantId) {
+        baseQuery.andWhere("history.merchantId = :merchantId", { merchantId });
+      }
+
+      // Get all rate limit events
+      const allEvents = await baseQuery.getMany();
+
+      // Get throttled events
+      const throttledEvents = allEvents.filter(e => e.wasThrottled);
+
+      // Get burst events
+      const burstEvents = allEvents.filter(e => e.wasBurst);
+
+      // Calculate fraud indicators
+      const suspiciousIPs = await rateLimitHistoryRepo
+        .createQueryBuilder("history")
+        .select("history.ip", "ip")
+        .addSelect("COUNT(*)", "count")
+        .where("history.timestamp >= :startDate", { startDate })
+        .andWhere("history.wasThrottled = :wasThrottled", { wasThrottled: true })
+        .groupBy("history.ip")
+        .having("COUNT(*) > :threshold", { threshold: 10 })
+        .getRawMany();
+
+      const suspiciousUsers = await rateLimitHistoryRepo
+        .createQueryBuilder("history")
+        .select("history.userId", "userId")
+        .addSelect("COUNT(*)", "count")
+        .where("history.timestamp >= :startDate", { startDate })
+        .andWhere("history.wasThrottled = :wasThrottled", { wasThrottled: true })
+        .andWhere("history.userId IS NOT NULL")
+        .groupBy("history.userId")
+        .having("COUNT(*) > :threshold", { threshold: 15 })
+        .getRawMany();
+
+      return {
+        period: {
+          startDate,
+          endDate: new Date(),
+          days
+        },
+        totalEvents: allEvents.length,
+        throttledEvents: throttledEvents.length,
+        burstEvents: burstEvents.length,
+        throttleRate: allEvents.length > 0 ? (throttledEvents.length / allEvents.length) * 100 : 0,
+        burstRate: allEvents.length > 0 ? (burstEvents.length / allEvents.length) * 100 : 0,
+        suspiciousActivity: {
+          suspiciousIPs: suspiciousIPs.map(ip => ({
+            ip: ip.ip,
+            throttledCount: parseInt(ip.count, 10)
+          })),
+          suspiciousUsers: suspiciousUsers.map(user => ({
+            userId: user.userId,
+            throttledCount: parseInt(user.count, 10)
+          })),
+        },
+        riskIndicators: {
+          highRiskIPs: suspiciousIPs.length,
+          highRiskUsers: suspiciousUsers.length,
+          averageThrottlePerIP: suspiciousIPs.length > 0 
+            ? suspiciousIPs.reduce((sum, ip) => sum + parseInt(ip.count, 10), 0) / suspiciousIPs.length 
+            : 0,
+          averageThrottlePerUser: suspiciousUsers.length > 0 
+            ? suspiciousUsers.reduce((sum, user) => sum + parseInt(user.count, 10), 0) / suspiciousUsers.length 
+            : 0,
+        }
+      };
+    } catch (error) {
+      console.error(`Error getting rate limit fraud stats: ${error}`);
+      throw error;
+    }
   }
 }

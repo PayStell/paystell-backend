@@ -40,6 +40,8 @@ import { oauthConfig } from "./config/auth0Config";
 import { auth } from "express-openid-connect";
 import { auditMiddleware } from "./middlewares/auditMiddleware";
 import routes from "./routes";
+import intelligentRateLimiter from "./middleware/rateLimiter";
+import rateLimitMonitoringService from "./services/rateLimitMonitoring.service";
 
 // Initialize express app
 const app = express();
@@ -76,6 +78,8 @@ app.use(
 );
 app.use(globalRateLimiter as RequestHandler);
 app.use(requestLogger as RequestHandler);
+app.use(intelligentRateLimiter); 
+app.use(rateLimitMonitoringService.createRateLimitMonitoringMiddleware());
 
 // Add timeout configurations
 app.use((req, res, next) => {
@@ -145,10 +149,10 @@ app.use("/users", userRoutes);
 app.use("/merchants", merchantRoutes);
 app.use("/webhook-queue/merchant", merchantWebhookQueueRoutes);
 app.use("/reports/transactions", transactionReportsRoutes);
-app.use("/api/v1/stellar", stellarContractRoutes);
-app.use("/token", tokenRoutes);
-app.use("/payment", paymentRouter);
-app.use("/subscriptions", subscriptionRouter);
+// app.use("/api/v1/stellar", stellarContractRoutes);
+// app.use("/token", tokenRoutes);
+// app.use("/payment", paymentRouter);
+// app.use("/subscriptions", subscriptionRouter);
 app.use("/", routes);
 
 // Error handling middleware
