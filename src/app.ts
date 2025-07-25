@@ -25,6 +25,7 @@ import stellarContractRoutes from "./routes/stellar-contract.routes";
 import tokenRoutes from "./routes/tokenRoutes";
 import { paymentRouter } from "./routes/paymentRoutes";
 import { subscriptionRouter } from "./routes/subscriptionRoutes";
+import fileUploadRoutes from "./routes/fileUpload.route";
 
 // Middleware imports
 import { globalRateLimiter } from "./middlewares/globalRateLimiter.middleware";
@@ -150,7 +151,7 @@ app.use("/token", tokenRoutes);
 app.use("/payment", paymentRouter);
 app.use("/subscriptions", subscriptionRouter);
 app.use("/", routes);
-
+app.use("/api/files", fileUploadRoutes);
 // Error handling middleware
 const customErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   console.error("Unhandled error:", err);
