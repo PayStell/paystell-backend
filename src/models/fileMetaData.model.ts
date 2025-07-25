@@ -4,10 +4,9 @@ import {
   Column,
   CreateDateColumn,
   Index,
-  FindManyOptions,
 } from "typeorm";
 
-export type StorageProvider = "local" | "s3" | "gcs";
+export type StorageProviderType = "local" | "s3" | "gcs";
 
 @Entity({ name: "file_metadata" })
 export class FileMetadata {
@@ -51,11 +50,8 @@ export class FileMetadata {
     type: "enum",
     enum: ["local", "s3", "gcs"],
   })
-  storageProvider: StorageProvider;
+  storageProvider: StorageProviderType;
 
   @Column({ name: "is_watermarked", default: false })
   isWatermarked: boolean;
-  static find: (
-    options?: FindManyOptions<FileMetadata>,
-  ) => Promise<FileMetadata[]>;
 }

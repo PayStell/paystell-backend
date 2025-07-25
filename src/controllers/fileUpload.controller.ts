@@ -13,13 +13,9 @@ export const handleFileUpload = asyncHandler(
 
       const fileUrl = fileUploadService.getFileUrl(req.file.filename);
 
-      const metadata = await fileUploadService.saveFileMetadata({
-        filename: req.file.filename,
-        mimetype: req.file.mimetype,
-        size: req.file.size,
-      });
-
       req.body.fileUrl = fileUrl;
+
+      const metadata = { filename: req.file.filename, size: req.file.size };
       req.body.fileMetadata = metadata;
 
       next();
