@@ -121,6 +121,19 @@ export class ConfigurationService {
   }
 
   /**
+   * Get configuration details including metadata
+   */
+  async getConfigDetails(key: string): Promise<Configuration | null> {
+    return this.configRepository.findOne({
+      where: {
+        configKey: key,
+        environment: this.currentEnvironment,
+        isActive: true,
+      },
+    });
+  }
+
+  /**
    * Set configuration value
    */
   async setConfig(
@@ -342,9 +355,9 @@ export class ConfigurationService {
       const userId = context?.userId || "anonymous";
       const hash = crypto.createHash("md5").update(`${flagName}:${userId}`).digest("hex");
       const hashValue = parseInt(hash.substring(0, 8), 16);
-      const userPercentage = (hashValue % 100) + 1;
+      const userPercentage = hashValue % 100;
 
-      if (userPercentage > percentage) {
+      if (userPercentage >= percentage) {
         return {
           isEnabled: false,
           reason: "User not included in percentage rollout",
@@ -565,8 +578,9 @@ export class ConfigurationService {
 
   private encryptValue(value: string): string {
     const iv = crypto.randomBytes(16);
-    // Use a KDF to derive a proper 32-byte key
-    const key = crypto.scryptSync(this.encryptionKey, 'salt', 32);
+    // Use a KDF with a deterministic salt based on a fixed application salt
+    const salt = crypto.createHash('sha256').update('paystell-config-v1').digest();
+    const key = crypto.scryptSync(this.encryptionKey, salt, 32);
     const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
     let encrypted = cipher.update(value, "utf8", "hex");
     encrypted += cipher.final("hex");
@@ -576,8 +590,9 @@ export class ConfigurationService {
   private decryptValue(encryptedValue: string): string {
     const [ivHex, encrypted] = encryptedValue.split(":");
     const iv = Buffer.from(ivHex, "hex");
-    // Use a KDF to derive a proper 32-byte key
-    const key = crypto.scryptSync(this.encryptionKey, 'salt', 32);
+    // Use the same salt for decryption
+    const salt = crypto.createHash('sha256').update('paystell-config-v1').digest();
+    const key = crypto.scryptSync(this.encryptionKey, salt, 32);
     const decipher = crypto.createDecipheriv("aes-256-cbc", key, iv);
     let decrypted = decipher.update(encrypted, "hex", "utf8");
     decrypted += decipher.final("utf8");

@@ -36,17 +36,20 @@ export class ConfigurationController {
   async getConfiguration(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { key } = req.params;
-      const value = await configurationService.getConfig(key);
+      const config = await configurationService.getConfigDetails(key);
 
-      if (value === null) {
+      if (!config) {
         throw new AppError("Configuration not found", 404);
       }
 
       res.json({
         success: true,
         data: {
-          key,
-          value,
+          key: config.configKey,
+          value: config.isEncrypted ? "[ENCRYPTED]" : config.value,
+          type: config.type,
+          category: config.category,
+          isEncrypted: config.isEncrypted,
         },
       });
     } catch (error) {
