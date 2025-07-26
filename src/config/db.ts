@@ -16,6 +16,8 @@ import { ReferralProgram } from "../entities/ReferralProgram";
 import { AuditLog } from "../entities/AuditLog";
 import { AuditSubscriber } from "../subscribers/AuditSubscriber";
 import { Wallet } from "src/entities/Wallet";
+import { Configuration } from "../entities/Configuration";
+import { FeatureFlag } from "../entities/FeatureFlag";
 
 dotenv.config();
 
@@ -45,6 +47,8 @@ const AppDataSource = new DataSource({
     ReferralProgram,
     AuditLog,
     Wallet,
+    Configuration,
+    FeatureFlag,
   ],
   subscribers: [AuditSubscriber],
   migrations: ["src/migrations/*.ts"],

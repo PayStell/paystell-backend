@@ -1,12 +1,17 @@
 import "reflect-metadata";
 import app from "./app";
 import AppDataSource from "./config/db";
+import { configurationService } from "./services/ConfigurationService";
 
 async function main() {
   try {
     // Initialize the database connection
     await AppDataSource.initialize();
     console.log("✅ Database connected successfully");
+
+    // Initialize configuration service
+    await configurationService.initialize();
+    console.log("✅ Configuration service initialized successfully");
 
     // Start the server
     const PORT = process.env.PORT || 4000;
