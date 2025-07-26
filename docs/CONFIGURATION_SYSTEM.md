@@ -54,7 +54,7 @@ The PayStell backend now includes a comprehensive Multi-Environment Configuratio
 ```sql
 CREATE TABLE configurations (
   id UUID PRIMARY KEY,
-  key VARCHAR(255) NOT NULL,
+  config_key VARCHAR(255) NOT NULL,
   value TEXT NOT NULL,
   environment VARCHAR(50) NOT NULL,
   type VARCHAR(50) NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE configurations (
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
   updated_by VARCHAR(255),
-  UNIQUE(key, environment)
+  UNIQUE(config_key, environment)
 );
 ```
 

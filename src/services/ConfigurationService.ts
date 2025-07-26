@@ -86,7 +86,7 @@ export class ConfigurationService {
 
     const config = await this.configRepository.findOne({
       where: {
-        key,
+        configKey: key,
         environment: this.currentEnvironment,
         isActive: true,
       },
@@ -102,7 +102,7 @@ export class ConfigurationService {
     }
 
     const configValue: ConfigurationValue = {
-      key: config.key,
+      key: config.configKey,
       value,
       type: config.type,
       category: config.category,
@@ -149,7 +149,7 @@ export class ConfigurationService {
 
     let config = await this.configRepository.findOne({
       where: {
-        key,
+        configKey: key,
         environment: this.currentEnvironment,
       },
     });
@@ -158,7 +158,7 @@ export class ConfigurationService {
 
     if (!config) {
       config = this.configRepository.create({
-        key,
+        configKey: key,
         value: finalValue,
         environment: this.currentEnvironment,
         type: options.type || ConfigurationType.STRING,
@@ -220,7 +220,7 @@ export class ConfigurationService {
   async deleteConfig(key: string, updatedBy?: string): Promise<void> {
     const config = await this.configRepository.findOne({
       where: {
-        key,
+        configKey: key,
         environment: this.currentEnvironment,
       },
     });
@@ -261,7 +261,7 @@ export class ConfigurationService {
       },
       order: {
         category: "ASC",
-        key: "ASC",
+        configKey: "ASC",
       },
     });
   }
@@ -277,7 +277,7 @@ export class ConfigurationService {
         isActive: true,
       },
       order: {
-        key: "ASC",
+        configKey: "ASC",
       },
     });
   }
@@ -486,8 +486,8 @@ export class ConfigurationService {
         value = this.decryptValue(value);
       }
 
-      this.cache.set(config.key, {
-        key: config.key,
+      this.cache.set(config.configKey, {
+        key: config.configKey,
         value,
         type: config.type,
         category: config.category,
@@ -517,19 +517,19 @@ export class ConfigurationService {
 
     for (const config of requiredConfigs) {
       if (!config.value || config.value.trim() === "") {
-        errors.push(`Required configuration missing or empty: ${config.key}`);
+        errors.push(`Required configuration missing or empty: ${config.configKey}`);
       }
 
       // Check if configuration has expired
       if (config.expiresAt && new Date() > config.expiresAt) {
-        warnings.push(`Configuration has expired: ${config.key}`);
+        warnings.push(`Configuration has expired: ${config.configKey}`);
       }
 
       // Validate against allowed values
       if (config.allowedValues) {
         const allowedValues = JSON.parse(config.allowedValues);
         if (!allowedValues.includes(config.value)) {
-          errors.push(`Configuration value not allowed: ${config.key} = ${config.value}`);
+          errors.push(`Configuration value not allowed: ${config.configKey} = ${config.value}`);
         }
       }
     }
@@ -565,7 +565,9 @@ export class ConfigurationService {
 
   private encryptValue(value: string): string {
     const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv("aes-256-cbc", Buffer.from(this.encryptionKey.padEnd(32, '0').slice(0, 32)), iv);
+    // Use a KDF to derive a proper 32-byte key
+    const key = crypto.scryptSync(this.encryptionKey, 'salt', 32);
+    const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
     let encrypted = cipher.update(value, "utf8", "hex");
     encrypted += cipher.final("hex");
     return `${iv.toString("hex")}:${encrypted}`;
@@ -574,7 +576,9 @@ export class ConfigurationService {
   private decryptValue(encryptedValue: string): string {
     const [ivHex, encrypted] = encryptedValue.split(":");
     const iv = Buffer.from(ivHex, "hex");
-    const decipher = crypto.createDecipheriv("aes-256-cbc", Buffer.from(this.encryptionKey.padEnd(32, '0').slice(0, 32)), iv);
+    // Use a KDF to derive a proper 32-byte key
+    const key = crypto.scryptSync(this.encryptionKey, 'salt', 32);
+    const decipher = crypto.createDecipheriv("aes-256-cbc", key, iv);
     let decrypted = decipher.update(encrypted, "hex", "utf8");
     decrypted += decipher.final("utf8");
     return decrypted;
@@ -609,6 +613,20 @@ export class ConfigurationService {
       if (!context.userRole || !targetingRules.userRoles.includes(context.userRole)) {
         return false;
       }
+    }
+
+    // Check percentage rollout
+    if (targetingRules.percentage !== undefined) {
+      // Validate percentage is between 0 and 100
+      if (typeof targetingRules.percentage !== 'number' || targetingRules.percentage < 0 || targetingRules.percentage > 100) {
+        logger.warn(`Invalid percentage value: ${targetingRules.percentage}. Must be between 0 and 100.`);
+        return false;
+      }
+      
+      const hash = crypto.createHash("md5").update(context.userId || "default").digest("hex");
+      const hashValue = parseInt(hash.substring(0, 8), 16);
+      const percentage = hashValue % 100;
+      return percentage < targetingRules.percentage;
     }
 
     return true;

@@ -17,9 +17,9 @@ describe("Configuration System Integration Tests", () => {
     // Initialize configuration service
     await configurationService.initialize();
 
-    // Create a test user and get auth token
-    // This would normally be done through the auth system
-    authToken = "test-auth-token";
+    // Create a test user and generate a proper auth token
+    // In a real implementation, this would use the actual auth system
+    authToken = "test-auth-token"; // TODO: Replace with proper JWT token generation
   });
 
   afterAll(async () => {
@@ -345,6 +345,108 @@ describe("Configuration System Integration Tests", () => {
       expect(statsResponse.body.data.encryptedConfigurations).toBe(1);
       expect(statsResponse.body.data.totalFeatureFlags).toBe(1);
       expect(statsResponse.body.data.activeFeatureFlags).toBe(1);
+    });
+
+    it("should update existing configuration", async () => {
+      // Create initial configuration
+      await request(app)
+        .post("/api/config")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          key: "UPDATE_TEST",
+          value: "initial_value",
+          type: "string",
+          category: "general",
+        });
+
+      // Update configuration
+      const updateResponse = await request(app)
+        .post("/api/config")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          key: "UPDATE_TEST",
+          value: "updated_value",
+          type: "string",
+          category: "general",
+        });
+
+      expect(updateResponse.status).toBe(200);
+      expect(updateResponse.body.data.value).toBe("updated_value");
+    });
+
+    it("should return 403 for unauthorized access", async () => {
+      const response = await request(app)
+        .get("/api/config")
+        .set("Authorization", "Bearer invalid-token");
+
+      expect(response.status).toBe(403);
+    });
+
+    it("should validate configuration types", async () => {
+      const response = await request(app)
+        .post("/api/config")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          key: "TYPE_TEST",
+          value: "not-a-number",
+          type: "number",
+          category: "general",
+        });
+
+      expect(response.status).toBe(400);
+    });
+
+    it("should handle percentage-based rollouts", async () => {
+      await request(app)
+        .post("/api/config/feature-flags")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          name: "percentage_feature",
+          description: "Percentage rollout feature",
+          isEnabled: true,
+          scope: "user",
+          targetingRules: {
+            percentage: 50,
+          },
+        });
+
+      // Test multiple evaluations to verify percentage distribution
+      const results = [];
+      for (let i = 0; i < 100; i++) {
+        const response = await request(app)
+          .get(`/api/config/feature-flags/percentage_feature/evaluate?userId=user${i}`)
+          .set("Authorization", `Bearer ${authToken}`);
+        results.push(response.body.data.isEnabled);
+      }
+
+      const enabledCount = results.filter(r => r).length;
+      expect(enabledCount).toBeGreaterThan(30);
+      expect(enabledCount).toBeLessThan(70);
+    });
+
+    it("should handle role-based targeting", async () => {
+      await request(app)
+        .post("/api/config/feature-flags")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          name: "role_feature",
+          description: "Role-based feature",
+          isEnabled: true,
+          scope: "user",
+          targetingRules: {
+            userRoles: ["admin", "super_admin"],
+          },
+        });
+
+      const adminResponse = await request(app)
+        .get("/api/config/feature-flags/role_feature/evaluate?userRole=admin")
+        .set("Authorization", `Bearer ${authToken}`);
+      expect(adminResponse.body.data.isEnabled).toBe(true);
+
+      const userResponse = await request(app)
+        .get("/api/config/feature-flags/role_feature/evaluate?userRole=user")
+        .set("Authorization", `Bearer ${authToken}`);
+      expect(userResponse.body.data.isEnabled).toBe(false);
     });
   });
 }); 

@@ -36,7 +36,7 @@ const defaultConfigurations = [
   },
   {
     key: "POSTGRES_PASSWORD",
-    value: "1234",
+    value: process.env.POSTGRES_PASSWORD || "",
     type: ConfigurationType.STRING,
     category: ConfigurationCategory.DATABASE,
     description: "PostgreSQL database password",
@@ -55,7 +55,7 @@ const defaultConfigurations = [
   // Authentication configurations
   {
     key: "JWT_SECRET",
-    value: "your-super-secret-jwt-key-change-in-production",
+    value: process.env.JWT_SECRET || "your-super-secret-jwt-key-change-in-production",
     type: ConfigurationType.STRING,
     category: ConfigurationCategory.AUTHENTICATION,
     description: "JWT secret key for token signing",
@@ -81,7 +81,7 @@ const defaultConfigurations = [
   },
   {
     key: "AUTH0_CLIENT_SECRET",
-    value: "",
+    value: process.env.AUTH0_CLIENT_SECRET || "",
     type: ConfigurationType.STRING,
     category: ConfigurationCategory.AUTHENTICATION,
     description: "Auth0 client secret",
@@ -161,7 +161,7 @@ const defaultConfigurations = [
   },
   {
     key: "REDIS_PASSWORD",
-    value: "",
+    value: process.env.REDIS_PASSWORD || "",
     type: ConfigurationType.STRING,
     category: ConfigurationCategory.REDIS,
     description: "Redis server password",
@@ -196,7 +196,7 @@ const defaultConfigurations = [
   },
   {
     key: "SMTP_PASSWORD",
-    value: "",
+    value: process.env.SMTP_PASSWORD || "",
     type: ConfigurationType.STRING,
     category: ConfigurationCategory.EMAIL,
     description: "SMTP password",
@@ -265,7 +265,7 @@ const defaultConfigurations = [
   },
   {
     key: "SESSION_SECRET",
-    value: "a-long-randomly-generated-string-change-in-production",
+    value: process.env.SESSION_SECRET || "a-long-randomly-generated-string-change-in-production",
     type: ConfigurationType.STRING,
     category: ConfigurationCategory.SECURITY,
     description: "Session secret for cookie signing",
@@ -274,7 +274,7 @@ const defaultConfigurations = [
   },
   {
     key: "CONFIG_ENCRYPTION_KEY",
-    value: "your-config-encryption-key-change-in-production",
+    value: process.env.CONFIG_ENCRYPTION_KEY || "your-config-encryption-key-change-in-production",
     type: ConfigurationType.STRING,
     category: ConfigurationCategory.SECURITY,
     description: "Encryption key for sensitive configurations",

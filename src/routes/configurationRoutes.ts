@@ -43,6 +43,13 @@ const featureFlagValidation = [
 const importValidation = [
   body("configurations").isArray().withMessage("configurations must be an array"),
   body("overwrite").optional().isBoolean().withMessage("overwrite must be a boolean"),
+  body("confirmOverwrite").optional().isString()
+    .custom((value, { req }) => {
+      if (req.body.overwrite && process.env.NODE_ENV === 'production') {
+        return value === `CONFIRM_OVERWRITE_${new Date().toISOString().split('T')[0]}`;
+      }
+      return true;
+    }).withMessage("Production overwrites require confirmation with today's date"),
 ];
 
 /**

@@ -23,5 +23,19 @@ declare module "express-serve-static-core" {
     validatedIp?: string;
     tokenExp?: number;
     requestId?: string;
+    config?: {
+      get: (key: string, defaultValue?: string) => Promise<string | number | boolean | Record<string, unknown> | null>;
+      isFeatureEnabled: (flagName: string, context?: {
+        userId?: string;
+        merchantId?: string;
+        userRole?: string;
+      }) => Promise<boolean>;
+    };
+    environment?: string;
+    appConfig?: {
+      name: string;
+      version: string;
+      environment: string;
+    };
   }
 }

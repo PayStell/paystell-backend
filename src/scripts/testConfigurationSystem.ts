@@ -30,7 +30,7 @@ async function testConfigurationSystem() {
       description: "Test configuration for validation",
       updatedBy: "test-script",
     });
-    logger.info(`✅ Created configuration: ${testConfig.key} = ${testConfig.value}`);
+    logger.info(`✅ Created configuration: ${testConfig.configKey} = ${testConfig.value}`);
 
     // Retrieve the configuration
     const retrievedValue = await configurationService.getConfig("TEST_CONFIG");
@@ -124,7 +124,7 @@ async function testConfigurationSystem() {
     const missingRequired = requiredConfigs.filter(c => !c.value || c.value.trim() === "");
     
     if (missingRequired.length > 0) {
-      logger.warn(`⚠️  Missing required configurations: ${missingRequired.map(c => c.key).join(", ")}`);
+      logger.warn(`⚠️  Missing required configurations: ${missingRequired.map(c => c.configKey).join(", ")}`);
     } else {
       logger.info("✅ All required configurations are present");
     }

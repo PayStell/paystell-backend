@@ -95,7 +95,11 @@ export const featureFlagMiddleware = (flagName: string) => {
         userRole: req.user?.role,
       };
 
-      const evaluation = await configurationService.evaluateFeatureFlag(flagName, context);
+      const evaluation = await configurationService.evaluateFeatureFlag(flagName, {
+        userId: context.userId?.toString(),
+        merchantId: context.merchantId,
+        userRole: context.userRole?.toString(),
+      });
 
       if (!evaluation.isEnabled) {
         res.status(403).json({

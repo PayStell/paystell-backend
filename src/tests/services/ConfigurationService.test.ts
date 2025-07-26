@@ -94,9 +94,12 @@ describe("ConfigurationService", () => {
       };
 
       mockConfigRepository.findOne.mockResolvedValue(mockConfig);
+      
+      // Mock the decryption method
+      jest.spyOn(configurationService as any, 'decryptValue').mockReturnValue('decrypted_value');
 
       const result = await configurationService.getConfig("ENCRYPTED_CONFIG");
-      expect(result).toBe("decrypted_value"); // Mock decryption
+      expect(result).toBe("decrypted_value");
     });
 
     it("should parse different data types correctly", async () => {

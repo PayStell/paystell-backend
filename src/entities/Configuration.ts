@@ -37,7 +37,7 @@ export enum ConfigurationCategory {
 }
 
 @Entity("configurations")
-@Index(["key", "environment"], { unique: true })
+@Index(["configKey", "environment"], { unique: true })
 @Index(["category", "environment"])
 export class Configuration {
   @PrimaryGeneratedColumn("uuid")
@@ -45,7 +45,7 @@ export class Configuration {
 
   @Column({ length: 255 })
   @IsNotEmpty()
-  key: string;
+  configKey: string;
 
   @Column({ type: "text" })
   @IsNotEmpty()

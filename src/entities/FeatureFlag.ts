@@ -72,7 +72,7 @@ export class FeatureFlag {
     userIds?: string[];
     merchantIds?: string[];
     userRoles?: string[];
-    percentage?: number; // For percentage-based rollouts
+    percentage?: number; // For percentage-based rollouts (0-100)
     conditions?: Record<string, unknown>;
   };
 

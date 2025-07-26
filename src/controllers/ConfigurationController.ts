@@ -95,7 +95,7 @@ export class ConfigurationController {
         allowedValues,
         expiresAt: expiresAt ? new Date(expiresAt) : undefined,
         metadata,
-        updatedBy: req.user?.id,
+        updatedBy: req.user?.id?.toString(),
       });
 
       res.status(201).json({
@@ -118,7 +118,7 @@ export class ConfigurationController {
     try {
       const { key } = req.params;
       
-      await configurationService.deleteConfig(key, req.user?.id);
+      await configurationService.deleteConfig(key, req.user?.id?.toString());
 
       res.json({
         success: true,
@@ -179,7 +179,16 @@ export class ConfigurationController {
    */
   async validateConfigurations(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const validationResult = await configurationService.validateRequiredConfigurations();
+      // Get all configurations and validate required ones
+      const allConfigs = await configurationService.getAllConfigs();
+      const requiredConfigs = allConfigs.filter(config => config.isRequired);
+      const missingRequired = requiredConfigs.filter(config => !config.value || config.value.trim() === "");
+      
+      const validationResult = {
+        isValid: missingRequired.length === 0,
+        errors: missingRequired.map(config => `Required configuration missing or empty: ${config.configKey}`),
+        warnings: [],
+      };
 
       res.json({
         success: true,
@@ -245,7 +254,7 @@ export class ConfigurationController {
         metadata,
         owner,
         tags,
-        updatedBy: req.user?.id,
+        updatedBy: req.user?.id?.toString(),
       });
 
       res.status(201).json({
@@ -326,7 +335,7 @@ export class ConfigurationController {
         environment: environment || process.env.NODE_ENV,
         exportedAt: new Date().toISOString(),
         configurations: configs.map(config => ({
-          key: config.key,
+          key: config.configKey,
           value: config.isEncrypted ? "[ENCRYPTED]" : config.value,
           type: config.type,
           category: config.category,
@@ -384,7 +393,7 @@ export class ConfigurationController {
             allowedValues: config.allowedValues,
             expiresAt: config.expiresAt ? new Date(config.expiresAt) : undefined,
             metadata: config.metadata,
-            updatedBy: req.user?.id,
+            updatedBy: req.user?.id?.toString(),
           });
 
           imported++;
