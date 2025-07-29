@@ -78,7 +78,7 @@ app.use(
 );
 app.use(globalRateLimiter as RequestHandler);
 app.use(requestLogger as RequestHandler);
-app.use(intelligentRateLimiter); 
+app.use(intelligentRateLimiter);
 app.use(rateLimitMonitoringService.createRateLimitMonitoringMiddleware());
 
 // Add timeout configurations

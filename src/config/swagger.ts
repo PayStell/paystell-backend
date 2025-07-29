@@ -465,12 +465,14 @@ const options: swaggerJsdoc.Options = {
             },
             merchantId: {
               type: "string",
-              description: "The ID of the merchant this configuration applies to.",
+              description:
+                "The ID of the merchant this configuration applies to.",
             },
             businessType: {
               type: "string",
               enum: ["standard", "premium", "enterprise"],
-              description: "The business type of the merchant, influencing default limits.",
+              description:
+                "The business type of the merchant, influencing default limits.",
             },
             requestsPerSecond: {
               type: "number",
@@ -491,11 +493,13 @@ const options: swaggerJsdoc.Options = {
             burstMultiplier: {
               type: "number",
               format: "float",
-              description: "Multiplier for burst allowance (e.g., 1.5 for 50% more requests).",
+              description:
+                "Multiplier for burst allowance (e.g., 1.5 for 50% more requests).",
             },
             burstDurationSeconds: {
               type: "number",
-              description: "Duration in seconds for which burst mode is active.",
+              description:
+                "Duration in seconds for which burst mode is active.",
             },
             createdAt: {
               type: "string",
@@ -670,7 +674,8 @@ const options: swaggerJsdoc.Options = {
             },
             burstModeActive: {
               type: "number",
-              description: "Number of requests that utilized burst mode in the last minute.",
+              description:
+                "Number of requests that utilized burst mode in the last minute.",
             },
             activeBurstSessions: {
               type: "number",
@@ -702,7 +707,8 @@ const options: swaggerJsdoc.Options = {
             },
             value: {
               type: "string",
-              description: "The actual value (IP address, User ID, Merchant ID).",
+              description:
+                "The actual value (IP address, User ID, Merchant ID).",
             },
             reason: {
               type: "string",
@@ -741,7 +747,8 @@ const options: swaggerJsdoc.Options = {
             },
             value: {
               type: "string",
-              description: "The actual value (IP address, User ID, Merchant ID).",
+              description:
+                "The actual value (IP address, User ID, Merchant ID).",
             },
             reason: {
               type: "string",

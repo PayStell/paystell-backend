@@ -1,6 +1,9 @@
 import { Router } from "express";
 import rateLimitController from "../controllers/RateLimitController";
-import { authMiddleware, isUserAuthorized } from "../middlewares/authMiddleware";
+import {
+  authMiddleware,
+  isUserAuthorized,
+} from "../middlewares/authMiddleware";
 import { UserRole } from "../enums/UserRole";
 
 const rateLimitRouter = Router();
@@ -406,7 +409,11 @@ rateLimitRouter.get("/metrics", authMiddleware, rateLimitController.getMetrics);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-rateLimitRouter.get("/metrics/merchant/:merchantId", authMiddleware, rateLimitController.getMerchantMetrics);
+rateLimitRouter.get(
+  "/metrics/merchant/:merchantId",
+  authMiddleware,
+  rateLimitController.getMerchantMetrics,
+);
 
 /**
  * @swagger
@@ -474,7 +481,11 @@ rateLimitRouter.get("/metrics/merchant/:merchantId", authMiddleware, rateLimitCo
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-rateLimitRouter.get("/history/user/:userId", authMiddleware, rateLimitController.getUserHistory);
+rateLimitRouter.get(
+  "/history/user/:userId",
+  authMiddleware,
+  rateLimitController.getUserHistory,
+);
 
 /**
  * @swagger
@@ -509,7 +520,11 @@ rateLimitRouter.get("/history/user/:userId", authMiddleware, rateLimitController
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-rateLimitRouter.get("/status", authMiddleware, rateLimitController.getRealTimeStatus);
+rateLimitRouter.get(
+  "/status",
+  authMiddleware,
+  rateLimitController.getRealTimeStatus,
+);
 
 /**
  * @swagger
@@ -573,7 +588,12 @@ rateLimitRouter.get("/status", authMiddleware, rateLimitController.getRealTimeSt
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-rateLimitRouter.get("/config/merchant/:merchantId", authMiddleware, isUserAuthorized([UserRole.ADMIN]), rateLimitController.getMerchantConfigs);
+rateLimitRouter.get(
+  "/config/merchant/:merchantId",
+  authMiddleware,
+  isUserAuthorized([UserRole.ADMIN]),
+  rateLimitController.getMerchantConfigs,
+);
 
 /**
  * @swagger
@@ -638,7 +658,12 @@ rateLimitRouter.get("/config/merchant/:merchantId", authMiddleware, isUserAuthor
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-rateLimitRouter.post("/config", authMiddleware, isUserAuthorized([UserRole.ADMIN]), rateLimitController.createConfig);
+rateLimitRouter.post(
+  "/config",
+  authMiddleware,
+  isUserAuthorized([UserRole.ADMIN]),
+  rateLimitController.createConfig,
+);
 
 /**
  * @swagger
@@ -711,7 +736,12 @@ rateLimitRouter.post("/config", authMiddleware, isUserAuthorized([UserRole.ADMIN
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-rateLimitRouter.put("/config/:configId", authMiddleware, isUserAuthorized([UserRole.ADMIN]), rateLimitController.updateConfig);
+rateLimitRouter.put(
+  "/config/:configId",
+  authMiddleware,
+  isUserAuthorized([UserRole.ADMIN]),
+  rateLimitController.updateConfig,
+);
 
 /**
  * @swagger
@@ -773,7 +803,12 @@ rateLimitRouter.put("/config/:configId", authMiddleware, isUserAuthorized([UserR
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-rateLimitRouter.delete("/config/:configId", authMiddleware, isUserAuthorized([UserRole.ADMIN]), rateLimitController.deleteConfig);
+rateLimitRouter.delete(
+  "/config/:configId",
+  authMiddleware,
+  isUserAuthorized([UserRole.ADMIN]),
+  rateLimitController.deleteConfig,
+);
 
 /**
  * @swagger
@@ -906,8 +941,18 @@ rateLimitRouter.delete("/config/:configId", authMiddleware, isUserAuthorized([Us
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-rateLimitRouter.get("/whitelist", authMiddleware, isUserAuthorized([UserRole.ADMIN]), rateLimitController.getWhitelist);
-rateLimitRouter.post("/whitelist", authMiddleware, isUserAuthorized([UserRole.ADMIN]), rateLimitController.addToWhitelist);
+rateLimitRouter.get(
+  "/whitelist",
+  authMiddleware,
+  isUserAuthorized([UserRole.ADMIN]),
+  rateLimitController.getWhitelist,
+);
+rateLimitRouter.post(
+  "/whitelist",
+  authMiddleware,
+  isUserAuthorized([UserRole.ADMIN]),
+  rateLimitController.addToWhitelist,
+);
 
 /**
  * @swagger
@@ -969,7 +1014,12 @@ rateLimitRouter.post("/whitelist", authMiddleware, isUserAuthorized([UserRole.AD
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-rateLimitRouter.delete("/whitelist/:id", authMiddleware, isUserAuthorized([UserRole.ADMIN]), rateLimitController.removeFromWhitelist);
+rateLimitRouter.delete(
+  "/whitelist/:id",
+  authMiddleware,
+  isUserAuthorized([UserRole.ADMIN]),
+  rateLimitController.removeFromWhitelist,
+);
 
 /**
  * @swagger
@@ -1108,8 +1158,18 @@ rateLimitRouter.delete("/whitelist/:id", authMiddleware, isUserAuthorized([UserR
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-rateLimitRouter.get("/blacklist", authMiddleware, isUserAuthorized([UserRole.ADMIN]), rateLimitController.getBlacklist);
-rateLimitRouter.post("/blacklist", authMiddleware, isUserAuthorized([UserRole.ADMIN]), rateLimitController.addToBlacklist);
+rateLimitRouter.get(
+  "/blacklist",
+  authMiddleware,
+  isUserAuthorized([UserRole.ADMIN]),
+  rateLimitController.getBlacklist,
+);
+rateLimitRouter.post(
+  "/blacklist",
+  authMiddleware,
+  isUserAuthorized([UserRole.ADMIN]),
+  rateLimitController.addToBlacklist,
+);
 
 /**
  * @swagger
@@ -1171,6 +1231,11 @@ rateLimitRouter.post("/blacklist", authMiddleware, isUserAuthorized([UserRole.AD
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-rateLimitRouter.delete("/blacklist/:id", authMiddleware, isUserAuthorized([UserRole.ADMIN]), rateLimitController.removeFromBlacklist);
+rateLimitRouter.delete(
+  "/blacklist/:id",
+  authMiddleware,
+  isUserAuthorized([UserRole.ADMIN]),
+  rateLimitController.removeFromBlacklist,
+);
 
 export default rateLimitRouter;

@@ -11,8 +11,6 @@ import rateLimitRoutes from "./rateLimitRoutes";
 
 const router = Router();
 
-
-
 router.use("/", userRoutes);
 router.use("/api/sales-summary", salesSummaryRoutes);
 router.use("/api", referralRoutes);

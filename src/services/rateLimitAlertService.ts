@@ -44,7 +44,8 @@ export class RateLimitAlertService {
 
       // Calculate current usage percentage
       const latestEntry = recentHistory[0];
-      const usagePercentage = (latestEntry.requestCount / latestEntry.limitUsed) * 100;
+      const usagePercentage =
+        (latestEntry.requestCount / latestEntry.limitUsed) * 100;
 
       // Check if we should send an alert
       if (usagePercentage >= this.thresholds.criticalThreshold) {
@@ -61,22 +62,23 @@ export class RateLimitAlertService {
     userId: string,
     merchantId: string,
     level: "warning" | "critical",
-    usagePercentage: number
+    usagePercentage: number,
   ): Promise<void> {
     try {
       const cooldownKey = `ratelimit:alert:${userId}:${level}`;
       const alertSent = await redisClient.get(cooldownKey);
 
       if (alertSent) {
-        return; 
+        return;
       }
 
       await redisClient.set(cooldownKey, "1", {
         EX: this.thresholds.cooldownMinutes * 60,
       });
 
-
-      logger.warn(`RATE LIMIT ALERT [${level.toUpperCase()}]: User ${userId} at ${Math.round(usagePercentage)}% of their rate limit for merchant ${merchantId}`);
+      logger.warn(
+        `RATE LIMIT ALERT [${level.toUpperCase()}]: User ${userId} at ${Math.round(usagePercentage)}% of their rate limit for merchant ${merchantId}`,
+      );
     } catch (error) {
       logger.error(`Error sending alert: ${error}`);
     }
