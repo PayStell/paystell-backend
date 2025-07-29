@@ -1,6 +1,5 @@
 import type { Request, Response, NextFunction } from "express"
 // Do NOT import intelligentRateLimiter here yet, as we need to mock its dependency first.
-
 import rateLimitConfigService from "../services/rateLimitConfigService"
 import whitelistBlacklistService from "../services/whitelistBlacklistService"
 import RateLimitMonitoringService from "../services/rateLimitMonitoring.service"
@@ -9,7 +8,6 @@ import { UserRole } from "../enums/UserRole"
 import { jest } from "@jest/globals"
 
 // --- START: Accurate Mock Interfaces based on your provided types ---
-
 interface MockMerchantWebhookEntity {
   id: string
   url: string
@@ -62,6 +60,36 @@ interface MockRateLimitConfig {
   merchant: MockMerchant
 }
 
+// Extend Express Request to include custom properties for testing
+declare module "express-serve-static-core" {
+  interface Request {
+    user?: MockUser
+    merchant?: MockMerchant
+    rateLimit?: {
+      limit: number
+      current: number
+      remaining: number
+      resetTime: Date
+      total: number
+    }
+  }
+}
+
+// Define a type for the options passed to express-rate-limit
+interface RateLimitOptions {
+  handler: (req: Request, res: Response, next: NextFunction, options: RateLimitOptions) => Promise<void> | void
+  max: number | ((req: Request, res: Response) => Promise<number>)
+  windowMs: number
+  skip: (req: Request, res: Response) => boolean
+  // Add other options used by the limiter if necessary
+}
+
+// Define a type for the mocked express-rate-limit instance
+interface MockRateLimitInstance extends jest.Mock {
+  _options: RateLimitOptions
+  resetKey: jest.Mock
+}
+
 // --- END: Accurate Mock Interfaces ---
 
 // Mock external dependencies
@@ -76,12 +104,14 @@ jest.mock("../config/redisConfig", () => ({
 }))
 
 // --- CRITICAL FIX: Mock express-rate-limit itself ---
-const mockRateLimit = jest.fn((options) => {
-  const middlewareInstance = jest.fn((req: Request, res: Response, next: NextFunction) => next()) as any
+const mockRateLimit = jest.fn((options: RateLimitOptions) => {
+  const middlewareInstance = jest.fn((req: Request, res: Response, next: NextFunction) =>
+    next(),
+  ) as MockRateLimitInstance
   middlewareInstance._options = options
   middlewareInstance.resetKey = jest.fn()
   return middlewareInstance
-})
+}) as unknown as (options: RateLimitOptions) => MockRateLimitInstance // Cast the mock function itself
 
 jest.mock("express-rate-limit", () => ({
   __esModule: true,
@@ -101,7 +131,7 @@ describe("intelligentRateLimiter", () => {
   let mockRequest: Partial<Request>
   let mockResponse: Partial<Response>
   let mockNext: NextFunction
-  let originalSend: any
+  let originalSend: jest.Mock
 
   // Helper to create a default MockMerchant
   const defaultMockMerchant: MockMerchant = {
@@ -127,9 +157,9 @@ describe("intelligentRateLimiter", () => {
   const createMockRateLimitConfig = (
     rpm: number,
     merchantId = defaultMockMerchant.id,
-    businessType = "standard",
+    businessType: "standard" | "premium" | "enterprise" = "standard",
     isActive = true,
-    merchant: MockMerchant = { ...defaultMockMerchant, id: merchantId, business_type: businessType as any },
+    merchant: MockMerchant = { ...defaultMockMerchant, id: merchantId, business_type: businessType },
   ): MockRateLimitConfig => ({
     id: `config-${merchantId}-${businessType}`,
     merchantId: merchantId,
@@ -139,7 +169,7 @@ describe("intelligentRateLimiter", () => {
     requestsPerDay: rpm * 60 * 24,
     burstMultiplier: 2,
     burstDurationSeconds: 30,
-    businessType: businessType as "standard" | "premium" | "enterprise",
+    businessType: businessType,
     isActive: isActive,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -157,17 +187,14 @@ describe("intelligentRateLimiter", () => {
     }
     mockResponse = {
       statusCode: 200,
-      setHeader: jest.fn() as any,
-      send: jest.fn() as any,
-      json: jest.fn() as any,
-      // CRITICAL FIX: Explicitly cast to any to resolve TS2322
-      status: jest.fn().mockReturnThis() as any,
+      setHeader: jest.fn(),
+      send: jest.fn(),
+      json: jest.fn(),
+      status: jest.fn().mockReturnThis(),
     }
     mockNext = jest.fn()
-
     originalSend = jest.fn()
-    ;(mockResponse as any).send = originalSend
-
+    ;(mockResponse as Response).send = originalSend
     jest.clearAllMocks()
 
     // Default mock implementations using typed mocks and full config objects
@@ -180,45 +207,46 @@ describe("intelligentRateLimiter", () => {
   })
 
   // CRITICAL FIX: Simulate req.rateLimit being set by the express-rate-limit middleware
-  const simulateRateLimitExceeded = async (limiter: any, req: Request, res: Response) => {
-    const handler = (limiter as any)._options.handler
-    const options = (limiter as any)._options
-
+  const simulateRateLimitExceeded = async (limiter: MockRateLimitInstance, req: Request, res: Response) => {
+    const handler = limiter._options.handler
+    const options = limiter._options
     // Manually set req.rateLimit to simulate the state when limit is exceeded
-    ;(req as any).rateLimit = {
-      limit: options.max, // The configured max limit
-      current: options.max + 1, // Simulate current count exceeding the limit
+    req.rateLimit = {
+      limit: options.max as number, // The configured max limit
+      current: (options.max as number) + 1, // Simulate current count exceeding the limit
       remaining: -1, // No requests remaining
       resetTime: new Date(Date.now() + options.windowMs), // Reset time in the future
-      total: options.max + 1, // Total requests made
+      total: (options.max as number) + 1, // Total requests made
     }
-
     // Call the handler with the correct arguments
     await handler(req, res, mockNext, options)
   }
 
   it("should apply default unauthenticated limit if no user/merchant context", async () => {
-    const maxFn = (intelligentRateLimiter as any)._options.max
-    const limit = await maxFn(mockRequest)
+    const limiter = intelligentRateLimiter as MockRateLimitInstance
+    const maxFn = limiter._options.max as (req: Request, res: Response) => Promise<number>
+    const limit = await maxFn(mockRequest as Request, mockResponse as Response)
     expect(limit).toBe(30)
   })
 
   it("should apply default authenticated limit if user but no specific config", async () => {
-    mockRequest.user = { id: 123, email: "user@example.com", role: UserRole.USER } as MockUser
-    const maxFn = (intelligentRateLimiter as any)._options.max
-    const limit = await maxFn(mockRequest)
+    mockRequest.user = { id: 123, email: "user@example.com", role: UserRole.USER }
+    const limiter = intelligentRateLimiter as MockRateLimitInstance
+    const maxFn = limiter._options.max as (req: Request, res: Response) => Promise<number>
+    const limit = await maxFn(mockRequest as Request, mockResponse as Response)
     expect(limit).toBe(100)
   })
 
   it("should apply admin limit if user is ADMIN", async () => {
-    mockRequest.user = { id: 456, email: "admin@example.com", role: UserRole.ADMIN } as MockUser
-    const maxFn = (intelligentRateLimiter as any)._options.max
-    const limit = await maxFn(mockRequest)
+    mockRequest.user = { id: 456, email: "admin@example.com", role: UserRole.ADMIN }
+    const limiter = intelligentRateLimiter as MockRateLimitInstance
+    const maxFn = limiter._options.max as (req: Request, res: Response) => Promise<number>
+    const limit = await maxFn(mockRequest as Request, mockResponse as Response)
     expect(limit).toBe(200)
   })
 
   it("should apply dynamic limit based on user/merchant config", async () => {
-    mockRequest.user = { id: 789, email: "user@example.com", role: UserRole.USER } as MockUser
+    mockRequest.user = { id: 789, email: "user@example.com", role: UserRole.USER }
     const mockMerchant: MockMerchant = {
       ...defaultMockMerchant,
       id: "merchantABC",
@@ -231,28 +259,28 @@ describe("intelligentRateLimiter", () => {
     mockedRateLimitConfigService.getConfigForUser.mockResolvedValueOnce(
       createMockRateLimitConfig(120, mockMerchant.id, mockMerchant.business_type, true, mockMerchant),
     )
-
-    const maxFn = (intelligentRateLimiter as any)._options.max
-    const limit = await maxFn(mockRequest)
+    const limiter = intelligentRateLimiter as MockRateLimitInstance
+    const maxFn = limiter._options.max as (req: Request, res: Response) => Promise<number>
+    const limit = await maxFn(mockRequest as Request, mockResponse as Response)
     expect(limit).toBe(120)
     expect(mockedRateLimitConfigService.getConfigForUser).toHaveBeenCalledWith("789", "merchantABC", UserRole.USER)
   })
 
   it("should return 0 (unlimited) if IP is whitelisted", async () => {
     mockedWhitelistBlacklistService.isWhitelisted.mockResolvedValueOnce(true)
-    const maxFn = (intelligentRateLimiter as any)._options.max
-    const limit = await maxFn(mockRequest)
+    const limiter = intelligentRateLimiter as MockRateLimitInstance
+    const maxFn = limiter._options.max as (req: Request, res: Response) => Promise<number>
+    const limit = await maxFn(mockRequest as Request, mockResponse as Response)
     expect(limit).toBe(0)
-    // Fixed the parameter case - should be "ip", not "IP"
     expect(mockedWhitelistBlacklistService.isWhitelisted).toHaveBeenCalledWith("ip", "127.0.0.1")
   })
 
   it("should return 0 (block) if IP is blacklisted", async () => {
     mockedWhitelistBlacklistService.isBlacklisted.mockResolvedValueOnce(true)
-    const maxFn = (intelligentRateLimiter as any)._options.max
-    const limit = await maxFn(mockRequest)
+    const limiter = intelligentRateLimiter as MockRateLimitInstance
+    const maxFn = limiter._options.max as (req: Request, res: Response) => Promise<number>
+    const limit = await maxFn(mockRequest as Request, mockResponse as Response)
     expect(limit).toBe(0)
-    // Fixed the parameter case - should be "ip", not "IP"
     expect(mockedWhitelistBlacklistService.isBlacklisted).toHaveBeenCalledWith("ip", "127.0.0.1")
   })
 
@@ -264,7 +292,6 @@ describe("intelligentRateLimiter", () => {
       path: "/api-docs", // Set specific path for this test
       user: { id: 101, email: "burst@example.com", role: UserRole.USER },
     } as Request
-
     const mockMerchant: MockMerchant = {
       ...defaultMockMerchant,
       id: "merchantXYZ",
@@ -274,16 +301,16 @@ describe("intelligentRateLimiter", () => {
       business_type: "premium",
     }
     testRequest.merchant = mockMerchant // Assign merchant to the new testRequest
-
     const mockConfig = createMockRateLimitConfig(60, mockMerchant.id, mockMerchant.business_type, true, mockMerchant)
     mockedRateLimitConfigService.getConfigForUser.mockResolvedValue(mockConfig) // Use mockResolvedValue for consistency
 
+    const limiter = intelligentRateLimiter as MockRateLimitInstance
+    const maxFn = limiter._options.max as (req: Request, res: Response) => Promise<number>
     // First, call the max function to set up the config
-    const maxFn = (intelligentRateLimiter as any)._options.max
-    await maxFn(testRequest) // Use testRequest here
+    await maxFn(testRequest, mockResponse as Response) // Use testRequest here
 
     // Now simulate rate limit exceeded
-    await simulateRateLimitExceeded(intelligentRateLimiter, testRequest, mockResponse as Response) // Use testRequest here
+    await simulateRateLimitExceeded(limiter, testRequest, mockResponse as Response) // Use testRequest here
 
     // Check if burst mode was activated
     expect(mockedRedisClient.set).toHaveBeenCalledWith("burst:101:/api-docs", "1", { EX: 30 })
@@ -301,7 +328,7 @@ describe("intelligentRateLimiter", () => {
 
     // Test that burst limit is returned when burst mode is active
     mockedRedisClient.get.mockResolvedValue("1") // Simulate burst active
-    const burstLimit = await maxFn(testRequest) // Use testRequest here
+    const burstLimit = await maxFn(testRequest, mockResponse as Response) // Use testRequest here
     expect(burstLimit).toBe(120) // 60 * 2 (burstMultiplier)
   })
 
@@ -314,7 +341,6 @@ describe("intelligentRateLimiter", () => {
       user: { id: 202, email: "test@example.com", role: UserRole.USER },
       headers: { "user-agent": "jest-test" },
     } as Request
-
     const mockMerchant: MockMerchant = {
       ...defaultMockMerchant,
       id: "merchantABC",
@@ -329,19 +355,20 @@ describe("intelligentRateLimiter", () => {
     const mockConfig = createMockRateLimitConfig(60, mockMerchant.id, mockMerchant.business_type, true, mockMerchant)
     mockedRateLimitConfigService.getConfigForUser.mockResolvedValue(mockConfig) // Use mockResolvedValue for consistency
 
+    const limiter = intelligentRateLimiter as MockRateLimitInstance
+    const maxFn = limiter._options.max as (req: Request, res: Response) => Promise<number>
     // First call the max function to ensure config is loaded
-    const maxFn = (intelligentRateLimiter as any)._options.max
-    await maxFn(testRequest) // Use testRequest here
+    await maxFn(testRequest, mockResponse as Response) // Use testRequest here
 
     // Now simulate rate limit exceeded
-    await simulateRateLimitExceeded(intelligentRateLimiter, testRequest, mockResponse as Response) // Use testRequest here
+    await simulateRateLimitExceeded(limiter, testRequest, mockResponse as Response) // Use testRequest here
 
     expect(mockedRateLimitMonitoringService.logAdvancedRateLimitEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         ip: "127.0.0.1",
         endpoint: "/api-docs",
         userAgent: "jest-test",
-        userId: "202",
+        userId: 202, // userId is number in RateLimitEvent
         email: "test@example.com",
         userRole: UserRole.USER,
         merchantId: "merchantABC",
@@ -353,16 +380,17 @@ describe("intelligentRateLimiter", () => {
   })
 
   it("should skip rate limiting for configured paths", async () => {
-    const skipFn = (intelligentRateLimiter as any)._options.skip
+    const limiter = intelligentRateLimiter as MockRateLimitInstance
+    const skipFn = limiter._options.skip
 
     // CRITICAL FIX: Create new request objects for each test case to avoid read-only property error
     const healthRequest = { ...mockRequest, path: "/health" } as Request
-    expect(skipFn(healthRequest)).toBe(true)
+    expect(skipFn(healthRequest, mockResponse as Response)).toBe(true)
 
     const apiDocsRequest = { ...mockRequest, path: "/api-docs/swagger" } as Request
-    expect(skipFn(apiDocsRequest)).toBe(true)
+    expect(skipFn(apiDocsRequest, mockResponse as Response)).toBe(true)
 
     const otherRequest = { ...mockRequest, path: "/api/some-other-path" } as Request
-    expect(skipFn(otherRequest)).toBe(false)
+    expect(skipFn(otherRequest, mockResponse as Response)).toBe(false)
   })
 })

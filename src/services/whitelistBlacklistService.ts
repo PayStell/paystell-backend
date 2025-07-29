@@ -1,16 +1,26 @@
-import { Repository } from "typeorm";
-import AppDataSource from "../config/db";
-import { RateLimitWhitelist, WhitelistType } from "../entities/RateLimitWhiteList";
-import { RateLimitBlacklist, BlacklistType, BlacklistReason } from "../entities/RateLimitBlacklist";
-import logger from "../utils/logger";
+import type { Repository } from "typeorm"
+import AppDataSource from "../config/db"
+import { RateLimitWhitelist, type WhitelistType } from "../entities/RateLimitWhiteList"
+import { RateLimitBlacklist, type BlacklistType, BlacklistReason } from "../entities/RateLimitBlacklist"
+import logger from "../utils/logger"
+
+interface WhitelistQuery {
+  isActive: boolean
+  type?: WhitelistType
+}
+
+interface BlacklistQuery {
+  isActive: boolean
+  type?: BlacklistType
+}
 
 export class WhitelistBlacklistService {
-  private whitelistRepository: Repository<RateLimitWhitelist>;
-  private blacklistRepository: Repository<RateLimitBlacklist>;
+  private whitelistRepository: Repository<RateLimitWhitelist>
+  private blacklistRepository: Repository<RateLimitBlacklist>
 
   constructor() {
-    this.whitelistRepository = AppDataSource.getRepository(RateLimitWhitelist);
-    this.blacklistRepository = AppDataSource.getRepository(RateLimitBlacklist);
+    this.whitelistRepository = AppDataSource.getRepository(RateLimitWhitelist)
+    this.blacklistRepository = AppDataSource.getRepository(RateLimitBlacklist)
   }
 
   async addToWhitelist(
@@ -18,19 +28,19 @@ export class WhitelistBlacklistService {
     value: string,
     reason?: string,
     addedBy?: string,
-    expiresAt?: Date
+    expiresAt?: Date,
   ): Promise<RateLimitWhitelist> {
     try {
       const existing = await this.whitelistRepository.findOne({
         where: { type, value },
-      });
+      })
 
       if (existing) {
-        existing.isActive = true;
-        existing.reason = reason || existing.reason;
-        existing.addedBy = addedBy || existing.addedBy;
-        existing.expiresAt = expiresAt || existing.expiresAt;
-        return await this.whitelistRepository.save(existing);
+        existing.isActive = true
+        existing.reason = reason || existing.reason
+        existing.addedBy = addedBy || existing.addedBy
+        existing.expiresAt = expiresAt || existing.expiresAt
+        return await this.whitelistRepository.save(existing)
       }
 
       const whitelist = this.whitelistRepository.create({
@@ -39,12 +49,11 @@ export class WhitelistBlacklistService {
         reason,
         addedBy,
         expiresAt,
-      });
-
-      return await this.whitelistRepository.save(whitelist);
+      })
+      return await this.whitelistRepository.save(whitelist)
     } catch (error) {
-      logger.error(`Error adding to whitelist: ${error}`);
-      throw error;
+      logger.error(`Error adding to whitelist: ${error}`)
+      throw error
     }
   }
 
@@ -52,46 +61,46 @@ export class WhitelistBlacklistService {
     try {
       const whitelist = await this.whitelistRepository.findOne({
         where: { id },
-      });
+      })
 
       if (!whitelist) {
-        throw new Error("Whitelist entry not found");
+        throw new Error("Whitelist entry not found")
       }
 
-      whitelist.isActive = false;
-      await this.whitelistRepository.save(whitelist);
+      whitelist.isActive = false
+      await this.whitelistRepository.save(whitelist)
     } catch (error) {
-      logger.error(`Error removing from whitelist: ${error}`);
-      throw error;
+      logger.error(`Error removing from whitelist: ${error}`)
+      throw error
     }
   }
 
   async isWhitelisted(type: WhitelistType, value: string): Promise<boolean> {
     try {
-      const now = new Date();
+      const now = new Date()
       const whitelist = await this.whitelistRepository.findOne({
         where: {
           type,
           value,
           isActive: true,
         },
-      });
+      })
 
       if (!whitelist) {
-        return false;
+        return false
       }
 
       // Check if whitelist entry has expired
       if (whitelist.expiresAt && whitelist.expiresAt < now) {
-        whitelist.isActive = false;
-        await this.whitelistRepository.save(whitelist);
-        return false;
+        whitelist.isActive = false
+        await this.whitelistRepository.save(whitelist)
+        return false
       }
 
-      return true;
+      return true
     } catch (error) {
-      logger.error(`Error checking whitelist: ${error}`);
-      return false;
+      logger.error(`Error checking whitelist: ${error}`)
+      return false
     }
   }
 
@@ -102,22 +111,22 @@ export class WhitelistBlacklistService {
     reason: BlacklistReason = BlacklistReason.MANUAL,
     details?: string,
     addedBy?: string,
-    expiresAt?: Date
+    expiresAt?: Date,
   ): Promise<RateLimitBlacklist> {
     try {
       // Check if already exists
       const existing = await this.blacklistRepository.findOne({
         where: { type, value },
-      });
+      })
 
       if (existing) {
         // Update existing entry
-        existing.isActive = true;
-        existing.reason = reason;
-        existing.details = details || existing.details;
-        existing.addedBy = addedBy || existing.addedBy;
-        existing.expiresAt = expiresAt || existing.expiresAt;
-        return await this.blacklistRepository.save(existing);
+        existing.isActive = true
+        existing.reason = reason
+        existing.details = details || existing.details
+        existing.addedBy = addedBy || existing.addedBy
+        existing.expiresAt = expiresAt || existing.expiresAt
+        return await this.blacklistRepository.save(existing)
       }
 
       // Create new entry
@@ -128,12 +137,11 @@ export class WhitelistBlacklistService {
         details,
         addedBy,
         expiresAt,
-      });
-
-      return await this.blacklistRepository.save(blacklist);
+      })
+      return await this.blacklistRepository.save(blacklist)
     } catch (error) {
-      logger.error(`Error adding to blacklist: ${error}`);
-      throw error;
+      logger.error(`Error adding to blacklist: ${error}`)
+      throw error
     }
   }
 
@@ -141,82 +149,80 @@ export class WhitelistBlacklistService {
     try {
       const blacklist = await this.blacklistRepository.findOne({
         where: { id },
-      });
+      })
 
       if (!blacklist) {
-        throw new Error("Blacklist entry not found");
+        throw new Error("Blacklist entry not found")
       }
 
-      blacklist.isActive = false;
-      await this.blacklistRepository.save(blacklist);
+      blacklist.isActive = false
+      await this.blacklistRepository.save(blacklist)
     } catch (error) {
-      logger.error(`Error removing from blacklist: ${error}`);
-      throw error;
+      logger.error(`Error removing from blacklist: ${error}`)
+      throw error
     }
   }
 
   async isBlacklisted(type: BlacklistType, value: string): Promise<boolean> {
     try {
-      const now = new Date();
+      const now = new Date()
       const blacklist = await this.blacklistRepository.findOne({
         where: {
           type,
           value,
           isActive: true,
         },
-      });
+      })
 
       if (!blacklist) {
-        return false;
+        return false
       }
 
       // Check if blacklist entry has expired
       if (blacklist.expiresAt && blacklist.expiresAt < now) {
-        blacklist.isActive = false;
-        await this.blacklistRepository.save(blacklist);
-        return false;
+        blacklist.isActive = false
+        await this.blacklistRepository.save(blacklist)
+        return false
       }
 
-      return true;
+      return true
     } catch (error) {
-      logger.error(`Error checking blacklist: ${error}`);
-      return false;
+      logger.error(`Error checking blacklist: ${error}`)
+      return false
     }
   }
 
   async getWhitelistedEntries(type?: WhitelistType): Promise<RateLimitWhitelist[]> {
     try {
-      const query: any = { isActive: true };
+      const query: WhitelistQuery = { isActive: true }
       if (type) {
-        query.type = type;
+        query.type = type
       }
-
       return await this.whitelistRepository.find({
         where: query,
         order: { createdAt: "DESC" },
-      });
+      })
     } catch (error) {
-      logger.error(`Error getting whitelist entries: ${error}`);
-      throw error;
+      logger.error(`Error getting whitelist entries: ${error}`)
+      throw error
     }
   }
 
   async getBlacklistedEntries(type?: BlacklistType): Promise<RateLimitBlacklist[]> {
     try {
-      const query: any = { isActive: true };
+      const query: BlacklistQuery = { isActive: true }
       if (type) {
-        query.type = type;
+        query.type = type
       }
-
       return await this.blacklistRepository.find({
         where: query,
         order: { createdAt: "DESC" },
-      });
+      })
     } catch (error) {
-      logger.error(`Error getting blacklist entries: ${error}`);
-      throw error;
+      logger.error(`Error getting blacklist entries: ${error}`)
+      throw error
     }
   }
 }
 
-export default new WhitelistBlacklistService();
+export default new WhitelistBlacklistService()
