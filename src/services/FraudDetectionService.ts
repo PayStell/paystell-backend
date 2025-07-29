@@ -18,6 +18,7 @@ import {
 import whitelistBlacklistService from "./whitelistBlacklistService";
 import { BlacklistType, BlacklistReason } from "../entities/RateLimitBlacklist";
 import { RateLimitHistory } from "../entities/RateLimitHistory";
+import { RateLimitFraudStats, SuspiciousActivity, SuspiciousIPResult, SuspiciousUser, SuspiciousUserResult } from "src/interfaces/fruadDetection.interface";
 
 export class FraudDetectionService {
   private transactionRepo: Repository<Transaction>;
@@ -622,87 +623,87 @@ export class FraudDetectionService {
   }
 
   // New method to get rate limiting fraud statistics
-  async getRateLimitFraudStats(merchantId?: string, days: number = 30): Promise<any> {
-    try {
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
+ async getRateLimitFraudStats(merchantId?: string, days: number = 30): Promise<RateLimitFraudStats> {
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
 
-      const rateLimitHistoryRepo = AppDataSource.getRepository(RateLimitHistory);
+    const rateLimitHistoryRepo = AppDataSource.getRepository(RateLimitHistory);
 
-      const baseQuery = rateLimitHistoryRepo
-        .createQueryBuilder("history")
-        .where("history.timestamp >= :startDate", { startDate });
+    const baseQuery = rateLimitHistoryRepo
+      .createQueryBuilder("history")
+      .where("history.timestamp >= :startDate", { startDate });
 
-      if (merchantId) {
-        baseQuery.andWhere("history.merchantId = :merchantId", { merchantId });
-      }
-
-      // Get all rate limit events
-      const allEvents = await baseQuery.getMany();
-
-      // Get throttled events
-      const throttledEvents = allEvents.filter(e => e.wasThrottled);
-
-      // Get burst events
-      const burstEvents = allEvents.filter(e => e.wasBurst);
-
-      // Calculate fraud indicators
-      const suspiciousIPs = await rateLimitHistoryRepo
-        .createQueryBuilder("history")
-        .select("history.ip", "ip")
-        .addSelect("COUNT(*)", "count")
-        .where("history.timestamp >= :startDate", { startDate })
-        .andWhere("history.wasThrottled = :wasThrottled", { wasThrottled: true })
-        .groupBy("history.ip")
-        .having("COUNT(*) > :threshold", { threshold: 10 })
-        .getRawMany();
-
-      const suspiciousUsers = await rateLimitHistoryRepo
-        .createQueryBuilder("history")
-        .select("history.userId", "userId")
-        .addSelect("COUNT(*)", "count")
-        .where("history.timestamp >= :startDate", { startDate })
-        .andWhere("history.wasThrottled = :wasThrottled", { wasThrottled: true })
-        .andWhere("history.userId IS NOT NULL")
-        .groupBy("history.userId")
-        .having("COUNT(*) > :threshold", { threshold: 15 })
-        .getRawMany();
-
-      return {
-        period: {
-          startDate,
-          endDate: new Date(),
-          days
-        },
-        totalEvents: allEvents.length,
-        throttledEvents: throttledEvents.length,
-        burstEvents: burstEvents.length,
-        throttleRate: allEvents.length > 0 ? (throttledEvents.length / allEvents.length) * 100 : 0,
-        burstRate: allEvents.length > 0 ? (burstEvents.length / allEvents.length) * 100 : 0,
-        suspiciousActivity: {
-          suspiciousIPs: suspiciousIPs.map(ip => ({
-            ip: ip.ip,
-            throttledCount: parseInt(ip.count, 10)
-          })),
-          suspiciousUsers: suspiciousUsers.map(user => ({
-            userId: user.userId,
-            throttledCount: parseInt(user.count, 10)
-          })),
-        },
-        riskIndicators: {
-          highRiskIPs: suspiciousIPs.length,
-          highRiskUsers: suspiciousUsers.length,
-          averageThrottlePerIP: suspiciousIPs.length > 0 
-            ? suspiciousIPs.reduce((sum, ip) => sum + parseInt(ip.count, 10), 0) / suspiciousIPs.length 
-            : 0,
-          averageThrottlePerUser: suspiciousUsers.length > 0 
-            ? suspiciousUsers.reduce((sum, user) => sum + parseInt(user.count, 10), 0) / suspiciousUsers.length 
-            : 0,
-        }
-      };
-    } catch (error) {
-      console.error(`Error getting rate limit fraud stats: ${error}`);
-      throw error;
+    if (merchantId) {
+      baseQuery.andWhere("history.merchantId = :merchantId", { merchantId });
     }
+
+    // Get all rate limit events
+    const allEvents = await baseQuery.getMany();
+
+    // Get throttled events
+    const throttledEvents = allEvents.filter(e => e.wasThrottled);
+
+    // Get burst events
+    const burstEvents = allEvents.filter(e => e.wasBurst);
+
+    // Calculate fraud indicators
+    const suspiciousIPs = await rateLimitHistoryRepo
+      .createQueryBuilder("history")
+      .select("history.ip", "ip")
+      .addSelect("COUNT(*)", "count")
+      .where("history.timestamp >= :startDate", { startDate })
+      .andWhere("history.wasThrottled = :wasThrottled", { wasThrottled: true })
+      .groupBy("history.ip")
+      .having("COUNT(*) > :threshold", { threshold: 10 })
+      .getRawMany<SuspiciousIPResult>();
+
+    const suspiciousUsers = await rateLimitHistoryRepo
+      .createQueryBuilder("history")
+      .select("history.userId", "userId")
+      .addSelect("COUNT(*)", "count")
+      .where("history.timestamp >= :startDate", { startDate })
+      .andWhere("history.wasThrottled = :wasThrottled", { wasThrottled: true })
+      .andWhere("history.userId IS NOT NULL")
+      .groupBy("history.userId")
+      .having("COUNT(*) > :threshold", { threshold: 15 })
+      .getRawMany<SuspiciousUserResult>();
+
+    return {
+      period: {
+        startDate,
+        endDate: new Date(),
+        days
+      },
+      totalEvents: allEvents.length,
+      throttledEvents: throttledEvents.length,
+      burstEvents: burstEvents.length,
+      throttleRate: allEvents.length > 0 ? (throttledEvents.length / allEvents.length) * 100 : 0,
+      burstRate: allEvents.length > 0 ? (burstEvents.length / allEvents.length) * 100 : 0,
+      suspiciousActivity: {
+        suspiciousIPs: suspiciousIPs.map((ip): SuspiciousActivity => ({
+          ip: ip.ip,
+          throttledCount: parseInt(ip.count, 10)
+        })),
+        suspiciousUsers: suspiciousUsers.map((user): SuspiciousUser => ({
+          userId: user.userId,
+          throttledCount: parseInt(user.count, 10)
+        })),
+      },
+      riskIndicators: {
+        highRiskIPs: suspiciousIPs.length,
+        highRiskUsers: suspiciousUsers.length,
+        averageThrottlePerIP: suspiciousIPs.length > 0 
+          ? suspiciousIPs.reduce((sum, ip) => sum + parseInt(ip.count, 10), 0) / suspiciousIPs.length 
+          : 0,
+        averageThrottlePerUser: suspiciousUsers.length > 0 
+          ? suspiciousUsers.reduce((sum, user) => sum + parseInt(user.count, 10), 0) / suspiciousUsers.length 
+          : 0,
+      }
+    };
+  } catch (error) {
+    console.error(`Error getting rate limit fraud stats: ${error}`);
+    throw error;
   }
+}
 }

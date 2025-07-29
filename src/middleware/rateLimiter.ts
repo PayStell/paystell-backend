@@ -7,6 +7,9 @@ import { BlacklistType } from "../entities/RateLimitBlacklist";
 import RateLimitMonitoringService from "../services/rateLimitMonitoring.service";
 import { redisClient } from "../config/redisConfig";
 import logger from "../utils/logger";
+import { Merchant } from "../interfaces/webhook.interfaces";
+
+
 
 export const paymentLinkLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -21,28 +24,28 @@ export const paymentLinkLimiter = rateLimit({
 
 export const intelligentRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute window
-  
+
   // Dynamic limit based on user context
   max: async (req: Request) => {
     try {
       // Get IP address
       const ip = req.ip || req.socket.remoteAddress || "0.0.0.0";
-      
+
       // Check blacklist first - completely block blacklisted entities
       if (await whitelistBlacklistService.isBlacklisted(BlacklistType.IP, ip)) {
         return 0; // Block completely
       }
 
       if (req.user?.id && await whitelistBlacklistService.isBlacklisted(BlacklistType.USER, req.user.id.toString())) {
-        return 0; 
+        return 0;
       }
 
       if (req.merchant?.id && await whitelistBlacklistService.isBlacklisted(BlacklistType.MERCHANT, req.merchant.id)) {
-        return 0; 
+        return 0;
       }
 
       if (await whitelistBlacklistService.isWhitelisted(WhitelistType.IP, ip)) {
-        return 0; 
+        return 0;
       }
 
       if (req.user?.id && await whitelistBlacklistService.isWhitelisted(WhitelistType.USER, req.user.id.toString())) {
@@ -50,7 +53,7 @@ export const intelligentRateLimiter = rateLimit({
       }
 
       if (req.merchant?.id && await whitelistBlacklistService.isWhitelisted(WhitelistType.MERCHANT, req.merchant.id)) {
-        return 0; 
+        return 0;
       }
 
       // Get dynamic limit based on user context
@@ -88,7 +91,7 @@ export const intelligentRateLimiter = rateLimit({
       return 30;
     } catch (error) {
       logger.error(`Error determining rate limit: ${error}`);
-      return 60; 
+      return 60;
     }
   },
 
@@ -97,7 +100,7 @@ export const intelligentRateLimiter = rateLimit({
     if (req.user?.id) {
       return `user:${req.user.id}:${req.originalUrl}`;
     }
-    
+
     const ip = req.ip || req.socket.remoteAddress || "unknown";
     return `ip:${ip}:${req.originalUrl}`;
   },
@@ -107,7 +110,7 @@ export const intelligentRateLimiter = rateLimit({
     const limit = res.getHeader('X-RateLimit-Limit');
     const remaining = res.getHeader('X-RateLimit-Remaining');
     const resetTime = res.getHeader('X-RateLimit-Reset');
-    
+
     return {
       status: "error",
       message: "Too many requests, please try again later",
@@ -127,7 +130,7 @@ export const intelligentRateLimiter = rateLimit({
   handler: async (req: Request, res: Response) => {
     try {
       const ip = req.ip || req.socket.remoteAddress || "0.0.0.0";
-      
+
       // Log the rate limit event using your existing service
       await RateLimitMonitoringService.logAdvancedRateLimitEvent({
         ip,
@@ -148,7 +151,7 @@ export const intelligentRateLimiter = rateLimit({
       if (req.user?.id) {
         const burstKey = `burst:${req.user.id}:${req.originalUrl}`;
         const burstActive = await redisClient.get(burstKey);
-        
+
         if (!burstActive) {
           // Get user's config to determine burst settings
           try {
@@ -157,14 +160,14 @@ export const intelligentRateLimiter = rateLimit({
               req.merchant?.id || "default",
               req.user.role || "USER"
             );
-            
+
             // Activate burst mode
             await redisClient.set(burstKey, "1", { EX: config.burstDurationSeconds });
-            
+
             // Set burst header
             res.setHeader("X-RateLimit-Burst", "activated");
             res.setHeader("X-RateLimit-Burst-Duration", config.burstDurationSeconds.toString());
-            
+
             logger.info(`Burst mode activated for user ${req.user.id} on ${req.originalUrl} for ${config.burstDurationSeconds}s`);
           } catch (error) {
             logger.error(`Error activating burst mode: ${error}`);
@@ -197,7 +200,7 @@ export const intelligentRateLimiter = rateLimit({
       });
     } catch (error) {
       logger.error(`Error in rate limit handler: ${error}`);
-      
+
       // Fallback response
       res.status(429).json({
         status: "error",
@@ -216,13 +219,13 @@ export const intelligentRateLimiter = rateLimit({
 });
 
 // Helper function to determine merchant type
-function determineMerchantType(merchant: any): string {
+function determineMerchantType(merchant: Merchant | undefined): string {
   if (!merchant) return "standard";
-  
+
   if (merchant.business_name && merchant.business_name.toLowerCase().includes("enterprise")) {
     return "enterprise";
   }
-  
+
   if (merchant.business_name && merchant.business_name.toLowerCase().includes("premium")) {
     return "premium";
   }

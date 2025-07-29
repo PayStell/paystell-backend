@@ -16,8 +16,8 @@ export class MerchantController {
       const { name, email } = req.body;
 
       // Generate API key for the merchant
-      const apiKey = crypto.randomBytes(32).toString("hex");
-      const secret = crypto.randomBytes(32).toString("hex");
+      // const apiKey = crypto.randomBytes(32).toString("hex");
+      // const secret = crypto.randomBytes(32).toString("hex");
 
       // Create merchant data
       const merchantData: CreateMerchantDTO = {
