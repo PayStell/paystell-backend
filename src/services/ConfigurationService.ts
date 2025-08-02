@@ -108,11 +108,11 @@ export class ConfigurationService {
       isEncrypted: config.isEncrypted,
       isRequired: config.isRequired,
       description: config.description,
-      validationRules: config.validationRules ? this.safeJsonParse(config.validationRules) : undefined,
+      validationRules: config.validationRules ? this.safeJsonParse<Record<string, unknown>>(config.validationRules) as Record<string, unknown> : undefined,
       defaultValue: config.defaultValue,
-      allowedValues: config.allowedValues ? this.safeJsonParse(config.allowedValues, []) : [],
+      allowedValues: config.allowedValues ? this.safeJsonParse<string[]>(config.allowedValues, []) as string[] : [],
       expiresAt: config.expiresAt,
-      metadata: config.metadata ? this.safeJsonParse(config.metadata) : undefined,
+      metadata: config.metadata ? this.safeJsonParse<Record<string, unknown>>(config.metadata) as Record<string, unknown> : undefined,
     };
 
     this.cache.set(key, configValue);
@@ -338,7 +338,7 @@ export class ConfigurationService {
 
     // Check targeting rules
     if (flag.targetingRules) {
-      const targetingMatch = this.evaluateTargetingRules(flag.targetingRules, context);
+      const targetingMatch = this.evaluateTargetingRules(flag.targetingRules, context, flagName);
       if (!targetingMatch) {
         return {
           isEnabled: false,
@@ -506,11 +506,11 @@ export class ConfigurationService {
         isEncrypted: config.isEncrypted,
         isRequired: config.isRequired,
         description: config.description,
-        validationRules: config.validationRules ? this.safeJsonParse(config.validationRules) : undefined,
+        validationRules: config.validationRules ? this.safeJsonParse<Record<string, unknown>>(config.validationRules) as Record<string, unknown> : undefined,
         defaultValue: config.defaultValue,
-        allowedValues: config.allowedValues ? this.safeJsonParse(config.allowedValues, []) : [],
+        allowedValues: config.allowedValues ? this.safeJsonParse<string[]>(config.allowedValues, []) as string[] : [],
         expiresAt: config.expiresAt,
-        metadata: config.metadata ? this.safeJsonParse(config.metadata) : undefined,
+        metadata: config.metadata ? this.safeJsonParse<Record<string, unknown>>(config.metadata) as Record<string, unknown> : undefined,
       });
     }
   }
@@ -539,7 +539,7 @@ export class ConfigurationService {
 
       // Validate against allowed values
       if (config.allowedValues) {
-        const allowedValues = this.safeJsonParse(config.allowedValues, []);
+        const allowedValues = this.safeJsonParse<string[]>(config.allowedValues, []) as string[];
         if (!allowedValues.includes(config.value)) {
           errors.push(`Configuration value not allowed: ${config.configKey} = ${config.value}`);
         }
@@ -560,7 +560,12 @@ export class ConfigurationService {
       case ConfigurationType.BOOLEAN:
         return value.toLowerCase() === "true";
       case ConfigurationType.JSON:
-        return JSON.parse(value);
+        try {
+          return JSON.parse(value);
+        } catch (error) {
+          logger.error(`Failed to parse JSON value for type JSON: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          return value; // Return raw value as fallback
+        }
       case ConfigurationType.ENCRYPTED:
         return this.decryptValue(value);
       default:
@@ -604,7 +609,8 @@ export class ConfigurationService {
       userId?: string;
       merchantId?: string;
       userRole?: string;
-    }
+    },
+    flagName?: string
   ): boolean {
     if (!context) return true;
 
@@ -638,8 +644,9 @@ export class ConfigurationService {
       }
       
       const userId = context.userId || "anonymous";
-      // Include a stable identifier to ensure consistent hashing
-      const hash = crypto.createHash("md5").update(`targeting:${userId}`).digest("hex");
+      // Use the same hash format as evaluateFeatureFlag for consistency
+      const hashInput = flagName ? `${flagName}:${userId}` : `targeting:${userId}`;
+      const hash = crypto.createHash("md5").update(hashInput).digest("hex");
       const hashValue = parseInt(hash.substring(0, 8), 16);
       const userPercentage = hashValue % 100;
       return userPercentage < targetingRules.percentage;
@@ -651,12 +658,12 @@ export class ConfigurationService {
   /**
    * Safely parse JSON with error handling
    */
-  private safeJsonParse(value: string, defaultValue: unknown = undefined): unknown {
+  private safeJsonParse<T = unknown>(value: string, defaultValue?: T): T | unknown {
     try {
       return JSON.parse(value);
     } catch (error) {
       logger.warn(`Failed to parse JSON: ${(error as Error).message}`);
-      return defaultValue;
+      return defaultValue !== undefined ? defaultValue : undefined;
     }
   }
 }
