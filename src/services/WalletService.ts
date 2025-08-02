@@ -22,7 +22,6 @@ interface WalletSettings {
   };
   [key: string]: unknown;
 }
-
 // Helper function to safely extract error message
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
@@ -84,44 +83,49 @@ export class WalletService {
     }
 
     try {
-      const balances = await this.stellarService.getAccountBalances(
-        wallet.publicKey,
-      );
+      const balances = await this.stellarService.getAccountBalances(wallet.publicKey);
+
       for (const balance of balances) {
         await this.balanceRepository.upsert(
           {
             walletId,
-            assetCode: balance.assetCode,
-            assetIssuer: balance.assetIssuer,
-            balance: balance.balance,
-            assetType: balance.assetType,
-            isAuthorized: balance.isAuthorized,
+            assetCode: typeof balance.assetCode === "string" ? balance.assetCode : undefined,
+            assetIssuer: typeof balance.assetIssuer === "string" ? balance.assetIssuer : undefined,
+            balance: typeof balance.balance === "string" ? balance.balance : "0",
+            assetType: typeof balance.assetType === "string" ? balance.assetType : undefined,
+            isAuthorized: typeof balance.isAuthorized === "boolean" ? balance.isAuthorized : undefined,
             isAuthorizedToMaintainLiabilities:
-              balance.isAuthorizedToMaintainLiabilities,
-            isClawbackEnabled: balance.isClawbackEnabled,
-            lastModifiedLedger: balance.lastModifiedLedger,
-            limit: balance.limit,
-            sponsor: balance.sponsor,
+              typeof balance.isAuthorizedToMaintainLiabilities === "boolean"
+                ? balance.isAuthorizedToMaintainLiabilities
+                : undefined,
+            isClawbackEnabled:
+              typeof balance.isClawbackEnabled === "boolean"
+                ? balance.isClawbackEnabled
+                : undefined,
+            lastModifiedLedger:
+              typeof balance.lastModifiedLedger === "number"
+                ? balance.lastModifiedLedger.toString()
+                : undefined,
+            limit: typeof balance.limit === "string" ? balance.limit : undefined,
+            sponsor: typeof balance.sponsor === "string" ? balance.sponsor : undefined,
           },
-          ["walletId", "assetCode", "assetIssuer"],
+          ["walletId", "assetCode", "assetIssuer"]
         );
       }
 
       return balances;
     } catch (error: unknown) {
-      console.warn(
-        `Failed to fetch live balances: ${getErrorMessage(error)}, using cached data`,
-      );
+      console.warn(`Failed to fetch live balances: ${getErrorMessage(error)}, using cached data`);
+
       const cachedBalances = await this.balanceRepository.find({
         where: { walletId },
       });
+
       return cachedBalances.map((b) => ({
         assetCode: b.assetCode,
         assetIssuer: b.assetIssuer,
         balance: b.balance,
-        assetType:
-          b.assetType ||
-          (b.assetCode === "XLM" ? "native" : "credit_alphanum4"),
+        assetType: b.assetType || (b.assetCode === "XLM" ? "native" : "credit_alphanum4"),
         isAuthorized: b.isAuthorized,
         isAuthorizedToMaintainLiabilities: b.isAuthorizedToMaintainLiabilities,
         isClawbackEnabled: b.isClawbackEnabled,
@@ -131,6 +135,7 @@ export class WalletService {
       }));
     }
   }
+
 
   async getTransactions(
     walletId: string,
@@ -350,7 +355,14 @@ export class WalletService {
           50,
         );
 
-      for (const stellarTx of stellarTransactions) {
+      for (const stellarTxUnknown of stellarTransactions) {
+        // Add a type assertion or guard here based on expected shape
+        const stellarTx = stellarTxUnknown as {
+          hash: string;
+          successful: boolean;
+          source_account: string;
+        };
+
         const existingTx = await this.transactionRepository.findOne({
           where: { hash: stellarTx.hash },
         });
