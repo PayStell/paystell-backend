@@ -83,17 +83,32 @@ export class WalletService {
     }
 
     try {
-      const balances = await this.stellarService.getAccountBalances(wallet.publicKey);
+      const balances = await this.stellarService.getAccountBalances(
+        wallet.publicKey,
+      );
 
       for (const balance of balances) {
         await this.balanceRepository.upsert(
           {
             walletId,
-            assetCode: typeof balance.assetCode === "string" ? balance.assetCode : undefined,
-            assetIssuer: typeof balance.assetIssuer === "string" ? balance.assetIssuer : undefined,
-            balance: typeof balance.balance === "string" ? balance.balance : "0",
-            assetType: typeof balance.assetType === "string" ? balance.assetType : undefined,
-            isAuthorized: typeof balance.isAuthorized === "boolean" ? balance.isAuthorized : undefined,
+            assetCode:
+              typeof balance.assetCode === "string"
+                ? balance.assetCode
+                : undefined,
+            assetIssuer:
+              typeof balance.assetIssuer === "string"
+                ? balance.assetIssuer
+                : undefined,
+            balance:
+              typeof balance.balance === "string" ? balance.balance : "0",
+            assetType:
+              typeof balance.assetType === "string"
+                ? balance.assetType
+                : undefined,
+            isAuthorized:
+              typeof balance.isAuthorized === "boolean"
+                ? balance.isAuthorized
+                : undefined,
             isAuthorizedToMaintainLiabilities:
               typeof balance.isAuthorizedToMaintainLiabilities === "boolean"
                 ? balance.isAuthorizedToMaintainLiabilities
@@ -106,16 +121,20 @@ export class WalletService {
               typeof balance.lastModifiedLedger === "number"
                 ? balance.lastModifiedLedger.toString()
                 : undefined,
-            limit: typeof balance.limit === "string" ? balance.limit : undefined,
-            sponsor: typeof balance.sponsor === "string" ? balance.sponsor : undefined,
+            limit:
+              typeof balance.limit === "string" ? balance.limit : undefined,
+            sponsor:
+              typeof balance.sponsor === "string" ? balance.sponsor : undefined,
           },
-          ["walletId", "assetCode", "assetIssuer"]
+          ["walletId", "assetCode", "assetIssuer"],
         );
       }
 
       return balances;
     } catch (error: unknown) {
-      console.warn(`Failed to fetch live balances: ${getErrorMessage(error)}, using cached data`);
+      console.warn(
+        `Failed to fetch live balances: ${getErrorMessage(error)}, using cached data`,
+      );
 
       const cachedBalances = await this.balanceRepository.find({
         where: { walletId },
@@ -125,7 +144,9 @@ export class WalletService {
         assetCode: b.assetCode,
         assetIssuer: b.assetIssuer,
         balance: b.balance,
-        assetType: b.assetType || (b.assetCode === "XLM" ? "native" : "credit_alphanum4"),
+        assetType:
+          b.assetType ||
+          (b.assetCode === "XLM" ? "native" : "credit_alphanum4"),
         isAuthorized: b.isAuthorized,
         isAuthorizedToMaintainLiabilities: b.isAuthorizedToMaintainLiabilities,
         isClawbackEnabled: b.isClawbackEnabled,
@@ -135,7 +156,6 @@ export class WalletService {
       }));
     }
   }
-
 
   async getTransactions(
     walletId: string,
