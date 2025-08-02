@@ -2,8 +2,8 @@ import request from "supertest";
 import app from "../../app";
 import AppDataSource from "../../config/db";
 import { configurationService } from "../../services/ConfigurationService";
-import { Configuration, ConfigurationType, ConfigurationCategory } from "../../entities/Configuration";
-import { FeatureFlag, FeatureFlagScope } from "../../entities/FeatureFlag";
+import { Configuration } from "../../entities/Configuration";
+import { FeatureFlag } from "../../entities/FeatureFlag";
 
 describe("Configuration System Integration Tests", () => {
   let authToken: string;
@@ -86,7 +86,7 @@ describe("Configuration System Integration Tests", () => {
 
       expect(getResponse.status).toBe(200);
       const encryptedConfig = getResponse.body.data.find(
-        (config: any) => config.key === "ENCRYPTED_CONFIG"
+        (config: { key: string; value: string }) => config.key === "ENCRYPTED_CONFIG"
       );
       expect(encryptedConfig.value).toBe("[ENCRYPTED]");
     });

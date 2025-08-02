@@ -2,20 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { configurationService } from "../services/ConfigurationService";
 import logger from "../utils/logger";
 
-declare global {
-  namespace Express {
-    interface Request {
-      config?: {
-        get: (key: string, defaultValue?: string) => Promise<string | number | boolean | Record<string, unknown> | null>;
-        isFeatureEnabled: (flagName: string, context?: {
-          userId?: string;
-          merchantId?: string;
-          userRole?: string;
-        }) => Promise<boolean>;
-      };
-    }
-  }
-}
+// Configuration middleware interfaces are now in src/types/express.d.ts
 
 /**
  * Middleware to inject configuration service into request object
@@ -166,7 +153,7 @@ export const configCacheMiddleware = async (
 ): Promise<void> => {
   try {
     // Create a request-specific cache
-    const requestCache = new Map<string, any>();
+    const requestCache = new Map<string, unknown>();
 
     // Extend the config object with caching
     if (req.config) {

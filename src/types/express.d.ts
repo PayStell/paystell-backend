@@ -1,7 +1,5 @@
-import { User } from "../entities/User";
 import { UserRole } from "../enums/UserRole";
 import { Merchant } from "../interfaces/webhook.interfaces";
-import { MerchantEntity } from "../entities/Merchant.entity";
 
 declare module "express-serve-static-core" {
   interface Request {

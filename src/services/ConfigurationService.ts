@@ -1,6 +1,5 @@
 import { Repository } from "typeorm";
-import { validate, ValidationError } from "class-validator";
-import { plainToClass } from "class-transformer";
+
 import crypto from "crypto";
 import AppDataSource from "../config/db";
 import { Configuration, Environment, ConfigurationType, ConfigurationCategory } from "../entities/Configuration";
@@ -652,7 +651,7 @@ export class ConfigurationService {
   /**
    * Safely parse JSON with error handling
    */
-  private safeJsonParse(value: string, defaultValue: any = undefined): any {
+  private safeJsonParse(value: string, defaultValue: unknown = undefined): unknown {
     try {
       return JSON.parse(value);
     } catch (error) {

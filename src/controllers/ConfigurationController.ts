@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { configurationService } from "../services/ConfigurationService";
-import { Configuration, ConfigurationCategory, ConfigurationType } from "../entities/Configuration";
-import { FeatureFlag, FeatureFlagScope } from "../entities/FeatureFlag";
+import { ConfigurationCategory, ConfigurationType } from "../entities/Configuration";
+import { FeatureFlagScope } from "../entities/FeatureFlag";
 import { AppError } from "../utils/AppError";
 import logger from "../utils/logger";
 import { validationResult } from "express-validator";

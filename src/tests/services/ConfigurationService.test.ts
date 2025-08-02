@@ -1,3 +1,4 @@
+import { Repository } from "typeorm";
 import { ConfigurationService } from "../../services/ConfigurationService";
 import { Configuration, ConfigurationType, ConfigurationCategory, Environment } from "../../entities/Configuration";
 import { FeatureFlag, FeatureFlagScope, FeatureFlagStatus } from "../../entities/FeatureFlag";
@@ -10,12 +11,12 @@ const mockAuditService = {
   createAuditLog: jest.fn().mockResolvedValue({}),
 };
 
-(AuditService as jest.MockedClass<typeof AuditService>).mockImplementation(() => mockAuditService as any);
+(AuditService as jest.MockedClass<typeof AuditService>).mockImplementation(() => mockAuditService as unknown as AuditService);
 
 describe("ConfigurationService", () => {
   let configurationService: ConfigurationService;
-  let mockConfigRepository: any;
-  let mockFeatureFlagRepository: any;
+  let mockConfigRepository: Partial<Repository<Configuration>>;
+  let mockFeatureFlagRepository: Partial<Repository<FeatureFlag>>;
 
   beforeEach(() => {
     // Reset mocks
@@ -45,7 +46,7 @@ describe("ConfigurationService", () => {
       if (entity === FeatureFlag) {
         return mockFeatureFlagRepository;
       }
-      return {} as any;
+      return {} as Partial<Repository<Configuration>>;
     });
 
     configurationService = new ConfigurationService();
@@ -96,7 +97,7 @@ describe("ConfigurationService", () => {
       mockConfigRepository.findOne.mockResolvedValue(mockConfig);
       
       // Mock the decryption method
-      jest.spyOn(configurationService as any, 'decryptValue').mockReturnValue('decrypted_value');
+      jest.spyOn(configurationService as unknown as { decryptValue: (value: string) => string }, 'decryptValue').mockReturnValue('decrypted_value');
 
       const result = await configurationService.getConfig("ENCRYPTED_CONFIG");
       expect(result).toBe("decrypted_value");
