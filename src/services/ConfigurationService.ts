@@ -109,11 +109,11 @@ export class ConfigurationService {
       isEncrypted: config.isEncrypted,
       isRequired: config.isRequired,
       description: config.description,
-      validationRules: config.validationRules ? JSON.parse(config.validationRules) : undefined,
+      validationRules: config.validationRules ? this.safeJsonParse(config.validationRules) : undefined,
       defaultValue: config.defaultValue,
-      allowedValues: config.allowedValues ? JSON.parse(config.allowedValues) : [],
+      allowedValues: config.allowedValues ? this.safeJsonParse(config.allowedValues, []) : [],
       expiresAt: config.expiresAt,
-      metadata: config.metadata ? JSON.parse(config.metadata) : undefined,
+      metadata: config.metadata ? this.safeJsonParse(config.metadata) : undefined,
     };
 
     this.cache.set(key, configValue);
@@ -507,11 +507,11 @@ export class ConfigurationService {
         isEncrypted: config.isEncrypted,
         isRequired: config.isRequired,
         description: config.description,
-        validationRules: config.validationRules ? JSON.parse(config.validationRules) : undefined,
+        validationRules: config.validationRules ? this.safeJsonParse(config.validationRules) : undefined,
         defaultValue: config.defaultValue,
-        allowedValues: config.allowedValues ? JSON.parse(config.allowedValues) : [],
+        allowedValues: config.allowedValues ? this.safeJsonParse(config.allowedValues, []) : [],
         expiresAt: config.expiresAt,
-        metadata: config.metadata ? JSON.parse(config.metadata) : undefined,
+        metadata: config.metadata ? this.safeJsonParse(config.metadata) : undefined,
       });
     }
   }
@@ -540,7 +540,7 @@ export class ConfigurationService {
 
       // Validate against allowed values
       if (config.allowedValues) {
-        const allowedValues = JSON.parse(config.allowedValues);
+        const allowedValues = this.safeJsonParse(config.allowedValues, []);
         if (!allowedValues.includes(config.value)) {
           errors.push(`Configuration value not allowed: ${config.configKey} = ${config.value}`);
         }
@@ -639,13 +639,26 @@ export class ConfigurationService {
       }
       
       const userId = context.userId || "anonymous";
-      const hash = crypto.createHash("md5").update(userId).digest("hex");
+      // Include a stable identifier to ensure consistent hashing
+      const hash = crypto.createHash("md5").update(`targeting:${userId}`).digest("hex");
       const hashValue = parseInt(hash.substring(0, 8), 16);
       const userPercentage = hashValue % 100;
       return userPercentage < targetingRules.percentage;
     }
 
     return true;
+  }
+
+  /**
+   * Safely parse JSON with error handling
+   */
+  private safeJsonParse(value: string, defaultValue: any = undefined): any {
+    try {
+      return JSON.parse(value);
+    } catch (error) {
+      logger.warn(`Failed to parse JSON: ${(error as Error).message}`);
+      return defaultValue;
+    }
   }
 }
 
