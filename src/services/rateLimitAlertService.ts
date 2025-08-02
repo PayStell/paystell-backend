@@ -24,6 +24,9 @@ export class RateLimitAlertService {
   }
 
   async checkUserThresholds(userId: string, merchantId: string): Promise<void> {
+    if (!userId || !merchantId) {
+      logger.warn('Invalid paramters provided to checkUserThresholds')
+    }
     try {
       const now = new Date();
       const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);

@@ -27,3 +27,16 @@ export interface MerchantData {
   apiKey: string;
   // Añade más campos según necesites
 }
+
+export type BalanceInfo = {
+  assetCode?: string;
+  assetIssuer?: string | null;
+  balance: string;
+  assetType?: string;
+  isAuthorized?: boolean;
+  isAuthorizedToMaintainLiabilities?: boolean;
+  isClawbackEnabled?: boolean;
+  lastModifiedLedger?: number;
+  limit?: string;
+  sponsor?: string;
+};
