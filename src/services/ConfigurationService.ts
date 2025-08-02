@@ -638,10 +638,11 @@ export class ConfigurationService {
         return false;
       }
       
-      const hash = crypto.createHash("md5").update(context.userId || "default").digest("hex");
+      const userId = context.userId || "anonymous";
+      const hash = crypto.createHash("md5").update(userId).digest("hex");
       const hashValue = parseInt(hash.substring(0, 8), 16);
-      const percentage = hashValue % 100;
-      return percentage < targetingRules.percentage;
+      const userPercentage = hashValue % 100;
+      return userPercentage < targetingRules.percentage;
     }
 
     return true;
