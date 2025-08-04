@@ -6,18 +6,19 @@ export interface UserRegistrationData {
 
 export interface UserResponse {
   id: number;
-  name: string;
+  name?: string;
   email: string;
-  role: string;
-  isEmailVerified: boolean;
-  isWalletVerified: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  role?: string;
+  isEmailVerified?: boolean;
+  isWalletVerified?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
   twoFactorAuth?: {
-    isEnabled: boolean;
+    isEnabled?: boolean;
   };
+  tokenExp?: number;
+  jti?: string;
 }
-
 export interface TokenResponse {
   accessToken: string;
   refreshToken: string;

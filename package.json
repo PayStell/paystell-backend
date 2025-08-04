@@ -22,7 +22,6 @@
     "@stellar/stellar-sdk": "^13.3.0",
     "@types/multer": "^1.4.12",
     "@types/rate-limit-redis": "^1.7.4",
-
     "auth0-js": "^9.28.0",
     "axios": "^1.8.1",
     "bcryptjs": "^2.4.3",

@@ -23,6 +23,8 @@ export class MerchantController {
       const merchantData: CreateMerchantDTO = {
         name,
         email,
+        secret,
+        apiKey,
         isActive: true,
       };
 

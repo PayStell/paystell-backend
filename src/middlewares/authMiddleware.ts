@@ -8,7 +8,6 @@ import {
 import { UserRole } from "../enums/UserRole";
 import { UserService } from "../services/UserService";
 import { redisClient } from "../config/redisConfig";
-import { MerchantEntity } from "../entities/Merchant.entity";
 
 export const authMiddleware = async (
   req: Request,
@@ -64,8 +63,8 @@ export const authMiddleware = async (
     }
 
     req.user = {
-      id: decoded.id,
-      email: decoded.email,
+      id: decoded.id as number,
+      email: decoded.email as string,
       tokenExp: decoded.exp,
       jti: decoded.jti,
     };
@@ -156,8 +155,8 @@ export const refreshTokenMiddleware = async (
 
     // Add user info to request
     req.user = {
-      id: decoded.id,
-      email: decoded.email,
+      id: decoded.id as number,
+      email: decoded.email as string,
       tokenExp: decoded.exp,
       jti: decoded.jti,
     };

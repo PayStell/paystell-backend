@@ -44,6 +44,8 @@ import {
   environmentConfigMiddleware,
 } from "./middlewares/configurationMiddleware";
 import routes from "./routes";
+import intelligentRateLimiter from "./middleware/rateLimiter";
+import rateLimitMonitoringService from "./services/rateLimitMonitoring.service";
 
 // Initialize express app
 const app = express();
@@ -80,6 +82,8 @@ app.use(
 );
 app.use(globalRateLimiter as RequestHandler);
 app.use(requestLogger as RequestHandler);
+app.use(intelligentRateLimiter);
+app.use(rateLimitMonitoringService.createRateLimitMonitoringMiddleware());
 
 // Add timeout configurations
 app.use((req, res, next) => {
