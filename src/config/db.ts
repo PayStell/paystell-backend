@@ -15,7 +15,7 @@ import { ReferralReward } from "../entities/ReferralReward";
 import { ReferralProgram } from "../entities/ReferralProgram";
 import { AuditLog } from "../entities/AuditLog";
 import { AuditSubscriber } from "../subscribers/AuditSubscriber";
-import { Wallet } from "src/entities/Wallet";
+import { Wallet } from "../entities/Wallet";
 
 dotenv.config();
 
