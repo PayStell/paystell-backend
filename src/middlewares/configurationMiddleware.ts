@@ -10,7 +10,7 @@ import logger from "../utils/logger";
 export const configurationMiddleware = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     // Inject configuration service into request
@@ -18,12 +18,18 @@ export const configurationMiddleware = async (
       get: async (key: string, defaultValue?: string) => {
         return await configurationService.getConfig(key, defaultValue);
       },
-      isFeatureEnabled: async (flagName: string, context?: {
-        userId?: string;
-        merchantId?: string;
-        userRole?: string;
-      }) => {
-        const evaluation = await configurationService.evaluateFeatureFlag(flagName, context);
+      isFeatureEnabled: async (
+        flagName: string,
+        context?: {
+          userId?: string;
+          merchantId?: string;
+          userRole?: string;
+        },
+      ) => {
+        const evaluation = await configurationService.evaluateFeatureFlag(
+          flagName,
+          context,
+        );
         return evaluation.isEnabled;
       },
     };
@@ -39,7 +45,11 @@ export const configurationMiddleware = async (
  * Middleware to validate required configurations before processing request
  */
 export const validateRequiredConfigMiddleware = (requiredConfigs: string[]) => {
-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       const missingConfigs: string[] = [];
 
@@ -74,7 +84,11 @@ export const validateRequiredConfigMiddleware = (requiredConfigs: string[]) => {
  * Middleware to check feature flag before processing request
  */
 export const featureFlagMiddleware = (flagName: string) => {
-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       const context = {
         userId: req.user?.id,
@@ -82,11 +96,14 @@ export const featureFlagMiddleware = (flagName: string) => {
         userRole: req.user?.role,
       };
 
-      const evaluation = await configurationService.evaluateFeatureFlag(flagName, {
-        userId: context.userId?.toString(),
-        merchantId: context.merchantId,
-        userRole: context.userRole?.toString(),
-      });
+      const evaluation = await configurationService.evaluateFeatureFlag(
+        flagName,
+        {
+          userId: context.userId?.toString(),
+          merchantId: context.merchantId,
+          userRole: context.userRole?.toString(),
+        },
+      );
 
       if (!evaluation.isEnabled) {
         res.status(403).json({
@@ -114,12 +131,12 @@ export const featureFlagMiddleware = (flagName: string) => {
 export const environmentConfigMiddleware = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     // Inject environment-specific configurations
     const environment = process.env.NODE_ENV || "development";
-    
+
     // Add environment info to request
     req.environment = environment;
 
@@ -149,7 +166,7 @@ export const environmentConfigMiddleware = async (
 export const configCacheMiddleware = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     // Create a request-specific cache
@@ -176,4 +193,4 @@ export const configCacheMiddleware = async (
     logger.error("Config cache middleware error:", error);
     next(error);
   }
-}; 
+};

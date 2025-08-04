@@ -2,8 +2,17 @@ import { Repository } from "typeorm";
 
 import crypto from "crypto";
 import AppDataSource from "../config/db";
-import { Configuration, Environment, ConfigurationType, ConfigurationCategory } from "../entities/Configuration";
-import { FeatureFlag, FeatureFlagScope, FeatureFlagStatus } from "../entities/FeatureFlag";
+import {
+  Configuration,
+  Environment,
+  ConfigurationType,
+  ConfigurationCategory,
+} from "../entities/Configuration";
+import {
+  FeatureFlag,
+  FeatureFlagScope,
+  FeatureFlagStatus,
+} from "../entities/FeatureFlag";
 import { AuditService } from "./AuditService";
 import logger from "../utils/logger";
 
@@ -47,8 +56,10 @@ export class ConfigurationService {
     this.configRepository = AppDataSource.getRepository(Configuration);
     this.featureFlagRepository = AppDataSource.getRepository(FeatureFlag);
     this.auditService = new AuditService();
-    this.encryptionKey = process.env.CONFIG_ENCRYPTION_KEY || "default-encryption-key";
-    this.currentEnvironment = (process.env.NODE_ENV as Environment) || Environment.DEVELOPMENT;
+    this.encryptionKey =
+      process.env.CONFIG_ENCRYPTION_KEY || "default-encryption-key";
+    this.currentEnvironment =
+      (process.env.NODE_ENV as Environment) || Environment.DEVELOPMENT;
   }
 
   /**
@@ -57,14 +68,16 @@ export class ConfigurationService {
   async initialize(): Promise<void> {
     try {
       logger.info("Initializing ConfigurationService...");
-      
+
       // Load all configurations for current environment
       await this.loadConfigurations();
-      
+
       // Validate required configurations
       const validationResult = await this.validateRequiredConfigurations();
       if (!validationResult.isValid) {
-        throw new Error(`Configuration validation failed: ${validationResult.errors.join(", ")}`);
+        throw new Error(
+          `Configuration validation failed: ${validationResult.errors.join(", ")}`,
+        );
       }
 
       logger.info("ConfigurationService initialized successfully");
@@ -77,7 +90,10 @@ export class ConfigurationService {
   /**
    * Get configuration value by key
    */
-  async getConfig(key: string, defaultValue?: string): Promise<string | number | boolean | Record<string, unknown> | null> {
+  async getConfig(
+    key: string,
+    defaultValue?: string,
+  ): Promise<string | number | boolean | Record<string, unknown> | null> {
     const cached = this.cache.get(key);
     if (cached) {
       return this.parseValue(cached.value as string, cached.type);
@@ -108,11 +124,21 @@ export class ConfigurationService {
       isEncrypted: config.isEncrypted,
       isRequired: config.isRequired,
       description: config.description,
-      validationRules: config.validationRules ? this.safeJsonParse<Record<string, unknown>>(config.validationRules) as Record<string, unknown> : undefined,
+      validationRules: config.validationRules
+        ? (this.safeJsonParse<Record<string, unknown>>(
+            config.validationRules,
+          ) as Record<string, unknown>)
+        : undefined,
       defaultValue: config.defaultValue,
-      allowedValues: config.allowedValues ? this.safeJsonParse<string[]>(config.allowedValues, []) as string[] : [],
+      allowedValues: config.allowedValues
+        ? (this.safeJsonParse<string[]>(config.allowedValues, []) as string[])
+        : [],
       expiresAt: config.expiresAt,
-      metadata: config.metadata ? this.safeJsonParse<Record<string, unknown>>(config.metadata) as Record<string, unknown> : undefined,
+      metadata: config.metadata
+        ? (this.safeJsonParse<Record<string, unknown>>(
+            config.metadata,
+          ) as Record<string, unknown>)
+        : undefined,
     };
 
     this.cache.set(key, configValue);
@@ -150,7 +176,7 @@ export class ConfigurationService {
       expiresAt?: Date;
       metadata?: Record<string, unknown>;
       updatedBy?: string;
-    } = {}
+    } = {},
   ): Promise<Configuration> {
     const stringValue = this.stringifyValue(value);
     let finalValue = stringValue;
@@ -178,11 +204,17 @@ export class ConfigurationService {
         description: options.description,
         isEncrypted: options.isEncrypted || false,
         isRequired: options.isRequired || false,
-        validationRules: options.validationRules ? JSON.stringify(options.validationRules) : undefined,
+        validationRules: options.validationRules
+          ? JSON.stringify(options.validationRules)
+          : undefined,
         defaultValue: options.defaultValue,
-        allowedValues: options.allowedValues ? JSON.stringify(options.allowedValues) : undefined,
+        allowedValues: options.allowedValues
+          ? JSON.stringify(options.allowedValues)
+          : undefined,
         expiresAt: options.expiresAt,
-        metadata: options.metadata ? JSON.stringify(options.metadata) : undefined,
+        metadata: options.metadata
+          ? JSON.stringify(options.metadata)
+          : undefined,
         updatedBy: options.updatedBy,
       });
     } else {
@@ -191,13 +223,25 @@ export class ConfigurationService {
         type: options.type || config.type,
         category: options.category || config.category,
         description: options.description || config.description,
-        isEncrypted: options.isEncrypted !== undefined ? options.isEncrypted : config.isEncrypted,
-        isRequired: options.isRequired !== undefined ? options.isRequired : config.isRequired,
-        validationRules: options.validationRules ? JSON.stringify(options.validationRules) : config.validationRules,
+        isEncrypted:
+          options.isEncrypted !== undefined
+            ? options.isEncrypted
+            : config.isEncrypted,
+        isRequired:
+          options.isRequired !== undefined
+            ? options.isRequired
+            : config.isRequired,
+        validationRules: options.validationRules
+          ? JSON.stringify(options.validationRules)
+          : config.validationRules,
         defaultValue: options.defaultValue || config.defaultValue,
-        allowedValues: options.allowedValues ? JSON.stringify(options.allowedValues) : config.allowedValues,
+        allowedValues: options.allowedValues
+          ? JSON.stringify(options.allowedValues)
+          : config.allowedValues,
         expiresAt: options.expiresAt || config.expiresAt,
-        metadata: options.metadata ? JSON.stringify(options.metadata) : config.metadata,
+        metadata: options.metadata
+          ? JSON.stringify(options.metadata)
+          : config.metadata,
         updatedBy: options.updatedBy,
       });
     }
@@ -221,7 +265,9 @@ export class ConfigurationService {
       },
     });
 
-    logger.info(`Configuration updated: ${key} = ${options.isEncrypted ? "[ENCRYPTED]" : value}`);
+    logger.info(
+      `Configuration updated: ${key} = ${options.isEncrypted ? "[ENCRYPTED]" : value}`,
+    );
 
     return savedConfig;
   }
@@ -281,7 +327,9 @@ export class ConfigurationService {
   /**
    * Get configurations by category
    */
-  async getConfigsByCategory(category: ConfigurationCategory): Promise<Configuration[]> {
+  async getConfigsByCategory(
+    category: ConfigurationCategory,
+  ): Promise<Configuration[]> {
     return this.configRepository.find({
       where: {
         category,
@@ -303,7 +351,7 @@ export class ConfigurationService {
       userId?: string;
       merchantId?: string;
       userRole?: string;
-    }
+    },
   ): Promise<FeatureFlagEvaluation> {
     const flag = await this.featureFlagRepository.findOne({
       where: {
@@ -338,7 +386,11 @@ export class ConfigurationService {
 
     // Check targeting rules
     if (flag.targetingRules) {
-      const targetingMatch = this.evaluateTargetingRules(flag.targetingRules, context, flagName);
+      const targetingMatch = this.evaluateTargetingRules(
+        flag.targetingRules,
+        context,
+        flagName,
+      );
       if (!targetingMatch) {
         return {
           isEnabled: false,
@@ -352,7 +404,10 @@ export class ConfigurationService {
     if (flag.targetingRules?.percentage) {
       const percentage = flag.targetingRules.percentage;
       const userId = context?.userId || "anonymous";
-      const hash = crypto.createHash("md5").update(`${flagName}:${userId}`).digest("hex");
+      const hash = crypto
+        .createHash("md5")
+        .update(`${flagName}:${userId}`)
+        .digest("hex");
       const hashValue = parseInt(hash.substring(0, 8), 16);
       const userPercentage = hashValue % 100;
 
@@ -367,7 +422,9 @@ export class ConfigurationService {
 
     return {
       isEnabled: flag.isEnabled,
-      reason: flag.isEnabled ? "Feature flag is enabled" : "Feature flag is disabled",
+      reason: flag.isEnabled
+        ? "Feature flag is enabled"
+        : "Feature flag is disabled",
       targetingMatch: true,
     };
   }
@@ -388,7 +445,7 @@ export class ConfigurationService {
       owner?: string;
       tags?: string;
       updatedBy?: string;
-    } = {}
+    } = {},
   ): Promise<FeatureFlag> {
     let flag = await this.featureFlagRepository.findOne({
       where: {
@@ -420,7 +477,8 @@ export class ConfigurationService {
         isEnabled,
         scope: options.scope || flag.scope,
         targetingRules: options.targetingRules || flag.targetingRules,
-        scheduledStartDate: options.scheduledStartDate || flag.scheduledStartDate,
+        scheduledStartDate:
+          options.scheduledStartDate || flag.scheduledStartDate,
         scheduledEndDate: options.scheduledEndDate || flag.scheduledEndDate,
         metadata: options.metadata || flag.metadata,
         owner: options.owner || flag.owner,
@@ -506,11 +564,21 @@ export class ConfigurationService {
         isEncrypted: config.isEncrypted,
         isRequired: config.isRequired,
         description: config.description,
-        validationRules: config.validationRules ? this.safeJsonParse<Record<string, unknown>>(config.validationRules) as Record<string, unknown> : undefined,
+        validationRules: config.validationRules
+          ? (this.safeJsonParse<Record<string, unknown>>(
+              config.validationRules,
+            ) as Record<string, unknown>)
+          : undefined,
         defaultValue: config.defaultValue,
-        allowedValues: config.allowedValues ? this.safeJsonParse<string[]>(config.allowedValues, []) as string[] : [],
+        allowedValues: config.allowedValues
+          ? (this.safeJsonParse<string[]>(config.allowedValues, []) as string[])
+          : [],
         expiresAt: config.expiresAt,
-        metadata: config.metadata ? this.safeJsonParse<Record<string, unknown>>(config.metadata) as Record<string, unknown> : undefined,
+        metadata: config.metadata
+          ? (this.safeJsonParse<Record<string, unknown>>(
+              config.metadata,
+            ) as Record<string, unknown>)
+          : undefined,
       });
     }
   }
@@ -529,7 +597,9 @@ export class ConfigurationService {
 
     for (const config of requiredConfigs) {
       if (!config.value || config.value.trim() === "") {
-        errors.push(`Required configuration missing or empty: ${config.configKey}`);
+        errors.push(
+          `Required configuration missing or empty: ${config.configKey}`,
+        );
       }
 
       // Check if configuration has expired
@@ -539,9 +609,14 @@ export class ConfigurationService {
 
       // Validate against allowed values
       if (config.allowedValues) {
-        const allowedValues = this.safeJsonParse<string[]>(config.allowedValues, []) as string[];
+        const allowedValues = this.safeJsonParse<string[]>(
+          config.allowedValues,
+          [],
+        ) as string[];
         if (!allowedValues.includes(config.value)) {
-          errors.push(`Configuration value not allowed: ${config.configKey} = ${config.value}`);
+          errors.push(
+            `Configuration value not allowed: ${config.configKey} = ${config.value}`,
+          );
         }
       }
     }
@@ -553,7 +628,10 @@ export class ConfigurationService {
     };
   }
 
-  private parseValue(value: string, type: ConfigurationType): string | number | boolean | Record<string, unknown> {
+  private parseValue(
+    value: string,
+    type: ConfigurationType,
+  ): string | number | boolean | Record<string, unknown> {
     switch (type) {
       case ConfigurationType.NUMBER:
         return parseFloat(value);
@@ -563,7 +641,9 @@ export class ConfigurationService {
         try {
           return JSON.parse(value);
         } catch (error) {
-          logger.error(`Failed to parse JSON value for type JSON: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          logger.error(
+            `Failed to parse JSON value for type JSON: ${error instanceof Error ? error.message : "Unknown error"}`,
+          );
           return value; // Return raw value as fallback
         }
       case ConfigurationType.ENCRYPTED:
@@ -573,7 +653,9 @@ export class ConfigurationService {
     }
   }
 
-  private stringifyValue(value: string | number | boolean | Record<string, unknown>): string {
+  private stringifyValue(
+    value: string | number | boolean | Record<string, unknown>,
+  ): string {
     if (typeof value === "object") {
       return JSON.stringify(value);
     }
@@ -583,7 +665,10 @@ export class ConfigurationService {
   private encryptValue(value: string): string {
     const iv = crypto.randomBytes(16);
     // Use a KDF with a deterministic salt based on a fixed application salt
-    const salt = crypto.createHash('sha256').update('paystell-config-v1').digest();
+    const salt = crypto
+      .createHash("sha256")
+      .update("paystell-config-v1")
+      .digest();
     const key = crypto.scryptSync(this.encryptionKey, salt, 32);
     const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
     let encrypted = cipher.update(value, "utf8", "hex");
@@ -595,7 +680,10 @@ export class ConfigurationService {
     const [ivHex, encrypted] = encryptedValue.split(":");
     const iv = Buffer.from(ivHex, "hex");
     // Use the same salt for decryption
-    const salt = crypto.createHash('sha256').update('paystell-config-v1').digest();
+    const salt = crypto
+      .createHash("sha256")
+      .update("paystell-config-v1")
+      .digest();
     const key = crypto.scryptSync(this.encryptionKey, salt, 32);
     const decipher = crypto.createDecipheriv("aes-256-cbc", key, iv);
     let decrypted = decipher.update(encrypted, "hex", "utf8");
@@ -610,7 +698,7 @@ export class ConfigurationService {
       merchantId?: string;
       userRole?: string;
     },
-    flagName?: string
+    flagName?: string,
   ): boolean {
     if (!context) return true;
 
@@ -622,15 +710,24 @@ export class ConfigurationService {
     }
 
     // Check merchant IDs
-    if (targetingRules.merchantIds && Array.isArray(targetingRules.merchantIds)) {
-      if (!context.merchantId || !targetingRules.merchantIds.includes(context.merchantId)) {
+    if (
+      targetingRules.merchantIds &&
+      Array.isArray(targetingRules.merchantIds)
+    ) {
+      if (
+        !context.merchantId ||
+        !targetingRules.merchantIds.includes(context.merchantId)
+      ) {
         return false;
       }
     }
 
     // Check user roles
     if (targetingRules.userRoles && Array.isArray(targetingRules.userRoles)) {
-      if (!context.userRole || !targetingRules.userRoles.includes(context.userRole)) {
+      if (
+        !context.userRole ||
+        !targetingRules.userRoles.includes(context.userRole)
+      ) {
         return false;
       }
     }
@@ -638,14 +735,22 @@ export class ConfigurationService {
     // Check percentage rollout
     if (targetingRules.percentage !== undefined) {
       // Validate percentage is between 0 and 100
-      if (typeof targetingRules.percentage !== 'number' || targetingRules.percentage < 0 || targetingRules.percentage > 100) {
-        logger.warn(`Invalid percentage value: ${targetingRules.percentage}. Must be between 0 and 100.`);
+      if (
+        typeof targetingRules.percentage !== "number" ||
+        targetingRules.percentage < 0 ||
+        targetingRules.percentage > 100
+      ) {
+        logger.warn(
+          `Invalid percentage value: ${targetingRules.percentage}. Must be between 0 and 100.`,
+        );
         return false;
       }
-      
+
       const userId = context.userId || "anonymous";
       // Use the same hash format as evaluateFeatureFlag for consistency
-      const hashInput = flagName ? `${flagName}:${userId}` : `targeting:${userId}`;
+      const hashInput = flagName
+        ? `${flagName}:${userId}`
+        : `targeting:${userId}`;
       const hash = crypto.createHash("md5").update(hashInput).digest("hex");
       const hashValue = parseInt(hash.substring(0, 8), 16);
       const userPercentage = hashValue % 100;
@@ -658,7 +763,10 @@ export class ConfigurationService {
   /**
    * Safely parse JSON with error handling
    */
-  private safeJsonParse<T = unknown>(value: string, defaultValue?: T): T | unknown {
+  private safeJsonParse<T = unknown>(
+    value: string,
+    defaultValue?: T,
+  ): T | unknown {
     try {
       return JSON.parse(value);
     } catch (error) {
@@ -669,4 +777,4 @@ export class ConfigurationService {
 }
 
 // Singleton instance
-export const configurationService = new ConfigurationService(); 
+export const configurationService = new ConfigurationService();

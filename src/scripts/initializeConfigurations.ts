@@ -1,7 +1,11 @@
 import "reflect-metadata";
 import dotenv from "dotenv";
 import { configurationService } from "../services/ConfigurationService";
-import { ConfigurationCategory, ConfigurationType, Environment } from "../entities/Configuration";
+import {
+  ConfigurationCategory,
+  ConfigurationType,
+  Environment,
+} from "../entities/Configuration";
 import { FeatureFlagScope } from "../entities/FeatureFlag";
 import AppDataSource from "../config/db";
 import logger from "../utils/logger";
@@ -55,7 +59,9 @@ const defaultConfigurations = [
   // Authentication configurations
   {
     key: "JWT_SECRET",
-    value: process.env.JWT_SECRET || "your-super-secret-jwt-key-change-in-production",
+    value:
+      process.env.JWT_SECRET ||
+      "your-super-secret-jwt-key-change-in-production",
     type: ConfigurationType.STRING,
     category: ConfigurationCategory.AUTHENTICATION,
     description: "JWT secret key for token signing",
@@ -265,7 +271,9 @@ const defaultConfigurations = [
   },
   {
     key: "SESSION_SECRET",
-    value: process.env.SESSION_SECRET || "a-long-randomly-generated-string-change-in-production",
+    value:
+      process.env.SESSION_SECRET ||
+      "a-long-randomly-generated-string-change-in-production",
     type: ConfigurationType.STRING,
     category: ConfigurationCategory.SECURITY,
     description: "Session secret for cookie signing",
@@ -274,7 +282,9 @@ const defaultConfigurations = [
   },
   {
     key: "CONFIG_ENCRYPTION_KEY",
-    value: process.env.CONFIG_ENCRYPTION_KEY || "your-config-encryption-key-change-in-production",
+    value:
+      process.env.CONFIG_ENCRYPTION_KEY ||
+      "your-config-encryption-key-change-in-production",
     type: ConfigurationType.STRING,
     category: ConfigurationCategory.SECURITY,
     description: "Encryption key for sensitive configurations",
@@ -386,10 +396,16 @@ async function initializeConfigurations() {
     await configurationService.initialize();
     logger.info("Configuration service initialized");
 
-    const environments = [Environment.DEVELOPMENT, Environment.STAGING, Environment.PRODUCTION];
+    const environments = [
+      Environment.DEVELOPMENT,
+      Environment.STAGING,
+      Environment.PRODUCTION,
+    ];
 
     for (const environment of environments) {
-      logger.info(`Initializing configurations for environment: ${environment}`);
+      logger.info(
+        `Initializing configurations for environment: ${environment}`,
+      );
 
       // Set environment-specific configurations
       for (const config of defaultConfigurations) {
@@ -439,11 +455,13 @@ async function initializeConfigurations() {
             scope: flag.scope,
             targetingRules: flag.targetingRules,
             updatedBy: "system",
-          }
+          },
         );
       }
 
-      logger.info(`Configuration initialization completed for environment: ${environment}`);
+      logger.info(
+        `Configuration initialization completed for environment: ${environment}`,
+      );
     }
 
     logger.info("Configuration initialization completed successfully");
@@ -459,4 +477,4 @@ if (require.main === module) {
   initializeConfigurations();
 }
 
-export { initializeConfigurations }; 
+export { initializeConfigurations };

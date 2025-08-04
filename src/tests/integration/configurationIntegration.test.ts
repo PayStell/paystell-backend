@@ -30,7 +30,7 @@ describe("Configuration System Integration Tests", () => {
     // Clear test data
     const configRepo = AppDataSource.getRepository(Configuration);
     const flagRepo = AppDataSource.getRepository(FeatureFlag);
-    
+
     await configRepo.delete({});
     await flagRepo.delete({});
   });
@@ -86,7 +86,8 @@ describe("Configuration System Integration Tests", () => {
 
       expect(getResponse.status).toBe(200);
       const encryptedConfig = getResponse.body.data.find(
-        (config: { key: string; value: string }) => config.key === "ENCRYPTED_CONFIG"
+        (config: { key: string; value: string }) =>
+          config.key === "ENCRYPTED_CONFIG",
       );
       expect(encryptedConfig.value).toBe("[ENCRYPTED]");
     });
@@ -243,17 +244,33 @@ describe("Configuration System Integration Tests", () => {
         });
 
       // Evaluate via service
-      const evaluation = await configurationService.evaluateFeatureFlag("service_test_flag");
+      const evaluation =
+        await configurationService.evaluateFeatureFlag("service_test_flag");
       expect(evaluation.isEnabled).toBe(true);
     });
 
     it("should handle different data types", async () => {
       // Create different types of configurations
       const testCases = [
-        { key: "STRING_CONFIG", value: "string_value", type: "string", expected: "string_value" },
+        {
+          key: "STRING_CONFIG",
+          value: "string_value",
+          type: "string",
+          expected: "string_value",
+        },
         { key: "NUMBER_CONFIG", value: "123", type: "number", expected: 123 },
-        { key: "BOOLEAN_CONFIG", value: "true", type: "boolean", expected: true },
-        { key: "JSON_CONFIG", value: '{"key":"value"}', type: "json", expected: { key: "value" } },
+        {
+          key: "BOOLEAN_CONFIG",
+          value: "true",
+          type: "boolean",
+          expected: true,
+        },
+        {
+          key: "JSON_CONFIG",
+          value: '{"key":"value"}',
+          type: "json",
+          expected: { key: "value" },
+        },
       ];
 
       for (const testCase of testCases) {
@@ -295,7 +312,7 @@ describe("Configuration System Integration Tests", () => {
       expect(validateResponse.status).toBe(200);
       expect(validateResponse.body.data.isValid).toBe(false);
       expect(validateResponse.body.data.errors).toContain(
-        "Required configuration missing or empty: REQUIRED_CONFIG"
+        "Required configuration missing or empty: REQUIRED_CONFIG",
       );
     });
   });
@@ -414,12 +431,14 @@ describe("Configuration System Integration Tests", () => {
       const results = [];
       for (let i = 0; i < 100; i++) {
         const response = await request(app)
-          .get(`/api/config/feature-flags/percentage_feature/evaluate?userId=user${i}`)
+          .get(
+            `/api/config/feature-flags/percentage_feature/evaluate?userId=user${i}`,
+          )
           .set("Authorization", `Bearer ${authToken}`);
         results.push(response.body.data.isEnabled);
       }
 
-      const enabledCount = results.filter(r => r).length;
+      const enabledCount = results.filter((r) => r).length;
       expect(enabledCount).toBeGreaterThan(30);
       expect(enabledCount).toBeLessThan(70);
     });
@@ -449,4 +468,4 @@ describe("Configuration System Integration Tests", () => {
       expect(userResponse.body.data.isEnabled).toBe(false);
     });
   });
-}); 
+});

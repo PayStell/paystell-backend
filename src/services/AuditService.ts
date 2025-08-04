@@ -166,11 +166,11 @@ export class AuditService {
       userId: extendedReq.user?.id?.toString(),
       userEmail: extendedReq.user?.email,
       ipAddress:
-        extendedReq.validatedIp || 
-        req.ip || 
-        req.socket?.remoteAddress || 
-        req.headers['x-forwarded-for']?.toString().split(',')[0]?.trim() || 
-        req.headers['x-real-ip']?.toString() || 
+        extendedReq.validatedIp ||
+        req.ip ||
+        req.socket?.remoteAddress ||
+        req.headers["x-forwarded-for"]?.toString().split(",")[0]?.trim() ||
+        req.headers["x-real-ip"]?.toString() ||
         "unknown",
       userAgent: req.get("User-Agent") || "unknown",
       sessionId: req.headers["x-session-id"] as string,

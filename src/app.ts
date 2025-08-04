@@ -39,7 +39,10 @@ import logger from "./utils/logger";
 import { oauthConfig } from "./config/auth0Config";
 import { auth } from "express-openid-connect";
 import { auditMiddleware } from "./middlewares/auditMiddleware";
-import { configurationMiddleware, environmentConfigMiddleware } from "./middlewares/configurationMiddleware";
+import {
+  configurationMiddleware,
+  environmentConfigMiddleware,
+} from "./middlewares/configurationMiddleware";
 import routes from "./routes";
 
 // Initialize express app

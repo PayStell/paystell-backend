@@ -1,7 +1,16 @@
 import { Repository } from "typeorm";
 import { ConfigurationService } from "../../services/ConfigurationService";
-import { Configuration, ConfigurationType, ConfigurationCategory, Environment } from "../../entities/Configuration";
-import { FeatureFlag, FeatureFlagScope, FeatureFlagStatus } from "../../entities/FeatureFlag";
+import {
+  Configuration,
+  ConfigurationType,
+  ConfigurationCategory,
+  Environment,
+} from "../../entities/Configuration";
+import {
+  FeatureFlag,
+  FeatureFlagScope,
+  FeatureFlagStatus,
+} from "../../entities/FeatureFlag";
 import AppDataSource from "../../config/db";
 import { AuditService } from "../../services/AuditService";
 
@@ -11,7 +20,9 @@ const mockAuditService = {
   createAuditLog: jest.fn().mockResolvedValue({}),
 };
 
-(AuditService as jest.MockedClass<typeof AuditService>).mockImplementation(() => mockAuditService as unknown as AuditService);
+(AuditService as jest.MockedClass<typeof AuditService>).mockImplementation(
+  () => mockAuditService as unknown as AuditService,
+);
 
 describe("ConfigurationService", () => {
   let configurationService: ConfigurationService;
@@ -80,7 +91,10 @@ describe("ConfigurationService", () => {
     it("should return default value when configuration not found", async () => {
       mockConfigRepository.findOne.mockResolvedValue(null);
 
-      const result = await configurationService.getConfig("NON_EXISTENT", "default_value");
+      const result = await configurationService.getConfig(
+        "NON_EXISTENT",
+        "default_value",
+      );
       expect(result).toBe("default_value");
     });
 
@@ -95,9 +109,16 @@ describe("ConfigurationService", () => {
       };
 
       mockConfigRepository.findOne.mockResolvedValue(mockConfig);
-      
+
       // Mock the decryption method
-      jest.spyOn(configurationService as unknown as { decryptValue: (value: string) => string }, 'decryptValue').mockReturnValue('decrypted_value');
+      jest
+        .spyOn(
+          configurationService as unknown as {
+            decryptValue: (value: string) => string;
+          },
+          "decryptValue",
+        )
+        .mockReturnValue("decrypted_value");
 
       const result = await configurationService.getConfig("ENCRYPTED_CONFIG");
       expect(result).toBe("decrypted_value");
@@ -107,7 +128,11 @@ describe("ConfigurationService", () => {
       const testCases = [
         { type: ConfigurationType.NUMBER, value: "123", expected: 123 },
         { type: ConfigurationType.BOOLEAN, value: "true", expected: true },
-        { type: ConfigurationType.JSON, value: '{"key":"value"}', expected: { key: "value" } },
+        {
+          type: ConfigurationType.JSON,
+          value: '{"key":"value"}',
+          expected: { key: "value" },
+        },
         { type: ConfigurationType.STRING, value: "test", expected: "test" },
       ];
 
@@ -123,7 +148,9 @@ describe("ConfigurationService", () => {
 
         mockConfigRepository.findOne.mockResolvedValue(mockConfig);
 
-        const result = await configurationService.getConfig(`TEST_${testCase.type}`);
+        const result = await configurationService.getConfig(
+          `TEST_${testCase.type}`,
+        );
         expect(result).toEqual(testCase.expected);
       }
     });
@@ -145,12 +172,16 @@ describe("ConfigurationService", () => {
       mockConfigRepository.create.mockReturnValue(mockCreatedConfig);
       mockConfigRepository.save.mockResolvedValue(mockCreatedConfig);
 
-      const result = await configurationService.setConfig("NEW_CONFIG", "new_value", {
-        type: ConfigurationType.STRING,
-        category: ConfigurationCategory.GENERAL,
-        description: "Test configuration",
-        updatedBy: "test-user",
-      });
+      const result = await configurationService.setConfig(
+        "NEW_CONFIG",
+        "new_value",
+        {
+          type: ConfigurationType.STRING,
+          category: ConfigurationCategory.GENERAL,
+          description: "Test configuration",
+          updatedBy: "test-user",
+        },
+      );
 
       expect(result).toEqual(mockCreatedConfig);
       expect(mockConfigRepository.create).toHaveBeenCalledWith({
@@ -182,9 +213,13 @@ describe("ConfigurationService", () => {
       mockConfigRepository.findOne.mockResolvedValue(existingConfig);
       mockConfigRepository.save.mockResolvedValue(updatedConfig);
 
-      const result = await configurationService.setConfig("EXISTING_CONFIG", "new_value", {
-        updatedBy: "test-user",
-      });
+      const result = await configurationService.setConfig(
+        "EXISTING_CONFIG",
+        "new_value",
+        {
+          updatedBy: "test-user",
+        },
+      );
 
       expect(result).toEqual(updatedConfig);
       expect(mockConfigRepository.save).toHaveBeenCalledWith({
@@ -219,7 +254,7 @@ describe("ConfigurationService", () => {
           key: "SENSITIVE_CONFIG",
           value: expect.stringContaining(":"), // Encrypted format
           isEncrypted: true,
-        })
+        }),
       );
     });
 
@@ -285,9 +320,9 @@ describe("ConfigurationService", () => {
     it("should throw error when configuration not found", async () => {
       mockConfigRepository.findOne.mockResolvedValue(null);
 
-      await expect(configurationService.deleteConfig("NON_EXISTENT")).rejects.toThrow(
-        "Configuration not found: NON_EXISTENT"
-      );
+      await expect(
+        configurationService.deleteConfig("NON_EXISTENT"),
+      ).rejects.toThrow("Configuration not found: NON_EXISTENT");
     });
   });
 
@@ -295,7 +330,8 @@ describe("ConfigurationService", () => {
     it("should return false when feature flag not found", async () => {
       mockFeatureFlagRepository.findOne.mockResolvedValue(null);
 
-      const result = await configurationService.evaluateFeatureFlag("NON_EXISTENT");
+      const result =
+        await configurationService.evaluateFeatureFlag("NON_EXISTENT");
 
       expect(result).toEqual({
         isEnabled: false,
@@ -316,7 +352,8 @@ describe("ConfigurationService", () => {
 
       mockFeatureFlagRepository.findOne.mockResolvedValue(mockFlag);
 
-      const result = await configurationService.evaluateFeatureFlag("test_flag");
+      const result =
+        await configurationService.evaluateFeatureFlag("test_flag");
 
       expect(result).toEqual({
         isEnabled: false,
@@ -338,7 +375,8 @@ describe("ConfigurationService", () => {
 
       mockFeatureFlagRepository.findOne.mockResolvedValue(mockFlag);
 
-      const result = await configurationService.evaluateFeatureFlag("test_flag");
+      const result =
+        await configurationService.evaluateFeatureFlag("test_flag");
 
       expect(result).toEqual({
         isEnabled: true,
@@ -364,15 +402,21 @@ describe("ConfigurationService", () => {
       mockFeatureFlagRepository.findOne.mockResolvedValue(mockFlag);
 
       // Test with matching user
-      const result1 = await configurationService.evaluateFeatureFlag("targeted_flag", {
-        userId: "user1",
-      });
+      const result1 = await configurationService.evaluateFeatureFlag(
+        "targeted_flag",
+        {
+          userId: "user1",
+        },
+      );
       expect(result1.isEnabled).toBe(true);
 
       // Test with non-matching user
-      const result2 = await configurationService.evaluateFeatureFlag("targeted_flag", {
-        userId: "user3",
-      });
+      const result2 = await configurationService.evaluateFeatureFlag(
+        "targeted_flag",
+        {
+          userId: "user3",
+        },
+      );
       expect(result2.isEnabled).toBe(false);
       expect(result2.reason).toBe("User does not match targeting rules");
     });
@@ -393,9 +437,12 @@ describe("ConfigurationService", () => {
 
       mockFeatureFlagRepository.findOne.mockResolvedValue(mockFlag);
 
-      const result = await configurationService.evaluateFeatureFlag("percentage_flag", {
-        userId: "test-user",
-      });
+      const result = await configurationService.evaluateFeatureFlag(
+        "percentage_flag",
+        {
+          userId: "test-user",
+        },
+      );
 
       // Result depends on hash, but should have percentageRollout info
       expect(result).toHaveProperty("percentageRollout");
@@ -425,7 +472,7 @@ describe("ConfigurationService", () => {
         {
           scope: FeatureFlagScope.GLOBAL,
           updatedBy: "test-user",
-        }
+        },
       );
 
       expect(result).toEqual(mockCreatedFlag);
@@ -450,7 +497,11 @@ describe("ConfigurationService", () => {
         status: FeatureFlagStatus.ACTIVE,
       };
 
-      const updatedFlag = { ...existingFlag, isEnabled: true, description: "New description" };
+      const updatedFlag = {
+        ...existingFlag,
+        isEnabled: true,
+        description: "New description",
+      };
 
       mockFeatureFlagRepository.findOne.mockResolvedValue(existingFlag);
       mockFeatureFlagRepository.save.mockResolvedValue(updatedFlag);
@@ -461,7 +512,7 @@ describe("ConfigurationService", () => {
         true,
         {
           updatedBy: "test-user",
-        }
+        },
       );
 
       expect(result).toEqual(updatedFlag);
@@ -537,4 +588,4 @@ describe("ConfigurationService", () => {
       });
     });
   });
-}); 
+});

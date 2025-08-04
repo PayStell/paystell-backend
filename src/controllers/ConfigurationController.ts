@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { configurationService } from "../services/ConfigurationService";
-import { ConfigurationCategory, ConfigurationType } from "../entities/Configuration";
+import {
+  ConfigurationCategory,
+  ConfigurationType,
+} from "../entities/Configuration";
 import { FeatureFlagScope } from "../entities/FeatureFlag";
 import { AppError } from "../utils/AppError";
 import logger from "../utils/logger";
@@ -10,12 +13,16 @@ export class ConfigurationController {
   /**
    * Get all configurations for current environment
    */
-  async getAllConfigurations(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getAllConfigurations(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const configs = await configurationService.getAllConfigs();
-      
+
       // Filter out encrypted values for security
-      const sanitizedConfigs = configs.map(config => ({
+      const sanitizedConfigs = configs.map((config) => ({
         ...config,
         value: config.isEncrypted ? "[ENCRYPTED]" : config.value,
       }));
@@ -33,7 +40,11 @@ export class ConfigurationController {
   /**
    * Get configuration by key
    */
-  async getConfiguration(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getConfiguration(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { key } = req.params;
       const config = await configurationService.getConfigDetails(key);
@@ -60,7 +71,11 @@ export class ConfigurationController {
   /**
    * Create or update configuration
    */
-  async setConfiguration(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async setConfiguration(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -117,10 +132,14 @@ export class ConfigurationController {
   /**
    * Delete configuration
    */
-  async deleteConfiguration(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async deleteConfiguration(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { key } = req.params;
-      
+
       await configurationService.deleteConfig(key, req.user?.id?.toString());
 
       res.json({
@@ -135,18 +154,28 @@ export class ConfigurationController {
   /**
    * Get configurations by category
    */
-  async getConfigurationsByCategory(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getConfigurationsByCategory(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { category } = req.params;
-      
-      if (!Object.values(ConfigurationCategory).includes(category as ConfigurationCategory)) {
+
+      if (
+        !Object.values(ConfigurationCategory).includes(
+          category as ConfigurationCategory,
+        )
+      ) {
         throw new AppError("Invalid category", 400);
       }
 
-      const configs = await configurationService.getConfigsByCategory(category as ConfigurationCategory);
-      
+      const configs = await configurationService.getConfigsByCategory(
+        category as ConfigurationCategory,
+      );
+
       // Filter out encrypted values for security
-      const sanitizedConfigs = configs.map(config => ({
+      const sanitizedConfigs = configs.map((config) => ({
         ...config,
         value: config.isEncrypted ? "[ENCRYPTED]" : config.value,
       }));
@@ -164,7 +193,11 @@ export class ConfigurationController {
   /**
    * Reload configurations from database
    */
-  async reloadConfigurations(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async reloadConfigurations(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       await configurationService.reloadConfigurations();
 
@@ -180,16 +213,25 @@ export class ConfigurationController {
   /**
    * Validate configurations
    */
-  async validateConfigurations(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async validateConfigurations(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       // Get all configurations and validate required ones
       const allConfigs = await configurationService.getAllConfigs();
-      const requiredConfigs = allConfigs.filter(config => config.isRequired);
-      const missingRequired = requiredConfigs.filter(config => !config.value || config.value.trim() === "");
-      
+      const requiredConfigs = allConfigs.filter((config) => config.isRequired);
+      const missingRequired = requiredConfigs.filter(
+        (config) => !config.value || config.value.trim() === "",
+      );
+
       const validationResult = {
         isValid: missingRequired.length === 0,
-        errors: missingRequired.map(config => `Required configuration missing or empty: ${config.configKey}`),
+        errors: missingRequired.map(
+          (config) =>
+            `Required configuration missing or empty: ${config.configKey}`,
+        ),
         warnings: [],
       };
 
@@ -207,7 +249,11 @@ export class ConfigurationController {
   /**
    * Get all feature flags
    */
-  async getAllFeatureFlags(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getAllFeatureFlags(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const flags = await configurationService.getAllFeatureFlags();
 
@@ -224,7 +270,11 @@ export class ConfigurationController {
   /**
    * Create or update feature flag
    */
-  async setFeatureFlag(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async setFeatureFlag(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -249,16 +299,25 @@ export class ConfigurationController {
         tags,
       } = req.body;
 
-      const flag = await configurationService.setFeatureFlag(name, description, isEnabled, {
-        scope,
-        targetingRules,
-        scheduledStartDate: scheduledStartDate ? new Date(scheduledStartDate) : undefined,
-        scheduledEndDate: scheduledEndDate ? new Date(scheduledEndDate) : undefined,
-        metadata,
-        owner,
-        tags,
-        updatedBy: req.user?.id?.toString(),
-      });
+      const flag = await configurationService.setFeatureFlag(
+        name,
+        description,
+        isEnabled,
+        {
+          scope,
+          targetingRules,
+          scheduledStartDate: scheduledStartDate
+            ? new Date(scheduledStartDate)
+            : undefined,
+          scheduledEndDate: scheduledEndDate
+            ? new Date(scheduledEndDate)
+            : undefined,
+          metadata,
+          owner,
+          tags,
+          updatedBy: req.user?.id?.toString(),
+        },
+      );
 
       res.status(201).json({
         success: true,
@@ -273,16 +332,23 @@ export class ConfigurationController {
   /**
    * Evaluate feature flag
    */
-  async evaluateFeatureFlag(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async evaluateFeatureFlag(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { flagName } = req.params;
       const { userId, merchantId, userRole } = req.query;
 
-      const evaluation = await configurationService.evaluateFeatureFlag(flagName, {
-        userId: userId as string,
-        merchantId: merchantId as string,
-        userRole: userRole as string,
-      });
+      const evaluation = await configurationService.evaluateFeatureFlag(
+        flagName,
+        {
+          userId: userId as string,
+          merchantId: merchantId as string,
+          userRole: userRole as string,
+        },
+      );
 
       res.json({
         success: true,
@@ -296,25 +362,37 @@ export class ConfigurationController {
   /**
    * Get configuration statistics
    */
-  async getConfigurationStats(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getConfigurationStats(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const configs = await configurationService.getAllConfigs();
       const flags = await configurationService.getAllFeatureFlags();
 
       const stats = {
         totalConfigurations: configs.length,
-        encryptedConfigurations: configs.filter(c => c.isEncrypted).length,
-        requiredConfigurations: configs.filter(c => c.isRequired).length,
-        configurationsByCategory: Object.values(ConfigurationCategory).reduce((acc, category) => {
-          acc[category] = configs.filter(c => c.category === category).length;
-          return acc;
-        }, {} as Record<string, number>),
+        encryptedConfigurations: configs.filter((c) => c.isEncrypted).length,
+        requiredConfigurations: configs.filter((c) => c.isRequired).length,
+        configurationsByCategory: Object.values(ConfigurationCategory).reduce(
+          (acc, category) => {
+            acc[category] = configs.filter(
+              (c) => c.category === category,
+            ).length;
+            return acc;
+          },
+          {} as Record<string, number>,
+        ),
         totalFeatureFlags: flags.length,
-        activeFeatureFlags: flags.filter(f => f.isEnabled).length,
-        featureFlagsByScope: Object.values(FeatureFlagScope).reduce((acc, scope) => {
-          acc[scope] = flags.filter(f => f.scope === scope).length;
-          return acc;
-        }, {} as Record<string, number>),
+        activeFeatureFlags: flags.filter((f) => f.isEnabled).length,
+        featureFlagsByScope: Object.values(FeatureFlagScope).reduce(
+          (acc, scope) => {
+            acc[scope] = flags.filter((f) => f.scope === scope).length;
+            return acc;
+          },
+          {} as Record<string, number>,
+        ),
       };
 
       res.json({
@@ -329,7 +407,11 @@ export class ConfigurationController {
   /**
    * Export configurations
    */
-  async exportConfigurations(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async exportConfigurations(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { environment } = req.query;
       const configs = await configurationService.getAllConfigs();
@@ -337,7 +419,7 @@ export class ConfigurationController {
       const exportData = {
         environment: environment || process.env.NODE_ENV,
         exportedAt: new Date().toISOString(),
-        configurations: configs.map(config => ({
+        configurations: configs.map((config) => ({
           key: config.configKey,
           value: config.isEncrypted ? "[ENCRYPTED]" : config.value,
           type: config.type,
@@ -354,7 +436,10 @@ export class ConfigurationController {
       };
 
       res.setHeader("Content-Type", "application/json");
-      res.setHeader("Content-Disposition", `attachment; filename="configurations-${environment || 'current'}.json"`);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="configurations-${environment || "current"}.json"`,
+      );
       res.json(exportData);
     } catch (error) {
       next(error);
@@ -364,7 +449,11 @@ export class ConfigurationController {
   /**
    * Import configurations
    */
-  async importConfigurations(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async importConfigurations(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { configurations, overwrite = false } = req.body;
 
@@ -379,7 +468,7 @@ export class ConfigurationController {
       for (const config of configurations) {
         try {
           const existing = await configurationService.getConfig(config.key);
-          
+
           if (existing !== null && !overwrite) {
             skipped++;
             continue;
@@ -394,7 +483,9 @@ export class ConfigurationController {
             validationRules: config.validationRules,
             defaultValue: config.defaultValue,
             allowedValues: config.allowedValues,
-            expiresAt: config.expiresAt ? new Date(config.expiresAt) : undefined,
+            expiresAt: config.expiresAt
+              ? new Date(config.expiresAt)
+              : undefined,
             metadata: config.metadata,
             updatedBy: req.user?.id?.toString(),
           });
@@ -419,4 +510,4 @@ export class ConfigurationController {
       next(error);
     }
   }
-} 
+}

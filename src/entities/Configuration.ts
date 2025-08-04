@@ -116,4 +116,4 @@ export class Configuration {
 
   @Column({ nullable: true })
   updatedBy?: string; // User ID who last updated this configuration
-} 
+}

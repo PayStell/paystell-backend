@@ -104,4 +104,4 @@ export class FeatureFlag {
 
   @Column({ nullable: true })
   updatedBy?: string; // User ID who last updated this feature flag
-} 
+}

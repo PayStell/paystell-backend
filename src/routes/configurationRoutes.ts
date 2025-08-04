@@ -5,7 +5,10 @@ import { authMiddleware } from "../middlewares/authMiddleware";
 import { requirePermission } from "../middlewares/permissionMiddleware";
 import { PermissionResource, PermissionAction } from "../entities/Permission";
 import { handleValidationErrors } from "../middlewares/validationErrorHandler";
-import { ConfigurationCategory, ConfigurationType } from "../entities/Configuration";
+import {
+  ConfigurationCategory,
+  ConfigurationType,
+} from "../entities/Configuration";
 import { FeatureFlagScope } from "../entities/FeatureFlag";
 
 const router = Router();
@@ -13,43 +16,110 @@ const configurationController = new ConfigurationController();
 
 // Validation schemas
 const configurationValidation = [
-  body("key").isString().isLength({ min: 1, max: 255 }).withMessage("Key is required and must be 1-255 characters"),
+  body("key")
+    .isString()
+    .isLength({ min: 1, max: 255 })
+    .withMessage("Key is required and must be 1-255 characters"),
   body("value").notEmpty().withMessage("Value is required"),
-  body("type").optional().isIn(Object.values(ConfigurationType)).withMessage("Invalid configuration type"),
-  body("category").optional().isIn(Object.values(ConfigurationCategory)).withMessage("Invalid configuration category"),
-  body("description").optional().isString().withMessage("Description must be a string"),
-  body("isEncrypted").optional().isBoolean().withMessage("isEncrypted must be a boolean"),
-  body("isRequired").optional().isBoolean().withMessage("isRequired must be a boolean"),
-  body("validationRules").optional().isObject().withMessage("validationRules must be an object"),
-  body("defaultValue").optional().isString().withMessage("defaultValue must be a string"),
-  body("allowedValues").optional().isArray().withMessage("allowedValues must be an array"),
-  body("expiresAt").optional().isISO8601().withMessage("expiresAt must be a valid ISO date"),
-  body("metadata").optional().isObject().withMessage("metadata must be an object"),
+  body("type")
+    .optional()
+    .isIn(Object.values(ConfigurationType))
+    .withMessage("Invalid configuration type"),
+  body("category")
+    .optional()
+    .isIn(Object.values(ConfigurationCategory))
+    .withMessage("Invalid configuration category"),
+  body("description")
+    .optional()
+    .isString()
+    .withMessage("Description must be a string"),
+  body("isEncrypted")
+    .optional()
+    .isBoolean()
+    .withMessage("isEncrypted must be a boolean"),
+  body("isRequired")
+    .optional()
+    .isBoolean()
+    .withMessage("isRequired must be a boolean"),
+  body("validationRules")
+    .optional()
+    .isObject()
+    .withMessage("validationRules must be an object"),
+  body("defaultValue")
+    .optional()
+    .isString()
+    .withMessage("defaultValue must be a string"),
+  body("allowedValues")
+    .optional()
+    .isArray()
+    .withMessage("allowedValues must be an array"),
+  body("expiresAt")
+    .optional()
+    .isISO8601()
+    .withMessage("expiresAt must be a valid ISO date"),
+  body("metadata")
+    .optional()
+    .isObject()
+    .withMessage("metadata must be an object"),
 ];
 
 const featureFlagValidation = [
-  body("name").isString().isLength({ min: 1, max: 255 }).withMessage("Name is required and must be 1-255 characters"),
-  body("description").isString().isLength({ min: 1 }).withMessage("Description is required"),
+  body("name")
+    .isString()
+    .isLength({ min: 1, max: 255 })
+    .withMessage("Name is required and must be 1-255 characters"),
+  body("description")
+    .isString()
+    .isLength({ min: 1 })
+    .withMessage("Description is required"),
   body("isEnabled").isBoolean().withMessage("isEnabled must be a boolean"),
-  body("scope").optional().isIn(Object.values(FeatureFlagScope)).withMessage("Invalid feature flag scope"),
-  body("targetingRules").optional().isObject().withMessage("targetingRules must be an object"),
-  body("scheduledStartDate").optional().isISO8601().withMessage("scheduledStartDate must be a valid ISO date"),
-  body("scheduledEndDate").optional().isISO8601().withMessage("scheduledEndDate must be a valid ISO date"),
-  body("metadata").optional().isObject().withMessage("metadata must be an object"),
+  body("scope")
+    .optional()
+    .isIn(Object.values(FeatureFlagScope))
+    .withMessage("Invalid feature flag scope"),
+  body("targetingRules")
+    .optional()
+    .isObject()
+    .withMessage("targetingRules must be an object"),
+  body("scheduledStartDate")
+    .optional()
+    .isISO8601()
+    .withMessage("scheduledStartDate must be a valid ISO date"),
+  body("scheduledEndDate")
+    .optional()
+    .isISO8601()
+    .withMessage("scheduledEndDate must be a valid ISO date"),
+  body("metadata")
+    .optional()
+    .isObject()
+    .withMessage("metadata must be an object"),
   body("owner").optional().isString().withMessage("owner must be a string"),
   body("tags").optional().isString().withMessage("tags must be a string"),
 ];
 
 const importValidation = [
-  body("configurations").isArray().withMessage("configurations must be an array"),
-  body("overwrite").optional().isBoolean().withMessage("overwrite must be a boolean"),
-  body("confirmOverwrite").optional().isString()
+  body("configurations")
+    .isArray()
+    .withMessage("configurations must be an array"),
+  body("overwrite")
+    .optional()
+    .isBoolean()
+    .withMessage("overwrite must be a boolean"),
+  body("confirmOverwrite")
+    .optional()
+    .isString()
     .custom((value, { req }) => {
-      if (req.body.overwrite && process.env.NODE_ENV === 'production') {
-        return value === `CONFIRM_OVERWRITE_${new Date().toISOString().split('T')[0]}`;
+      if (req.body.overwrite && process.env.NODE_ENV === "production") {
+        return (
+          value ===
+          `CONFIRM_OVERWRITE_${new Date().toISOString().split("T")[0]}`
+        );
       }
       return true;
-    }).withMessage("Production overwrites require confirmation with today's date"),
+    })
+    .withMessage(
+      "Production overwrites require confirmation with today's date",
+    ),
 ];
 
 /**
@@ -86,7 +156,9 @@ router.get(
   "/",
   authMiddleware as RequestHandler,
   requirePermission(PermissionResource.CONFIGURATION, PermissionAction.READ),
-  configurationController.getAllConfigurations.bind(configurationController) as RequestHandler,
+  configurationController.getAllConfigurations.bind(
+    configurationController,
+  ) as RequestHandler,
 );
 
 /**
@@ -139,7 +211,9 @@ router.get(
   requirePermission(PermissionResource.CONFIGURATION, PermissionAction.READ),
   param("key").isString().withMessage("Key must be a string"),
   handleValidationErrors,
-  configurationController.getConfiguration.bind(configurationController) as RequestHandler,
+  configurationController.getConfiguration.bind(
+    configurationController,
+  ) as RequestHandler,
 );
 
 /**
@@ -233,7 +307,9 @@ router.post(
   requirePermission(PermissionResource.CONFIGURATION, PermissionAction.CREATE),
   configurationValidation,
   handleValidationErrors,
-  configurationController.setConfiguration.bind(configurationController) as RequestHandler,
+  configurationController.setConfiguration.bind(
+    configurationController,
+  ) as RequestHandler,
 );
 
 /**
@@ -277,7 +353,9 @@ router.delete(
   requirePermission(PermissionResource.CONFIGURATION, PermissionAction.DELETE),
   param("key").isString().withMessage("Key must be a string"),
   handleValidationErrors,
-  configurationController.deleteConfiguration.bind(configurationController) as RequestHandler,
+  configurationController.deleteConfiguration.bind(
+    configurationController,
+  ) as RequestHandler,
 );
 
 /**
@@ -324,9 +402,13 @@ router.get(
   "/category/:category",
   authMiddleware as RequestHandler,
   requirePermission(PermissionResource.CONFIGURATION, PermissionAction.READ),
-  param("category").isIn(Object.values(ConfigurationCategory)).withMessage("Invalid category"),
+  param("category")
+    .isIn(Object.values(ConfigurationCategory))
+    .withMessage("Invalid category"),
   handleValidationErrors,
-  configurationController.getConfigurationsByCategory.bind(configurationController) as RequestHandler,
+  configurationController.getConfigurationsByCategory.bind(
+    configurationController,
+  ) as RequestHandler,
 );
 
 /**
@@ -359,7 +441,9 @@ router.post(
   "/reload",
   authMiddleware as RequestHandler,
   requirePermission(PermissionResource.CONFIGURATION, PermissionAction.UPDATE),
-  configurationController.reloadConfigurations.bind(configurationController) as RequestHandler,
+  configurationController.reloadConfigurations.bind(
+    configurationController,
+  ) as RequestHandler,
 );
 
 /**
@@ -403,7 +487,9 @@ router.get(
   "/validate",
   authMiddleware as RequestHandler,
   requirePermission(PermissionResource.CONFIGURATION, PermissionAction.READ),
-  configurationController.validateConfigurations.bind(configurationController) as RequestHandler,
+  configurationController.validateConfigurations.bind(
+    configurationController,
+  ) as RequestHandler,
 );
 
 // Feature Flag Routes
@@ -442,7 +528,9 @@ router.get(
   "/feature-flags",
   authMiddleware as RequestHandler,
   requirePermission(PermissionResource.CONFIGURATION, PermissionAction.READ),
-  configurationController.getAllFeatureFlags.bind(configurationController) as RequestHandler,
+  configurationController.getAllFeatureFlags.bind(
+    configurationController,
+  ) as RequestHandler,
 );
 
 /**
@@ -525,7 +613,9 @@ router.post(
   requirePermission(PermissionResource.CONFIGURATION, PermissionAction.CREATE),
   featureFlagValidation,
   handleValidationErrors,
-  configurationController.setFeatureFlag.bind(configurationController) as RequestHandler,
+  configurationController.setFeatureFlag.bind(
+    configurationController,
+  ) as RequestHandler,
 );
 
 /**
@@ -591,7 +681,9 @@ router.get(
   requirePermission(PermissionResource.CONFIGURATION, PermissionAction.READ),
   param("flagName").isString().withMessage("Flag name must be a string"),
   handleValidationErrors,
-  configurationController.evaluateFeatureFlag.bind(configurationController) as RequestHandler,
+  configurationController.evaluateFeatureFlag.bind(
+    configurationController,
+  ) as RequestHandler,
 );
 
 // Utility Routes
@@ -641,7 +733,9 @@ router.get(
   "/stats",
   authMiddleware as RequestHandler,
   requirePermission(PermissionResource.CONFIGURATION, PermissionAction.READ),
-  configurationController.getConfigurationStats.bind(configurationController) as RequestHandler,
+  configurationController.getConfigurationStats.bind(
+    configurationController,
+  ) as RequestHandler,
 );
 
 /**
@@ -685,9 +779,14 @@ router.get(
   "/export",
   authMiddleware as RequestHandler,
   requirePermission(PermissionResource.CONFIGURATION, PermissionAction.READ),
-  query("environment").optional().isString().withMessage("Environment must be a string"),
+  query("environment")
+    .optional()
+    .isString()
+    .withMessage("Environment must be a string"),
   handleValidationErrors,
-  configurationController.exportConfigurations.bind(configurationController) as RequestHandler,
+  configurationController.exportConfigurations.bind(
+    configurationController,
+  ) as RequestHandler,
 );
 
 /**
@@ -750,7 +849,9 @@ router.post(
   requirePermission(PermissionResource.CONFIGURATION, PermissionAction.CREATE),
   importValidation,
   handleValidationErrors,
-  configurationController.importConfigurations.bind(configurationController) as RequestHandler,
+  configurationController.importConfigurations.bind(
+    configurationController,
+  ) as RequestHandler,
 );
 
-export default router; 
+export default router;
