@@ -1,5 +1,17 @@
-import { IsEnum, IsOptional, IsString, IsNumber, IsDateString, Min, Max } from "class-validator";
-import { NotificationType, NotificationCategory, NotificationStatus } from "../entities/InAppNotification.entity";
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsDateString,
+  Min,
+  Max,
+} from "class-validator";
+import {
+  NotificationType,
+  NotificationCategory,
+  NotificationStatus,
+} from "../entities/InAppNotification.entity";
 
 // A more specific type for metadata values instead of 'any'
 type MetadataValue = string | number | boolean | null;

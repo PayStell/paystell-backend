@@ -1,4 +1,12 @@
-import { Repository, FindManyOptions, LessThan, Between, MoreThanOrEqual, LessThanOrEqual, FindOptionsWhere } from "typeorm";
+import {
+  Repository,
+  FindManyOptions,
+  LessThan,
+  Between,
+  MoreThanOrEqual,
+  LessThanOrEqual,
+  FindOptionsWhere,
+} from "typeorm";
 import AppDataSource from "../config/db";
 import {
   InAppNotificationEntity,
@@ -82,17 +90,17 @@ export class NotificationService {
     const skip = (page - 1) * limit;
 
     const whereConditions: FindOptionsWhere<InAppNotificationEntity> = {};
-    
+
     if (filters.category) whereConditions.category = filters.category;
     if (filters.status) whereConditions.status = filters.status;
     if (filters.recipientId) whereConditions.recipientId = filters.recipientId;
 
     if (filters.dateFrom && filters.dateTo) {
-        whereConditions.createdAt = Between(filters.dateFrom, filters.dateTo);
+      whereConditions.createdAt = Between(filters.dateFrom, filters.dateTo);
     } else if (filters.dateFrom) {
-        whereConditions.createdAt = MoreThanOrEqual(filters.dateFrom);
+      whereConditions.createdAt = MoreThanOrEqual(filters.dateFrom);
     } else if (filters.dateTo) {
-        whereConditions.createdAt = LessThanOrEqual(filters.dateTo);
+      whereConditions.createdAt = LessThanOrEqual(filters.dateTo);
     }
 
     const findOptions: FindManyOptions<InAppNotificationEntity> = {
@@ -102,7 +110,8 @@ export class NotificationService {
       order: { priority: "DESC", createdAt: "DESC" },
     };
 
-    const [notifications, total] = await this.notificationRepository.findAndCount(findOptions);
+    const [notifications, total] =
+      await this.notificationRepository.findAndCount(findOptions);
 
     return {
       notifications,
@@ -112,8 +121,13 @@ export class NotificationService {
     };
   }
 
-  async markAsRead(notificationId: string, recipientId?: string): Promise<InAppNotificationEntity> {
-    const whereConditions: FindOptionsWhere<InAppNotificationEntity> = { id: notificationId };
+  async markAsRead(
+    notificationId: string,
+    recipientId?: string,
+  ): Promise<InAppNotificationEntity> {
+    const whereConditions: FindOptionsWhere<InAppNotificationEntity> = {
+      id: notificationId,
+    };
     if (recipientId) whereConditions.recipientId = recipientId;
 
     const notification = await this.notificationRepository.findOne({
@@ -134,11 +148,11 @@ export class NotificationService {
   async markAllAsRead(recipientId: string): Promise<void> {
     await this.notificationRepository.update(
       { recipientId, isRead: false },
-      { 
-        isRead: true, 
-        status: NotificationStatus.READ, 
-        readAt: new Date() 
-      }
+      {
+        isRead: true,
+        status: NotificationStatus.READ,
+        readAt: new Date(),
+      },
     );
   }
 
@@ -148,14 +162,18 @@ export class NotificationService {
     });
   }
 
-  async softDelete(notificationId: string, recipientId?: string): Promise<void> {
-    const whereConditions: FindOptionsWhere<InAppNotificationEntity> = { id: notificationId };
+  async softDelete(
+    notificationId: string,
+    recipientId?: string,
+  ): Promise<void> {
+    const whereConditions: FindOptionsWhere<InAppNotificationEntity> = {
+      id: notificationId,
+    };
     if (recipientId) whereConditions.recipientId = recipientId;
 
-    await this.notificationRepository.update(
-      whereConditions,
-      { status: NotificationStatus.ARCHIVED }
-    );
+    await this.notificationRepository.update(whereConditions, {
+      status: NotificationStatus.ARCHIVED,
+    });
   }
 
   async deleteExpiredNotifications(): Promise<void> {
@@ -167,9 +185,9 @@ export class NotificationService {
 
   // Template methods for automatic notifications
   async createPaymentNotification(
-    recipientId: string, 
-    amount: number, 
-    paymentId: string
+    recipientId: string,
+    amount: number,
+    paymentId: string,
   ): Promise<InAppNotificationEntity> {
     return this.createNotification({
       title: "Payment Received",
@@ -184,9 +202,9 @@ export class NotificationService {
   }
 
   async createFraudAlertNotification(
-    recipientId: string, 
+    recipientId: string,
     transactionId: string,
-    riskLevel: string
+    riskLevel: string,
   ): Promise<InAppNotificationEntity> {
     return this.createNotification({
       title: "Fraud Alert",
@@ -202,7 +220,7 @@ export class NotificationService {
 
   async createSystemUpdateNotification(
     message: string,
-    link?: string
+    link?: string,
   ): Promise<InAppNotificationEntity> {
     return this.createNotification({
       title: "System Update",

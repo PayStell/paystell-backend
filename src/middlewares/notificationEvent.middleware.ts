@@ -22,7 +22,10 @@ interface SystemUpdateEvent {
   link?: string;
 }
 
-type NotificationEvent = PaymentCompletedEvent | FraudDetectedEvent | SystemUpdateEvent;
+type NotificationEvent =
+  | PaymentCompletedEvent
+  | FraudDetectedEvent
+  | SystemUpdateEvent;
 
 export class NotificationEventMiddleware {
   private notificationService: NotificationService;
@@ -40,8 +43,10 @@ export class NotificationEventMiddleware {
       // Override json method to check for notification events
       res.json = (body: Record<string, unknown>) => {
         // Check if response contains notification events
-        if (body && typeof body === 'object' && 'notificationEvent' in body) {
-          this.processNotificationEvent(body.notificationEvent as NotificationEvent);
+        if (body && typeof body === "object" && "notificationEvent" in body) {
+          this.processNotificationEvent(
+            body.notificationEvent as NotificationEvent,
+          );
         }
 
         return originalJson(body);
@@ -51,14 +56,16 @@ export class NotificationEventMiddleware {
     };
   }
 
-  private async processNotificationEvent(event: NotificationEvent): Promise<void> {
+  private async processNotificationEvent(
+    event: NotificationEvent,
+  ): Promise<void> {
     try {
       switch (event.type) {
         case "payment_completed":
           await this.notificationService.createPaymentNotification(
             event.recipientId,
             event.amount,
-            event.paymentId
+            event.paymentId,
           );
           break;
 
@@ -66,14 +73,14 @@ export class NotificationEventMiddleware {
           await this.notificationService.createFraudAlertNotification(
             event.recipientId,
             event.transactionId,
-            event.riskLevel
+            event.riskLevel,
           );
           break;
 
         case "system_update":
           await this.notificationService.createSystemUpdateNotification(
             event.message,
-            event.link
+            event.link,
           );
           break;
 
@@ -90,7 +97,7 @@ export class NotificationEventMiddleware {
     res: Response,
     recipientId: string,
     amount: number,
-    paymentId: string
+    paymentId: string,
   ): void {
     const currentBody = res.locals.responseBody || {};
     currentBody.notificationEvent = {
@@ -106,7 +113,7 @@ export class NotificationEventMiddleware {
     res: Response,
     recipientId: string,
     transactionId: string,
-    riskLevel: string
+    riskLevel: string,
   ): void {
     const currentBody = res.locals.responseBody || {};
     currentBody.notificationEvent = {
@@ -121,7 +128,7 @@ export class NotificationEventMiddleware {
   static triggerSystemUpdateNotification(
     res: Response,
     message: string,
-    link?: string
+    link?: string,
   ): void {
     const currentBody = res.locals.responseBody || {};
     currentBody.notificationEvent = {

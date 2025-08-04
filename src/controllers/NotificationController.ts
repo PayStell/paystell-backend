@@ -1,6 +1,12 @@
 import { Request, Response, NextFunction } from "express";
-import { NotificationService, NotificationFilters } from "../services/inAppNotificationService";
-import { NotificationCategory, NotificationStatus } from "../entities/InAppNotification.entity";
+import {
+  NotificationService,
+  NotificationFilters,
+} from "../services/inAppNotificationService";
+import {
+  NotificationCategory,
+  NotificationStatus,
+} from "../entities/InAppNotification.entity";
 import { AppError } from "../utils/AppError";
 
 export class NotificationController {
@@ -10,7 +16,11 @@ export class NotificationController {
     this.notificationService = new NotificationService();
   }
 
-  async getNotifications(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getNotifications(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const userId = req.user?.id.toString();
       if (!userId) {
@@ -43,7 +53,11 @@ export class NotificationController {
     }
   }
 
-  async markAsRead(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async markAsRead(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { notificationId } = req.params;
       const userId = req.user?.id.toString();
@@ -52,7 +66,10 @@ export class NotificationController {
         throw new AppError("User not authenticated", 401);
       }
 
-      const notification = await this.notificationService.markAsRead(notificationId, userId);
+      const notification = await this.notificationService.markAsRead(
+        notificationId,
+        userId,
+      );
 
       res.status(200).json({
         success: true,
@@ -64,7 +81,11 @@ export class NotificationController {
     }
   }
 
-  async markAllAsRead(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async markAllAsRead(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const userId = req.user?.id.toString();
       if (!userId) {
@@ -82,7 +103,11 @@ export class NotificationController {
     }
   }
 
-  async getUnreadCount(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getUnreadCount(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const userId = req.user?.id.toString();
       if (!userId) {
@@ -100,7 +125,11 @@ export class NotificationController {
     }
   }
 
-  async deleteNotification(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async deleteNotification(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { notificationId } = req.params;
       const userId = req.user?.id.toString();

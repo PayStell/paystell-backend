@@ -93,7 +93,9 @@ router.get(
     query("dateTo").optional().isISO8601(),
   ],
   handleValidationErrors,
-  notificationController.getNotifications.bind(notificationController) as RequestHandler,
+  notificationController.getNotifications.bind(
+    notificationController,
+  ) as RequestHandler,
 );
 
 /**
@@ -122,7 +124,9 @@ router.get(
  */
 router.get(
   "/unread-count",
-  notificationController.getUnreadCount.bind(notificationController) as RequestHandler,
+  notificationController.getUnreadCount.bind(
+    notificationController,
+  ) as RequestHandler,
 );
 
 /**
@@ -160,7 +164,9 @@ router.put(
   "/:notificationId/read",
   [param("notificationId").isUUID()],
   handleValidationErrors,
-  notificationController.markAsRead.bind(notificationController) as RequestHandler,
+  notificationController.markAsRead.bind(
+    notificationController,
+  ) as RequestHandler,
 );
 
 /**
@@ -186,7 +192,9 @@ router.put(
  */
 router.put(
   "/mark-all-read",
-  notificationController.markAllAsRead.bind(notificationController) as RequestHandler,
+  notificationController.markAllAsRead.bind(
+    notificationController,
+  ) as RequestHandler,
 );
 
 /**
@@ -222,7 +230,9 @@ router.delete(
   "/:notificationId",
   [param("notificationId").isUUID()],
   handleValidationErrors,
-  notificationController.deleteNotification.bind(notificationController) as RequestHandler,
+  notificationController.deleteNotification.bind(
+    notificationController,
+  ) as RequestHandler,
 );
 
 export default router;
