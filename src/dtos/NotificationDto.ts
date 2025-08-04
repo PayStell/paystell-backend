@@ -13,7 +13,6 @@ import {
   NotificationStatus,
 } from "../entities/InAppNotification.entity";
 
-// A more specific type for metadata values instead of 'any'
 type MetadataValue = string | number | boolean | null;
 
 export class CreateNotificationDTO {
