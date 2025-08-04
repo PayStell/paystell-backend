@@ -1,4 +1,4 @@
-import { Repository, FindManyOptions, LessThan, Between, MoreThanOrEqual, LessThanOrEqual } from "typeorm";
+import { Repository, FindManyOptions, LessThan, Between, MoreThanOrEqual, LessThanOrEqual, FindOptionsWhere } from "typeorm";
 import AppDataSource from "../config/db";
 import {
   InAppNotificationEntity,
@@ -7,8 +7,10 @@ import {
   NotificationStatus,
 } from "../entities/InAppNotification.entity";
 
+type MetadataValue = string | number | boolean | null;
+
 export interface NotificationMetadata {
-  [key: string]: string | number | boolean | null | undefined;
+  [key: string]: MetadataValue;
 }
 
 export interface CreateNotificationParams {
@@ -79,11 +81,12 @@ export class NotificationService {
     const { page = 1, limit = 20 } = filters;
     const skip = (page - 1) * limit;
 
-    const whereConditions: any = {};
+    const whereConditions: FindOptionsWhere<InAppNotificationEntity> = {};
     
     if (filters.category) whereConditions.category = filters.category;
     if (filters.status) whereConditions.status = filters.status;
     if (filters.recipientId) whereConditions.recipientId = filters.recipientId;
+
     if (filters.dateFrom && filters.dateTo) {
         whereConditions.createdAt = Between(filters.dateFrom, filters.dateTo);
     } else if (filters.dateFrom) {
@@ -110,7 +113,7 @@ export class NotificationService {
   }
 
   async markAsRead(notificationId: string, recipientId?: string): Promise<InAppNotificationEntity> {
-    const whereConditions: any = { id: notificationId };
+    const whereConditions: FindOptionsWhere<InAppNotificationEntity> = { id: notificationId };
     if (recipientId) whereConditions.recipientId = recipientId;
 
     const notification = await this.notificationRepository.findOne({
@@ -146,7 +149,7 @@ export class NotificationService {
   }
 
   async softDelete(notificationId: string, recipientId?: string): Promise<void> {
-    const whereConditions: any = { id: notificationId };
+    const whereConditions: FindOptionsWhere<InAppNotificationEntity> = { id: notificationId };
     if (recipientId) whereConditions.recipientId = recipientId;
 
     await this.notificationRepository.update(

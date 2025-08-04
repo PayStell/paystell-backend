@@ -1,6 +1,11 @@
-import { Repository, LessThan, Between } from "typeorm";
+import { Repository, LessThan, Between, UpdateResult } from "typeorm";
 import { NotificationService } from "../../services/inAppNotificationService";
-import { InAppNotificationEntity, NotificationType, NotificationCategory, NotificationStatus } from "../../entities/InAppNotification.entity";
+import {
+  InAppNotificationEntity,
+  NotificationType,
+  NotificationCategory,
+  NotificationStatus,
+} from "../../entities/InAppNotification.entity";
 import AppDataSource from "../../config/db";
 
 // Mock the AppDataSource to prevent actual database connections during tests
@@ -19,7 +24,7 @@ describe("NotificationService", () => {
       update: jest.fn(),
       count: jest.fn(),
       delete: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<Repository<InAppNotificationEntity>>;
 
     // Mock the getRepository method to return our mock repository
     (AppDataSource.getRepository as jest.Mock).mockReturnValue(mockRepository);
@@ -66,7 +71,7 @@ describe("NotificationService", () => {
           recipientId: params.recipientId,
           isRead: false,
           status: NotificationStatus.UNREAD,
-        })
+        }),
       );
       expect(result).toEqual(mockNotification);
     });
@@ -83,7 +88,9 @@ describe("NotificationService", () => {
       // Mock a rejected promise to simulate a database error
       mockRepository.save.mockRejectedValue(new Error("Database error"));
 
-      await expect(notificationService.createNotification(params)).rejects.toThrow("Database error");
+      await expect(
+        notificationService.createNotification(params),
+      ).rejects.toThrow("Database error");
     });
   });
 
@@ -121,85 +128,93 @@ describe("NotificationService", () => {
     });
 
     it("should correctly filter notifications by category", async () => {
-        const mockNotifications = [
-            { id: "1", title: "Info Notification", category: NotificationCategory.INFO },
-        ] as InAppNotificationEntity[];
+      const mockNotifications = [
+        {
+          id: "1",
+          title: "Info Notification",
+          category: NotificationCategory.INFO,
+        },
+      ] as InAppNotificationEntity[];
 
-        mockRepository.findAndCount.mockResolvedValue([mockNotifications, 1]);
+      mockRepository.findAndCount.mockResolvedValue([mockNotifications, 1]);
 
-        const filters = {
-            recipientId: "user123",
-            category: NotificationCategory.INFO,
-            page: 1,
-            limit: 20,
-        };
+      const filters = {
+        recipientId: "user123",
+        category: NotificationCategory.INFO,
+        page: 1,
+        limit: 20,
+      };
 
-        await notificationService.getNotifications(filters);
+      await notificationService.getNotifications(filters);
 
-        expect(mockRepository.findAndCount).toHaveBeenCalledWith({
-            where: {
-                recipientId: "user123",
-                category: NotificationCategory.INFO
-            },
-            skip: 0,
-            take: 20,
-            order: { priority: "DESC", createdAt: "DESC" },
-        });
+      expect(mockRepository.findAndCount).toHaveBeenCalledWith({
+        where: {
+          recipientId: "user123",
+          category: NotificationCategory.INFO,
+        },
+        skip: 0,
+        take: 20,
+        order: { priority: "DESC", createdAt: "DESC" },
+      });
     });
 
     it("should correctly filter notifications by status", async () => {
-        const mockNotifications = [
-            { id: "1", title: "Unread Notification", status: NotificationStatus.UNREAD },
-        ] as InAppNotificationEntity[];
+      const mockNotifications = [
+        {
+          id: "1",
+          title: "Unread Notification",
+          status: NotificationStatus.UNREAD,
+        },
+      ] as InAppNotificationEntity[];
 
-        mockRepository.findAndCount.mockResolvedValue([mockNotifications, 1]);
+      mockRepository.findAndCount.mockResolvedValue([mockNotifications, 1]);
 
-        const filters = {
-            recipientId: "user123",
-            status: NotificationStatus.UNREAD,
-            page: 1,
-            limit: 20,
-        };
+      const filters = {
+        recipientId: "user123",
+        status: NotificationStatus.UNREAD,
+        page: 1,
+        limit: 20,
+      };
 
-        await notificationService.getNotifications(filters);
+      await notificationService.getNotifications(filters);
 
-        expect(mockRepository.findAndCount).toHaveBeenCalledWith({
-            where: {
-                recipientId: "user123",
-                status: NotificationStatus.UNREAD
-            },
-            skip: 0,
-            take: 20,
-            order: { priority: "DESC", createdAt: "DESC" },
-        });
+      expect(mockRepository.findAndCount).toHaveBeenCalledWith({
+        where: {
+          recipientId: "user123",
+          status: NotificationStatus.UNREAD,
+        },
+        skip: 0,
+        take: 20,
+        order: { priority: "DESC", createdAt: "DESC" },
+      });
     });
 
     it("should filter by date range correctly", async () => {
-        const dateFrom = new Date('2025-08-01T00:00:00.000Z');
-        const dateTo = new Date('2025-08-31T00:00:00.000Z');
-        const mockNotifications = [] as InAppNotificationEntity[];
+      const dateFrom = new Date("2025-08-01T00:00:00.000Z");
+      const dateTo = new Date("2025-08-31T00:00:00.000Z");
+      const mockNotifications = [] as InAppNotificationEntity[];
 
-        mockRepository.findAndCount.mockResolvedValue([mockNotifications, 0]);
+      mockRepository.findAndCount.mockResolvedValue([mockNotifications, 0]);
 
-        const filters = {
-            recipientId: "user123",
-            dateFrom,
-            dateTo,
-            page: 1,
-            limit: 20,
-        };
+      const filters = {
+        recipientId: "user123",
+        dateFrom,
+        dateTo,
+        page: 1,
+        limit: 20,
+      };
 
-        await notificationService.getNotifications(filters);
+      await notificationService.getNotifications(filters);
 
-        expect(mockRepository.findAndCount).toHaveBeenCalledWith({
-            where: {
-                recipientId: "user123",
-                createdAt: Between(dateFrom, dateTo),
-            },
-            skip: 0,
-            take: 20,
-            order: { priority: "DESC", createdAt: "DESC" },
-        });
+      expect(mockRepository.findAndCount).toHaveBeenCalledWith({
+        where: {
+          recipientId: "user123",
+          createdAt: Between(dateFrom, dateTo),
+        },
+        skip: 0,
+        take: 20,
+        order: { priority: "DESC", createdAt: "DESC" },
+      });
     });
   });
 
@@ -232,7 +247,7 @@ describe("NotificationService", () => {
           isRead: true,
           status: NotificationStatus.READ,
           readAt: expect.any(Date),
-        })
+        }),
       );
       expect(result).toEqual(updatedNotification);
     });
@@ -241,14 +256,19 @@ describe("NotificationService", () => {
       mockRepository.findOne.mockResolvedValue(null);
 
       await expect(
-        notificationService.markAsRead("123", "user123")
+        notificationService.markAsRead("123", "user123"),
       ).rejects.toThrow("Notification not found");
     });
   });
 
   describe("markAllAsRead", () => {
     it("should mark all unread notifications as read for a user", async () => {
-      mockRepository.update.mockResolvedValue({ affected: 3 } as any);
+      const updateResult: UpdateResult = {
+        affected: 3,
+        raw: [],
+        generatedMaps: [],
+      };
+      mockRepository.update.mockResolvedValue(updateResult);
 
       await notificationService.markAllAsRead("user123");
 
@@ -258,8 +278,8 @@ describe("NotificationService", () => {
         {
           isRead: true,
           status: NotificationStatus.READ,
-          readAt: expect.any(Date)
-        }
+          readAt: expect.any(Date),
+        },
       );
     });
   });
@@ -279,28 +299,33 @@ describe("NotificationService", () => {
 
   describe("softDelete", () => {
     it("should archive a notification for a specific user", async () => {
-      mockRepository.update.mockResolvedValue({ affected: 1 } as any);
+      const updateResult: UpdateResult = {
+        affected: 1,
+        raw: [],
+        generatedMaps: [],
+      };
+      mockRepository.update.mockResolvedValue(updateResult);
 
       await notificationService.softDelete("notif123", "user123");
 
       // Check if the notification status was updated to ARCHIVED
       expect(mockRepository.update).toHaveBeenCalledWith(
         { id: "notif123", recipientId: "user123" },
-        { status: NotificationStatus.ARCHIVED }
+        { status: NotificationStatus.ARCHIVED },
       );
     });
   });
 
   describe("deleteExpiredNotifications", () => {
     it("should delete notifications that have expired", async () => {
-        mockRepository.delete.mockResolvedValue({ affected: 2 } as any);
+      mockRepository.delete.mockResolvedValue({ affected: 2, raw: [] });
 
-        await notificationService.deleteExpiredNotifications();
+      await notificationService.deleteExpiredNotifications();
 
-        // Ensure delete is called with a condition to find notifications with an expiresAt date less than the current time
-        expect(mockRepository.delete).toHaveBeenCalledWith({
-            expiresAt: LessThan(expect.any(Date)),
-        });
+      // Ensure delete is called with a condition to find notifications with an expiresAt date less than the current time
+      expect(mockRepository.delete).toHaveBeenCalledWith({
+        expiresAt: LessThan(expect.any(Date)),
+      });
     });
   });
 
@@ -309,7 +334,11 @@ describe("NotificationService", () => {
       const mockNotification = {} as InAppNotificationEntity;
       mockRepository.save.mockResolvedValue(mockNotification);
 
-      const result = await notificationService.createPaymentNotification("user123", 100, "payment123");
+      const result = await notificationService.createPaymentNotification(
+        "user123",
+        100,
+        "payment123",
+      );
 
       expect(mockRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -321,7 +350,7 @@ describe("NotificationService", () => {
           link: "/payments/payment123",
           metadata: { paymentId: "payment123", amount: 100 },
           priority: 5,
-        })
+        }),
       );
       expect(result).toEqual(mockNotification);
     });
@@ -330,7 +359,11 @@ describe("NotificationService", () => {
       const mockNotification = {} as InAppNotificationEntity;
       mockRepository.save.mockResolvedValue(mockNotification);
 
-      const result = await notificationService.createFraudAlertNotification("user123", "txn123", "HIGH");
+      const result = await notificationService.createFraudAlertNotification(
+        "user123",
+        "txn123",
+        "HIGH",
+      );
 
       expect(mockRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -342,31 +375,31 @@ describe("NotificationService", () => {
           link: "/fraud/alerts/txn123",
           metadata: { transactionId: "txn123", riskLevel: "HIGH" },
           priority: 10,
-        })
+        }),
       );
       expect(result).toEqual(mockNotification);
     });
 
     it("createSystemUpdateNotification should create a broadcast notification", async () => {
-        const mockNotification = {} as InAppNotificationEntity;
-        mockRepository.save.mockResolvedValue(mockNotification);
+      const mockNotification = {} as InAppNotificationEntity;
+      mockRepository.save.mockResolvedValue(mockNotification);
 
-        const result = await notificationService.createSystemUpdateNotification(
-            "System will be down for maintenance",
-            "/maintenance"
-        );
+      const result = await notificationService.createSystemUpdateNotification(
+        "System will be down for maintenance",
+        "/maintenance",
+      );
 
-        expect(mockRepository.save).toHaveBeenCalledWith(
-            expect.objectContaining({
-                title: "System Update",
-                message: "System will be down for maintenance",
-                notificationType: NotificationType.BROADCAST,
-                category: NotificationCategory.INFO,
-                link: "/maintenance",
-                priority: 3,
-            })
-        );
-        expect(result).toEqual(mockNotification);
+      expect(mockRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "System Update",
+          message: "System will be down for maintenance",
+          notificationType: NotificationType.BROADCAST,
+          category: NotificationCategory.INFO,
+          link: "/maintenance",
+          priority: 3,
+        }),
+      );
+      expect(result).toEqual(mockNotification);
     });
   });
 
@@ -382,7 +415,9 @@ describe("NotificationService", () => {
         recipientId: "user123",
       };
 
-      await expect(notificationService.createNotification(params)).rejects.toThrow("Connection timeout");
+      await expect(
+        notificationService.createNotification(params),
+      ).rejects.toThrow("Connection timeout");
     });
 
     it("should handle errors during findAndCount operations", async () => {
@@ -394,7 +429,9 @@ describe("NotificationService", () => {
         limit: 20,
       };
 
-      await expect(notificationService.getNotifications(filters)).rejects.toThrow("Query failed");
+      await expect(
+        notificationService.getNotifications(filters),
+      ).rejects.toThrow("Query failed");
     });
   });
 });

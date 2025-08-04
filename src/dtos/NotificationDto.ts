@@ -1,6 +1,9 @@
 import { IsEnum, IsOptional, IsString, IsNumber, IsDateString, Min, Max } from "class-validator";
 import { NotificationType, NotificationCategory, NotificationStatus } from "../entities/InAppNotification.entity";
 
+// A more specific type for metadata values instead of 'any'
+type MetadataValue = string | number | boolean | null;
+
 export class CreateNotificationDTO {
   @IsString()
   title: string;
@@ -23,7 +26,7 @@ export class CreateNotificationDTO {
   link?: string;
 
   @IsOptional()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, MetadataValue>;
 
   @IsOptional()
   @IsNumber()

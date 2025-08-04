@@ -38,10 +38,10 @@ export class NotificationEventMiddleware {
       const originalJson = res.json.bind(res);
 
       // Override json method to check for notification events
-      res.json = (body: any) => {
+      res.json = (body: Record<string, unknown>) => {
         // Check if response contains notification events
-        if (body.notificationEvent) {
-          this.processNotificationEvent(body.notificationEvent);
+        if (body && typeof body === 'object' && 'notificationEvent' in body) {
+          this.processNotificationEvent(body.notificationEvent as NotificationEvent);
         }
 
         return originalJson(body);
