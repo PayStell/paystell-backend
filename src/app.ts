@@ -25,6 +25,7 @@ import stellarContractRoutes from "./routes/stellar-contract.routes";
 import tokenRoutes from "./routes/tokenRoutes";
 import { paymentRouter } from "./routes/paymentRoutes";
 import { subscriptionRouter } from "./routes/subscriptionRoutes";
+import notificationRoutes from "./routes/notification.routes";
 
 // Middleware imports
 import { globalRateLimiter } from "./middlewares/globalRateLimiter.middleware";
@@ -165,7 +166,7 @@ app.use("/subscriptions", subscriptionRouter);
 // Configuration routes
 import configurationRoutes from "./routes/configurationRoutes";
 app.use("/api/config", configurationRoutes);
-
+app.use("/api/notifications", notificationRoutes);
 app.use("/", routes);
 
 // Error handling middleware

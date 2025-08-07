@@ -283,8 +283,8 @@ export class MerchantWebhookQueueService {
               metadata: {
                 ...alertData,
                 merchantWebhookId: merchantWebhook.id,
-                asset: webhookPayload.asset,
-                amount: webhookPayload.amount,
+                asset: webhookPayload.asset ?? null,
+                amount: webhookPayload.amount ?? null,
                 eventType: webhookPayload.eventType,
               },
               link: `/admin/webhooks/failed/${job.id}`,
