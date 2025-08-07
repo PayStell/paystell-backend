@@ -13,6 +13,11 @@ PayStell Backend is the server-side component of a payment solution that enables
 - Minimal transaction fees
 - Robust data validation and error handling
 - Integration with local and online payment systems
+- **Multi-Environment Configuration Management System**
+- **Feature Flags with targeting and percentage rollouts**
+- **Dynamic configuration updates without restart**
+- **Encrypted sensitive configurations**
+- **Comprehensive audit logging**
 
 ## ⚙️ Project Structure
 
@@ -63,6 +68,31 @@ cp .env.example .env
 
 # Start the development server
 npm start
+
+## 🔧 Configuration Management
+
+The PayStell backend includes a comprehensive Multi-Environment Configuration Management System:
+
+### Initialize Configurations
+```bash
+npm run init-config
+```
+
+### Configuration API
+- **Get all configurations**: `GET /api/config`
+- **Get configuration by key**: `GET /api/config/{key}`
+- **Create/Update configuration**: `POST /api/config`
+- **Delete configuration**: `DELETE /api/config/{key}`
+- **Get configurations by category**: `GET /api/config/category/{category}`
+- **Reload configurations**: `POST /api/config/reload`
+- **Validate configurations**: `GET /api/config/validate`
+
+### Feature Flags
+- **Get all feature flags**: `GET /api/config/feature-flags`
+- **Create/Update feature flag**: `POST /api/config/feature-flags`
+- **Evaluate feature flag**: `GET /api/config/feature-flags/{flagName}/evaluate`
+
+For detailed documentation, see [CONFIGURATION_SYSTEM.md](docs/CONFIGURATION_SYSTEM.md)
 ```
 
 ## 📬 How to Import the Postman Collection

@@ -1,7 +1,7 @@
 import { Repository } from "typeorm";
 import AppDataSource from "../config/db";
 import { AuditLog } from "../entities/AuditLog";
-import { Request } from "express-serve-static-core";
+import { Request } from "express";
 // Request interface extensions are now handled in src/types/express.d.ts
 
 export interface AuditContext {
@@ -158,11 +158,20 @@ export class AuditService {
   }
 
   static extractContextFromRequest(req: Request): AuditContext {
+    const extendedReq = req as Request & {
+      user?: { id?: number; email?: string };
+      validatedIp?: string;
+    };
     return {
-      userId: req.user?.id?.toString(),
-      userEmail: req.user?.email,
+      userId: extendedReq.user?.id?.toString(),
+      userEmail: extendedReq.user?.email,
       ipAddress:
-        req.validatedIp || req.ip || req.connection.remoteAddress || "unknown",
+        extendedReq.validatedIp ||
+        req.ip ||
+        req.socket?.remoteAddress ||
+        req.headers["x-forwarded-for"]?.toString().split(",")[0]?.trim() ||
+        req.headers["x-real-ip"]?.toString() ||
+        "unknown",
       userAgent: req.get("User-Agent") || "unknown",
       sessionId: req.headers["x-session-id"] as string,
     };

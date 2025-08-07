@@ -30,6 +30,7 @@ export enum PermissionResource {
   SUBSCRIPTIONS = "subscriptions",
   FRAUD_DETECTION = "fraud_detection",
   ROLES = "roles", // New dedicated roles resource
+  CONFIGURATION = "configuration",
 }
 
 @Entity("permissions")
