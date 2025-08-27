@@ -13,7 +13,9 @@
     "test:coverage": "jest --coverage",
     "migration:run": "npx typeorm-ts-node-commonjs migration:run -d src/config/db.ts",
     "validate:openapi": "node scripts/validate-openapi.js",
-    "init-rbac": "ts-node src/scripts/initializeRBAC.ts"
+    "init-rbac": "ts-node src/scripts/initializeRBAC.ts",
+    "init-config": "ts-node src/scripts/initializeConfigurations.ts",
+    "test-config": "ts-node src/scripts/testConfigurationSystem.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.777.0",

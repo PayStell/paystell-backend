@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import app from "./app";
 import AppDataSource from "./config/db";
+import { configurationService } from "./services/ConfigurationService";
 import adaptiveRateLimitService from "./services/adaptiveRateLimitService";
 
 async function main() {
@@ -8,7 +9,14 @@ async function main() {
     // Initialize the database connection
     await AppDataSource.initialize();
     console.log("✅ Database connected successfully");
+
+    // Initialize configuration service
+    await configurationService.initialize();
+    console.log("✅ Configuration service initialized successfully");
+
+    // Start adaptive rate limit adjustment
     adaptiveRateLimitService.startAdjustment();
+
     // Start the server
     const PORT = process.env.PORT || 4000;
     const server = app.listen(PORT, () => {
@@ -35,7 +43,7 @@ async function main() {
     } else {
       console.error(error);
     }
-    process.exit(1); // Exit the process if the database fails to initialize
+    process.exit(1);
   }
 }
 
@@ -45,7 +53,6 @@ process.on("uncaughtException", (error) => {
   process.exit(1);
 });
 
-// Handle unhandled promise rejections
 process.on("unhandledRejection", (reason, promise) => {
   console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
   process.exit(1);

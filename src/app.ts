@@ -40,6 +40,10 @@ import logger from "./utils/logger";
 import { oauthConfig } from "./config/auth0Config";
 import { auth } from "express-openid-connect";
 import { auditMiddleware } from "./middlewares/auditMiddleware";
+import {
+  configurationMiddleware,
+  environmentConfigMiddleware,
+} from "./middlewares/configurationMiddleware";
 import routes from "./routes";
 import intelligentRateLimiter from "./middleware/rateLimiter";
 import rateLimitMonitoringService from "./services/rateLimitMonitoring.service";
@@ -122,6 +126,10 @@ try {
 // Add audit middleware after auth middleware but before routes
 app.use(auditMiddleware);
 
+// Add configuration middleware
+app.use(configurationMiddleware);
+app.use(environmentConfigMiddleware);
+
 // Swagger UI setup
 app.use(
   "/api-docs",
@@ -154,6 +162,10 @@ app.use("/api/v1/stellar", stellarContractRoutes);
 app.use("/token", tokenRoutes);
 app.use("/payment", paymentRouter);
 app.use("/subscriptions", subscriptionRouter);
+
+// Configuration routes
+import configurationRoutes from "./routes/configurationRoutes";
+app.use("/api/config", configurationRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/", routes);
 
