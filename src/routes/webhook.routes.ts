@@ -6,10 +6,26 @@ import {
   asyncHandler,
 } from "../middlewares/merchantAuth";
 import { WebhookController } from "../controllers/webhook.controller";
+import { WebhookService } from "../services/webhook.service";
+import { MerchantAuthService } from "../services/merchant.service";
+import { WebhookNotificationService } from "../services/webhookNotification.service";
+import { CryptoGeneratorService } from "../services/cryptoGenerator.service";
 
 const router = express.Router();
 const merchantController = new MerchantController();
-const webhookController = new WebhookController();
+const webhookService = new WebhookService();
+const merchantAuthService = new MerchantAuthService();
+const cryptoGeneratorService = new CryptoGeneratorService();
+const webhookNotificationService = new WebhookNotificationService(
+  merchantAuthService,
+  cryptoGeneratorService
+);
+
+const webhookController = new WebhookController(
+  webhookService,
+  merchantAuthService,
+  webhookNotificationService
+);
 
 // router.use(webhookRateLimiter)
 
