@@ -188,43 +188,50 @@ router.get("/dependencies", async (_req, res) => {
     timestamp: Date.now(),
   };
 
+  // Check Stellar
   try {
-    // Stellar
     const stellarStart = Date.now();
     const stellarResponse = await fetch(stellarConfig.STELLAR_HORIZON_URL);
     healthcheck.details.stellarLatencyMs = Date.now() - stellarStart;
     if (!stellarResponse.ok) {
-      throw new Error(`Stellar API returned ${stellarResponse.status}`);
+      healthcheck.dependencies.stellar = "FAIL";
     }
+  } catch {
+    healthcheck.dependencies.stellar = "FAIL";
+  }
 
-    // Redis
+  // Check Redis
+  try {
     const redisStart = Date.now();
     const pingResult = await redisClient.ping();
     healthcheck.details.redisLatencyMs = Date.now() - redisStart;
     if (pingResult !== "PONG") {
-      throw new Error("Redis ping failed");
+      healthcheck.dependencies.redis = "FAIL";
     }
+  } catch {
+    healthcheck.dependencies.redis = "FAIL";
+  }
 
-    // Database
+  // Check Database
+  try {
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
     }
     const dbStart = Date.now();
     await AppDataSource.query("SELECT 1");
     healthcheck.details.dbLatencyMs = Date.now() - dbStart;
-
-    res.status(200).json(healthcheck);
-  } catch (error) {
-    healthcheck.message =
-      error instanceof Error ? error.message : "Dependencies check failed";
-    // Mark failing dependency
-    const msg = (error as Error)?.message || "";
-    if (msg.includes("Stellar")) healthcheck.dependencies.stellar = "FAIL";
-    if (msg.includes("Redis")) healthcheck.dependencies.redis = "FAIL";
-    if (msg.toLowerCase().includes("db") || msg.toLowerCase().includes("query"))
-      healthcheck.dependencies.database = "FAIL";
-    res.status(503).json(healthcheck);
+  } catch {
+    healthcheck.dependencies.database = "FAIL";
   }
+
+  const anyFail = Object.values(healthcheck.dependencies).some((s) => s === "FAIL");
+  if (anyFail) {
+    healthcheck.message = "One or more dependencies are unhealthy";
+    res.status(503).json(healthcheck);
+    return;
+  }
+
+  res.status(200).json(healthcheck);
 });
 
 // System resource usage health

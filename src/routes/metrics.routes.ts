@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { metricsService } from "../services/MetricsService";
+import type { Aggregation } from "../services/MetricsService";
 
 const router = Router();
 
@@ -45,13 +46,22 @@ router.get("/summary", async (_req, res) => {
  *           default: avg
  */
 router.get("/historical", (req, res) => {
-  const { metric, windowMinutes, aggregation } = req.query as Record<string, string>;
+  const { metric, windowMinutes, aggregation } = req.query as Record<string, string | undefined>;
   if (!metric) {
     res.status(400).json({ error: "metric is required" });
     return;
   }
-  const window = Number(windowMinutes || 60);
-  const agg = (aggregation as any) || "avg";
+  const window = Number(windowMinutes ?? 60);
+  if (!Number.isFinite(window) || window <= 0) {
+    res.status(400).json({ error: "windowMinutes must be a positive number" });
+    return;
+  }
+  const allowed: Aggregation[] = ["avg", "min", "max", "p95"];
+  const agg = (aggregation as Aggregation) ?? "avg";
+  if (!allowed.includes(agg)) {
+    res.status(400).json({ error: `aggregation must be one of ${allowed.join(", ")}` });
+    return;
+  }
   const result = metricsService.getHistorical(metric, window, agg);
   res.json(result);
 });
