@@ -13,7 +13,7 @@ export type Numeric = number;
 
 type TimeSeriesPoint = { ts: number; value: Numeric };
 
-type Aggregation = "avg" | "min" | "max" | "p95";
+export type Aggregation = "avg" | "min" | "max" | "p95";
 
 type RouteKey = string; // `${method} ${route}`
 
@@ -143,10 +143,11 @@ class MetricsService {
 
     // Optional disk metrics via dynamic import
     try {
-      // @ts-ignore - optional dependency
-      const mod = await import("check-disk-space");
-      const checkDiskSpace = (mod as any).default || mod;
-      const disk = await checkDiskSpace(process.platform === "win32" ? "C:" : "/");
+      // Optional dependency: present in production, absent in some dev/CI envs
+      type CheckDiskSpaceModule = { default: (path: string) => Promise<{ free: number; size: number }> };
+      const { default: checkDiskSpace } = (await import("check-disk-space")) as CheckDiskSpaceModule;
+      const mount = process.platform === "win32" ? "C:" : "/";
+      const disk = await checkDiskSpace(mount);
       resources.disk = { free: disk.free, size: disk.size };
     } catch (err) {
       // Not installed or failed; skip
@@ -180,11 +181,13 @@ class MetricsService {
       stellar: { status: "OK", latencyMs: 0 },
     };
 
+    const deadline = (ms: number) => new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), ms));
+
     // DB
     try {
       if (!AppDataSource.isInitialized) await AppDataSource.initialize();
       const dbStart = Date.now();
-      await AppDataSource.query("SELECT 1");
+      await Promise.race([AppDataSource.query("SELECT 1"), deadline(1500)]);
       status.database.latencyMs = Date.now() - dbStart;
       this.pushSeries("db_latency_ms", status.database.latencyMs);
       const rawDb = await configurationService.getConfig("METRICS_DB_LATENCY_THRESHOLD_MS", "500");
@@ -198,7 +201,7 @@ class MetricsService {
     // Redis
     try {
       const redisStart = Date.now();
-      const pingResult = await redisClient.ping();
+      const pingResult = await Promise.race([redisClient.ping(), deadline(800)]);
       status.redis.latencyMs = Date.now() - redisStart;
       this.pushSeries("redis_latency_ms", status.redis.latencyMs);
       if (pingResult !== "PONG") throw new Error("Redis ping failed");
@@ -210,7 +213,9 @@ class MetricsService {
     // Stellar
     try {
       const stellarStart = Date.now();
-      const resp = await fetch(stellarConfig.STELLAR_HORIZON_URL);
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), 1500);
+      const resp = await fetch(stellarConfig.STELLAR_HORIZON_URL, { signal: controller.signal }).finally(() => clearTimeout(t));
       status.stellar.latencyMs = Date.now() - stellarStart;
       this.pushSeries("stellar_latency_ms", status.stellar.latencyMs);
       if (!resp.ok) throw new Error(`Stellar ${resp.status}`);
@@ -301,6 +306,7 @@ class MetricsService {
     const lines: string[] = [];
 
     const push = (l: string) => lines.push(l);
+    const esc = (v: string) => v.replace(/\\/g, "\\\\").replace(/\"/g, "\\\"").replace(/\n/g, "\\n");
 
     // Gauges: CPU, memory
     push(`# HELP paystell_cpu_percent CPU usage percent`);
@@ -329,10 +335,22 @@ class MetricsService {
     push(`paystell_stellar_latency_ms ${snapshot.external.stellar.latencyMs}`);
 
     // Counters per route and latency p95
-    push(`# HELP paystell_api_request_total Total API requests by route/method/status`);
+    push(`# HELP paystell_api_request_total Total API requests by route/method`);
     push(`# TYPE paystell_api_request_total counter`);
+    // Additional metric families
+    push(`# HELP paystell_api_error_total Total API errors by route/method`);
+    push(`# TYPE paystell_api_error_total counter`);
+    push(`# HELP paystell_api_latency_ms_p95 95th percentile API latency in ms by route/method`);
+    push(`# TYPE paystell_api_latency_ms_p95 gauge`);
+    push(`# HELP paystell_api_latency_ms_avg Average API latency in ms by route/method`);
+    push(`# TYPE paystell_api_latency_ms_avg gauge`);
+
     for (const [key, data] of Object.entries(snapshot.requests.byRoute)) {
-      const [method, route] = key.split(" ");
+      const spaceIdx = key.indexOf(" ");
+      const methodRaw = spaceIdx > -1 ? key.slice(0, spaceIdx) : "GET";
+      const routeRaw = spaceIdx > -1 ? key.slice(spaceIdx + 1) : key;
+      const method = esc(methodRaw);
+      const route = esc(routeRaw);
       push(`paystell_api_request_total{route="${route}",method="${method}"} ${data.count}`);
       push(`paystell_api_error_total{route="${route}",method="${method}"} ${data.errorCount}`);
       push(`paystell_api_latency_ms_p95{route="${route}",method="${method}"} ${data.p95LatencyMs}`);
