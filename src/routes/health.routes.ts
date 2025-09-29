@@ -1,5 +1,9 @@
 import { Router } from "express";
 import AppDataSource from "../config/db";
+import { redisClient } from "../config/redisConfig";
+import stellarConfig from "../config/stellarConfig";
+import os from "os";
+import process from "process";
 
 const router = Router();
 
@@ -92,6 +96,7 @@ router.get("/db", async (_req, res) => {
   const healthcheck = {
     message: "OK",
     timestamp: Date.now(),
+    latencyMs: 0,
   };
 
   try {
@@ -99,7 +104,9 @@ router.get("/db", async (_req, res) => {
       await AppDataSource.initialize();
     }
 
+    const start = Date.now();
     await AppDataSource.query("SELECT 1");
+    healthcheck.latencyMs = Date.now() - start;
     res.status(200).json(healthcheck);
   } catch (error) {
     healthcheck.message =
@@ -170,22 +177,88 @@ router.get("/dependencies", async (_req, res) => {
     message: "OK",
     dependencies: {
       stellar: "OK",
+      redis: "OK",
+      database: "OK",
+    },
+    details: {
+      stellarLatencyMs: 0,
+      redisLatencyMs: 0,
+      dbLatencyMs: 0,
     },
     timestamp: Date.now(),
   };
 
   try {
-    const stellarResponse = await fetch("https://horizon-testnet.stellar.org/");
-
+    // Stellar
+    const stellarStart = Date.now();
+    const stellarResponse = await fetch(stellarConfig.STELLAR_HORIZON_URL);
+    healthcheck.details.stellarLatencyMs = Date.now() - stellarStart;
     if (!stellarResponse.ok) {
       throw new Error(`Stellar API returned ${stellarResponse.status}`);
     }
+
+    // Redis
+    const redisStart = Date.now();
+    const pingResult = await redisClient.ping();
+    healthcheck.details.redisLatencyMs = Date.now() - redisStart;
+    if (pingResult !== "PONG") {
+      throw new Error("Redis ping failed");
+    }
+
+    // Database
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
+    }
+    const dbStart = Date.now();
+    await AppDataSource.query("SELECT 1");
+    healthcheck.details.dbLatencyMs = Date.now() - dbStart;
+
     res.status(200).json(healthcheck);
   } catch (error) {
     healthcheck.message =
       error instanceof Error ? error.message : "Dependencies check failed";
-    healthcheck.dependencies.stellar = "FAIL";
+    // Mark failing dependency
+    const msg = (error as Error)?.message || "";
+    if (msg.includes("Stellar")) healthcheck.dependencies.stellar = "FAIL";
+    if (msg.includes("Redis")) healthcheck.dependencies.redis = "FAIL";
+    if (msg.toLowerCase().includes("db") || msg.toLowerCase().includes("query"))
+      healthcheck.dependencies.database = "FAIL";
     res.status(503).json(healthcheck);
+  }
+});
+
+// System resource usage health
+router.get("/system", async (_req, res) => {
+  try {
+    const memory = process.memoryUsage();
+    const uptimeSec = process.uptime();
+    const cpuUsage = process.cpuUsage();
+    const cores = os.cpus().length || 1;
+    const cpuPercent =
+      ((cpuUsage.user + cpuUsage.system) / 1000 /* to ms */) /
+      (uptimeSec * 1000 * cores);
+
+    res.status(200).json({
+      message: "OK",
+      timestamp: Date.now(),
+      resources: {
+        cpuPercent: Number((cpuPercent * 100).toFixed(2)),
+        memory: {
+          rss: memory.rss,
+          heapTotal: memory.heapTotal,
+          heapUsed: memory.heapUsed,
+          external: memory.external,
+        },
+        loadAvg: os.loadavg(),
+        uptimeSec,
+      },
+    });
+  } catch (error) {
+    res.status(503).json({
+      message:
+        error instanceof Error ? error.message : "Failed to get system metrics",
+      timestamp: Date.now(),
+    });
   }
 });
 
