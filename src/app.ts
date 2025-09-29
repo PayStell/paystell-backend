@@ -9,6 +9,7 @@ import morgan from "morgan";
 import cors from "cors";
 import swaggerUi from "swagger-ui-express";
 import { specs } from "./config/swagger";
+import { metricsMiddleware } from "./middlewares/metrics.middleware";
 
 // Route imports
 import sessionRouter from "./routes/session.routes";
@@ -26,6 +27,7 @@ import tokenRoutes from "./routes/tokenRoutes";
 import { paymentRouter } from "./routes/paymentRoutes";
 import { subscriptionRouter } from "./routes/subscriptionRoutes";
 import notificationRoutes from "./routes/notification.routes";
+import metricsRoutes from "./routes/metrics.routes";
 
 // Middleware imports
 import { globalRateLimiter } from "./middlewares/globalRateLimiter.middleware";
@@ -85,6 +87,7 @@ app.use(globalRateLimiter as RequestHandler);
 app.use(requestLogger as RequestHandler);
 app.use(intelligentRateLimiter);
 app.use(rateLimitMonitoringService.createRateLimitMonitoringMiddleware());
+app.use(metricsMiddleware as RequestHandler);
 
 // Add timeout configurations
 app.use((req, res, next) => {
@@ -168,6 +171,7 @@ import configurationRoutes from "./routes/configurationRoutes";
 app.use("/api/config", configurationRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/", routes);
+app.use("/metrics", metricsRoutes);
 
 // Error handling middleware
 const customErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
