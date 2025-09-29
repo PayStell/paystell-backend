@@ -82,7 +82,13 @@ class MetricsService {
   // Alerts
   private lastAlertSentAt: Map<string, number> = new Map();
   private minAlertIntervalMs = 10 * 60 * 1000; // 10 minutes
-
+  // Persist last known external status for accurate snapshots
+  private lastExternalStatus: ExternalStatus = {
+    database: { status: "OK", latencyMs: 0 },
+    redis: { status: "OK", latencyMs: 0 },
+    stellar: { status: "OK", latencyMs: 0 },
+  };
+  
   private constructor() {}
 
   static get instance(): MetricsService {
@@ -149,7 +155,7 @@ class MetricsService {
       const mount = process.platform === "win32" ? "C:" : "/";
       const disk = await checkDiskSpace(mount);
       resources.disk = { free: disk.free, size: disk.size };
-    } catch (err) {
+    } catch {
       // Not installed or failed; skip
     }
 
@@ -224,6 +230,7 @@ class MetricsService {
       this.triggerAlert("stellar_down", `Stellar check failed: ${(err as Error)?.message}`);
     }
 
+    this.lastExternalStatus = status;
     return status;
   }
 
@@ -252,11 +259,7 @@ class MetricsService {
         loadAvg: os.loadavg(),
         uptimeSec: process.uptime(),
       },
-      external: {
-        database: { status: "OK", latencyMs: this.getLatest("db_latency_ms") || 0 },
-        redis: { status: "OK", latencyMs: this.getLatest("redis_latency_ms") || 0 },
-        stellar: { status: "OK", latencyMs: this.getLatest("stellar_latency_ms") || 0 },
-      },
+      external: this.lastExternalStatus,
       requests: { total: this.totalRequests, byRoute, throughputRps: Number(throughputRps.toFixed(2)) },
     };
   }
@@ -306,7 +309,12 @@ class MetricsService {
     const lines: string[] = [];
 
     const push = (l: string) => lines.push(l);
-    const esc = (v: string) => v.replace(/\\/g, "\\\\").replace(/\"/g, "\\\"").replace(/\n/g, "\\n");
+    const esc = (v: string) =>
+      v
+        .replace(/\\/g, "\\\\")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, "\\n")
+        .replace(/\r/g, "\\r");
 
     // Gauges: CPU, memory
     push(`# HELP paystell_cpu_percent CPU usage percent`);
