@@ -12,7 +12,12 @@ export const handleFileUpload = asyncHandler(
       }
 
       const fileUrl = fileUploadService.getFileUrl(req.file.filename);
+
       req.body.fileUrl = fileUrl;
+
+      const metadata = { filename: req.file.filename, size: req.file.size };
+      req.body.fileMetadata = metadata;
+
       next();
     } catch (error) {
       return res.status(500).json({ error: (error as Error).message });
