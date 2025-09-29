@@ -1,10 +1,5 @@
 import cookieParser from "cookie-parser";
-import express, {
-  Request,
-  Response,
-  RequestHandler,
-  ErrorRequestHandler,
-} from "express";
+import express, { Request, Response, RequestHandler, ErrorRequestHandler } from "express";
 import morgan from "morgan";
 import cors from "cors";
 import swaggerUi from "swagger-ui-express";
@@ -26,34 +21,39 @@ import tokenRoutes from "./routes/tokenRoutes";
 import { paymentRouter } from "./routes/paymentRoutes";
 import { subscriptionRouter } from "./routes/subscriptionRoutes";
 import fileUploadRoutes from "./routes/fileUpload.route";
+import notificationRoutes from "./routes/notification.routes";
+import configurationRoutes from "./routes/configurationRoutes";
+import routes from "./routes";
 
 // Middleware imports
 import { globalRateLimiter } from "./middlewares/globalRateLimiter.middleware";
 import { validateIpAddress } from "./middlewares/ipValidation.middleware";
 import { requestLogger } from "./middlewares/requestLogger.middleware";
+import { auditMiddleware } from "./middlewares/auditMiddleware";
+import {
+  configurationMiddleware,
+  environmentConfigMiddleware,
+} from "./middlewares/configurationMiddleware";
+import intelligentRateLimiter from "./middleware/rateLimiter";
 
 // Service imports
 import RateLimitMonitoringService from "./services/rateLimitMonitoring.service";
+import rateLimitMonitoringService from "./services/rateLimitMonitoring.service";
 import { startExpiredSessionCleanupCronJobs } from "./utils/schedular";
 import { subscriptionScheduler } from "./utils/subscriptionScheduler";
 import logger from "./utils/logger";
 import { oauthConfig } from "./config/auth0Config";
 import { auth } from "express-openid-connect";
-import { auditMiddleware } from "./middlewares/auditMiddleware";
-import routes from "./routes";
 
 // Initialize express app
 const app = express();
 
 // Apply middleware
-// Apply global middlewares
 app.use(cookieParser());
 app.use(morgan("dev"));
-
-// CORS configuration
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:3001"], // Add your frontend URLs
+    origin: ["http://localhost:3000", "http://localhost:3001"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: [
@@ -66,38 +66,30 @@ app.use(
       "Access-Control-Request-Headers",
     ],
     exposedHeaders: ["Authorization"],
-    maxAge: 86400, // 24 hours
+    maxAge: 86400,
   }),
 );
-
 app.use(express.json());
 app.use(validateIpAddress as RequestHandler);
-app.use(
-  RateLimitMonitoringService.createRateLimitMonitoringMiddleware() as RequestHandler,
-);
+app.use(RateLimitMonitoringService.createRateLimitMonitoringMiddleware() as RequestHandler);
 app.use(globalRateLimiter as RequestHandler);
 app.use(requestLogger as RequestHandler);
+app.use(intelligentRateLimiter);
+app.use(rateLimitMonitoringService.createRateLimitMonitoringMiddleware());
 
-// Add timeout configurations
+// Timeout middleware
 app.use((req, res, next) => {
-  req.setTimeout(30000); // 30 seconds
-  res.setTimeout(30000); // 30 seconds
+  req.setTimeout(30000);
+  res.setTimeout(30000);
   next();
 });
 
 // Start scheduled jobs
-startExpiredSessionCleanupCronJobs();
-
-// Start subscription scheduler
-subscriptionScheduler.start();
 try {
   startExpiredSessionCleanupCronJobs();
   subscriptionScheduler.start();
 } catch (error) {
-  console.error(
-    "❌ Error starting cron jobs or subscription scheduler:",
-    error,
-  );
+  console.error("❌ Error starting cron jobs or subscription scheduler:", error);
   process.exit(1);
 }
 
@@ -108,6 +100,7 @@ console.log("Auth0 Config:", {
   clientID: oauthConfig.clientID,
   issuerBaseURL: oauthConfig.issuerBaseURL,
 });
+
 try {
   app.use(auth(oauthConfig));
 } catch (error) {
@@ -115,8 +108,10 @@ try {
   process.exit(1);
 }
 
-// Add audit middleware after auth middleware but before routes
+// Audit and configuration middleware
 app.use(auditMiddleware);
+app.use(configurationMiddleware);
+app.use(environmentConfigMiddleware);
 
 // Swagger UI setup
 app.use(
@@ -135,7 +130,7 @@ app.use(
   }),
 );
 
-// Define routes
+// Routes
 app.use("/health", healthRouter);
 app.use("/session", sessionRouter);
 app.use("/email-verification", emailVerification);
@@ -150,23 +145,22 @@ app.use("/api/v1/stellar", stellarContractRoutes);
 app.use("/token", tokenRoutes);
 app.use("/payment", paymentRouter);
 app.use("/subscriptions", subscriptionRouter);
-app.use("/", routes);
+app.use("/api/config", configurationRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/files", fileUploadRoutes);
+app.use("/", routes);
+
 // Error handling middleware
 const customErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   console.error("Unhandled error:", err);
   res.status(500).json({
     error: "Internal Server Error",
-    message:
-      process.env.NODE_ENV === "development"
-        ? err.message
-        : "Something went wrong",
+    message: process.env.NODE_ENV === "development" ? err.message : "Something went wrong",
   });
 };
-
 app.use(customErrorHandler);
 
-// Handle 404 errors
+// 404 handler
 app.use(((req: Request, res: Response) => {
   console.log("404 - Route not found:", req.originalUrl);
   res.status(404).json({
