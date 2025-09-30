@@ -23,10 +23,10 @@ export class WebhookController {
 
   async handleWebhook(req: Request, res: Response): Promise<Response> {
     try {
-      const { signature } = req.headers;
+      const sig = req.headers?.signature;
       const merchantId = req.params.merchantId;
 
-      if (!signature || !merchantId) {
+      if (!sig || !merchantId) {
         return res.status(400).json({
           status: "error",
           code: "MISSING_PARAMETERS",
@@ -44,7 +44,7 @@ export class WebhookController {
         });
       }
 
-  const webhook = await this.webhookService.getMerchantWebhook(merchantId);
+      const webhook = await this.webhookService.getMerchantWebhook(merchantId);
       if (!webhook) {
         return res.status(404).json({
           status: "error",
