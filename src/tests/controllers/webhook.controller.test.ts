@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { WebhookController } from "../../controllers/webhook.controller";
-import { WebhookService } from "../../services/webhook.service";
-import { MerchantAuthService } from "../../services/merchant.service";
+import { IWebhookService } from "../../interfaces/IWebhookService";
+import { IMerchantAuthService } from "../../interfaces/IMerchantAuthService";
 import {
   Merchant,
   MerchantWebhook,
@@ -9,15 +9,9 @@ import {
   WebhookPayload,
   TransactionStatus,
 } from "../../interfaces/webhook.interfaces";
-import { WebhookNotificationService } from "../../services/webhookNotification.service";
-import { CryptoGeneratorService } from "../../services/cryptoGenerator.service";
+import { IWebhookNotificationService } from "../../interfaces/IWebhookNotificationService";
 
-// Mock external dependencies
-jest.mock("../../services/merchant.service");
-jest.mock("../../services/webhook.service");
-jest.mock("../../services/webhookNotification.service");
-jest.mock("../../services/cryptoGenerator.service");
-jest.mock("axios");
+// No need to jest.mock service classes, use plain object mocks
 
 describe("WebhookController", () => {
   let webhookController: WebhookController;
@@ -25,10 +19,9 @@ describe("WebhookController", () => {
   let mockResponse: Partial<Response>;
   let responseJson: jest.Mock;
   let responseStatus: jest.Mock;
-  let merchantAuthService: MerchantAuthService;
-  let webhookService: WebhookService;
-  let cryptoGeneratorService: CryptoGeneratorService;
-  let webhookNotificationService: WebhookNotificationService;
+  let merchantAuthService: jest.Mocked<IMerchantAuthService>;
+  let webhookService: jest.Mocked<IWebhookService>;
+  let webhookNotificationService: jest.Mocked<IWebhookNotificationService>;
 
   const mockStellarPayload: StellarWebhookPayload = {
     id: "webhook-123",
@@ -66,8 +59,15 @@ describe("WebhookController", () => {
     name: "Test Merchant",
     email: "test@merchant.com",
     isActive: true,
+    business_name: null,
+    business_description: null,
+    business_address: null,
+    business_phone: null,
+    business_email: null,
+    business_logo_url: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    webhooks: [],
   };
 
   const mockMerchantWebhook: MerchantWebhook = {
@@ -94,24 +94,19 @@ describe("WebhookController", () => {
       json: responseJson,
     };
 
-    merchantAuthService = new MerchantAuthService();
-    webhookService = new WebhookService();
-    cryptoGeneratorService = new CryptoGeneratorService();
-    webhookNotificationService = new WebhookNotificationService(
-      merchantAuthService,
-      cryptoGeneratorService,
-    );
+    merchantAuthService = {
+      getMerchantById: jest.fn().mockResolvedValue(mockMerchant),
+    };
+    webhookService = {
+      getMerchantWebhook: jest.fn().mockResolvedValue(mockMerchantWebhook),
+    };
+    webhookNotificationService = {
+      sendWebhookNotification: jest.fn().mockResolvedValue(true),
+    };
     webhookController = new WebhookController(
       webhookService,
       merchantAuthService,
       webhookNotificationService,
-    );
-
-    (merchantAuthService.getMerchantById as jest.Mock).mockResolvedValue(
-      mockMerchant,
-    );
-    (webhookService.getMerchantWebhook as jest.Mock).mockResolvedValue(
-      mockMerchantWebhook,
     );
   });
 
