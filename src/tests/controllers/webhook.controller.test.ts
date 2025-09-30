@@ -87,6 +87,7 @@ describe("WebhookController", () => {
 
     mockRequest = {
       body: mockStellarPayload,
+      params: { merchantId: "merchant-123" },
     };
 
     mockResponse = {
