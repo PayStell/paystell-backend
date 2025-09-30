@@ -104,6 +104,7 @@ describe("WebhookController", () => {
     };
     webhookNotificationService = {
       sendWebhookNotification: jest.fn().mockResolvedValue(true),
+      notifyPaymentUpdate: jest.fn().mockResolvedValue(true),
     };
     webhookController = new WebhookController(
       webhookService,
