@@ -175,16 +175,19 @@ export const configCacheMiddleware = async (
     // Extend the config object with caching
     if (req.config) {
       const originalGet = req.config.get;
-      req.config.get = async (key: string, defaultValue?: string) => {
+      req.config.get = async (
+        key: string,
+        defaultValue?: string
+      ): Promise<string | number | boolean | Record<string, unknown> | null> => {
         // Check request cache first
         if (requestCache.has(key)) {
-          return requestCache.get(key);
+          return requestCache.get(key) as string | number | boolean | Record<string, unknown> | null;
         }
 
         // Get from service and cache
         const value = await originalGet(key, defaultValue);
         requestCache.set(key, value);
-        return value;
+        return value as string | number | boolean | Record<string, unknown> | null;
       };
     }
 
