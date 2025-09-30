@@ -46,6 +46,11 @@ paystell-backend/
 └── tsconfig.json # TypeScript configuration
 ```
 
+
+## 🧩 Manual Dependency Injection
+
+This project uses manual dependency injection for controllers and services. See [docs/MANUAL_DEPENDENCY_INJECTION.md](docs/MANUAL_DEPENDENCY_INJECTION.md) for details on how dependencies are passed, how to add new services, and the benefits of this approach.
+
 ## 🛠️ Technologies
 
 - Backend: Node.js, TypeScript, Express
