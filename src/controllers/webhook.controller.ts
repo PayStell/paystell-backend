@@ -44,6 +44,14 @@ export class WebhookController {
         });
       }
 
+      if (!merchant.isActive) {
+        return res.status(404).json({
+          status: "error",
+          code: "MERCHANT_INACTIVE",
+          message: "Merchant is inactive",
+        });
+      }
+
       const webhook = await this.webhookService.getMerchantWebhook(merchantId);
       if (!webhook) {
         return res.status(404).json({
