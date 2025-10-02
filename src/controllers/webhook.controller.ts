@@ -3,6 +3,8 @@ import { WebhookPayload } from "../interfaces/webhook.interfaces";
 import { IMerchantAuthService } from "../interfaces/IMerchantAuthService";
 import { IWebhookService } from "../interfaces/IWebhookService";
 import { Request, Response } from "express";
+import { validateAndNormalizeWebhookPayload } from "../validators/webhook.validators";
+import { ZodError } from "zod";
 
 // Dependencies are now injected manually from the application entry point
 
@@ -45,7 +47,7 @@ export class WebhookController {
       }
 
       if (!merchant.isActive) {
-        return res.status(404).json({
+        return res.status(403).json({
           status: "error",
           code: "MERCHANT_INACTIVE",
           message: "Merchant is inactive",
@@ -61,11 +63,29 @@ export class WebhookController {
         });
       }
 
-      // Verify signature
-      const payload = req.body as WebhookPayload;
+      // Validate and normalize the webhook payload
+      let validatedPayload: WebhookPayload;
+      try {
+        validatedPayload = validateAndNormalizeWebhookPayload(req.body);
+      } catch (validationError) {
+        if (validationError instanceof ZodError) {
+          return res.status(400).json({
+            status: "error",
+            code: "INVALID_PAYLOAD",
+            message: "Invalid webhook payload",
+            errors: validationError.errors.map((err) => ({
+              path: err.path.join("."),
+              message: err.message,
+            })),
+          });
+        }
+        throw validationError;
+      }
+
+      // Send webhook notification
       const isValid = await this.webhookNotificationService.sendWebhookNotification(
         webhook.url,
-        payload,
+        validatedPayload,
         merchantId,
       );
 
