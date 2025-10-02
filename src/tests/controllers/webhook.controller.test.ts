@@ -168,7 +168,7 @@ describe("WebhookController", () => {
       }
     });
 
-    it("should return 404 when merchant is not found", async () => {
+    it("should return 403 when merchant is not found", async () => {
       (merchantAuthService.getMerchantById as jest.Mock).mockResolvedValue(
         null,
       );
@@ -178,7 +178,7 @@ describe("WebhookController", () => {
         mockResponse as Response,
       );
 
-      expect(responseStatus).toHaveBeenCalledWith(404);
+      expect(responseStatus).toHaveBeenCalledWith(403);
       expect(responseJson).toHaveBeenCalledWith({
         code: "MERCHANT_NOT_FOUND",
         message: "Merchant not found",
