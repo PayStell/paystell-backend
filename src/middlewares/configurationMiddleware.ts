@@ -170,18 +170,22 @@ export const configCacheMiddleware = async (
 ): Promise<void> => {
   try {
     // Create a request-specific cache
-    const requestCache = new Map<string, unknown>();
+    const requestCache = new Map<
+      string,
+      string | number | boolean | Record<string, unknown> | null
+    >();
 
     // Extend the config object with caching
     if (req.config) {
       const originalGet = req.config.get;
       req.config.get = async (
         key: string,
-        defaultValue?: string
+        defaultValue?: string,
       ): Promise<string | number | boolean | Record<string, unknown> | null> => {
         // Check request cache first
-        if (requestCache.has(key)) {
-          return requestCache.get(key) as string | number | boolean | Record<string, unknown> | null;
+        const cached = requestCache.get(key);
+        if (cached !== undefined) {
+          return cached;
         }
 
         // Get from service and cache
