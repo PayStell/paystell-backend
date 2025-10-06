@@ -9,6 +9,7 @@ import morgan from "morgan";
 import cors from "cors";
 import swaggerUi from "swagger-ui-express";
 import { specs } from "./config/swagger";
+import { metricsMiddleware } from "./middlewares/metrics.middleware";
 
 // Route imports
 import sessionRouter from "./routes/session.routes";
@@ -25,6 +26,8 @@ import stellarContractRoutes from "./routes/stellar-contract.routes";
 import tokenRoutes from "./routes/tokenRoutes";
 import { paymentRouter } from "./routes/paymentRoutes";
 import { subscriptionRouter } from "./routes/subscriptionRoutes";
+import notificationRoutes from "./routes/notification.routes";
+import metricsRoutes from "./routes/metrics.routes";
 
 // Middleware imports
 import { globalRateLimiter } from "./middlewares/globalRateLimiter.middleware";
@@ -39,7 +42,13 @@ import logger from "./utils/logger";
 import { oauthConfig } from "./config/auth0Config";
 import { auth } from "express-openid-connect";
 import { auditMiddleware } from "./middlewares/auditMiddleware";
+import {
+  configurationMiddleware,
+  environmentConfigMiddleware,
+} from "./middlewares/configurationMiddleware";
 import routes from "./routes";
+import intelligentRateLimiter from "./middleware/rateLimiter";
+import rateLimitMonitoringService from "./services/rateLimitMonitoring.service";
 
 // Initialize express app
 const app = express();
@@ -76,6 +85,9 @@ app.use(
 );
 app.use(globalRateLimiter as RequestHandler);
 app.use(requestLogger as RequestHandler);
+app.use(intelligentRateLimiter);
+app.use(rateLimitMonitoringService.createRateLimitMonitoringMiddleware());
+app.use(metricsMiddleware as RequestHandler);
 
 // Add timeout configurations
 app.use((req, res, next) => {
@@ -117,6 +129,10 @@ try {
 // Add audit middleware after auth middleware but before routes
 app.use(auditMiddleware);
 
+// Add configuration middleware
+app.use(configurationMiddleware);
+app.use(environmentConfigMiddleware);
+
 // Swagger UI setup
 app.use(
   "/api-docs",
@@ -149,7 +165,13 @@ app.use("/api/v1/stellar", stellarContractRoutes);
 app.use("/token", tokenRoutes);
 app.use("/payment", paymentRouter);
 app.use("/subscriptions", subscriptionRouter);
+
+// Configuration routes
+import configurationRoutes from "./routes/configurationRoutes";
+app.use("/api/config", configurationRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/", routes);
+app.use("/metrics", metricsRoutes);
 
 // Error handling middleware
 const customErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {

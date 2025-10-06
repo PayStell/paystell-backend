@@ -14,6 +14,12 @@ export class CreateMerchantDTO {
   @IsEmail()
   email: string;
 
+  @IsString()
+  apiKey: string;
+
+  @IsString()
+  secret: string;
+
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;

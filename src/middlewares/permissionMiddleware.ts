@@ -3,15 +3,10 @@ import { getRBACService } from "../services/RBACService";
 import { PermissionResource, PermissionAction } from "../entities/Permission";
 import { UserRole } from "../enums/UserRole";
 import { MerchantEntity } from "../entities/Merchant.entity";
+import { UserResponse } from "src/interfaces/auth.interfaces";
 
 export interface AuthenticatedRequest extends Request {
-  user?: {
-    id: number;
-    email: string;
-    tokenExp?: number;
-    jti?: string;
-    role?: UserRole;
-  };
+  user?: UserResponse;
   merchant?: MerchantEntity;
 }
 
