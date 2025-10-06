@@ -46,7 +46,10 @@ router.get("/summary", async (_req, res) => {
  *           default: avg
  */
 router.get("/historical", (req, res) => {
-  const { metric, windowMinutes, aggregation } = req.query as Record<string, string | undefined>;
+  const { metric, windowMinutes, aggregation } = req.query as Record<
+    string,
+    string | undefined
+  >;
   if (!metric) {
     res.status(400).json({ error: "metric is required" });
     return;
@@ -59,7 +62,9 @@ router.get("/historical", (req, res) => {
   const allowed: Aggregation[] = ["avg", "min", "max", "p95"];
   const agg = (aggregation as Aggregation) ?? "avg";
   if (!allowed.includes(agg)) {
-    res.status(400).json({ error: `aggregation must be one of ${allowed.join(", ")}` });
+    res
+      .status(400)
+      .json({ error: `aggregation must be one of ${allowed.join(", ")}` });
     return;
   }
   const result = metricsService.getHistorical(metric, window, agg);

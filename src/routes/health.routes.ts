@@ -224,7 +224,9 @@ router.get("/dependencies", async (_req, res) => {
     healthcheck.dependencies.database = "FAIL";
   }
 
-  const anyFail = Object.values(healthcheck.dependencies).some((s) => s === "FAIL");
+  const anyFail = Object.values(healthcheck.dependencies).some(
+    (s) => s === "FAIL",
+  );
   if (anyFail) {
     healthcheck.message = "One or more dependencies are unhealthy";
     res.status(503).json(healthcheck);
@@ -242,7 +244,8 @@ router.get("/system", async (_req, res) => {
     const cpuUsage = process.cpuUsage();
     const cores = os.cpus().length || 1;
     const cpuPercent =
-      ((cpuUsage.user + cpuUsage.system) / 1000 /* to ms */) /
+      (cpuUsage.user + cpuUsage.system) /
+      1000 /* to ms */ /
       (uptimeSec * 1000 * cores);
 
     res.status(200).json({

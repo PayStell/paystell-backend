@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { metricsService } from "../services/MetricsService";
 
-export function metricsMiddleware(req: Request, res: Response, next: NextFunction) {
+export function metricsMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   const start = process.hrtime();
   res.on("finish", () => {
     try {
