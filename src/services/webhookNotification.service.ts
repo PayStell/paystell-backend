@@ -7,21 +7,16 @@ import { validateWebhookUrl } from "../validators/webhook.validators";
 import { MerchantAuthService } from "./merchant.service";
 import { CryptoGeneratorService } from "./cryptoGenerator.service";
 
-const defaultMerchantAuthService = new MerchantAuthService();
-const defaultCryptoGeneratorService = new CryptoGeneratorService();
-
 export class WebhookNotificationService {
   private merchantAuthService: MerchantAuthService;
   private cryptoGeneratorService: CryptoGeneratorService;
 
   constructor(
-    merchantAuthService?: MerchantAuthService,
-    cryptoGeneratorService?: CryptoGeneratorService,
+    merchantAuthService: MerchantAuthService,
+    cryptoGeneratorService: CryptoGeneratorService,
   ) {
-    this.merchantAuthService =
-      merchantAuthService ?? defaultMerchantAuthService;
-    this.cryptoGeneratorService =
-      cryptoGeneratorService ?? defaultCryptoGeneratorService;
+    this.merchantAuthService = merchantAuthService;
+    this.cryptoGeneratorService = cryptoGeneratorService;
   }
 
   async sendWebhookNotification(

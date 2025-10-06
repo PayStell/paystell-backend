@@ -198,7 +198,7 @@ export const configCacheMiddleware = async (
         // Get from service and cache
         const value = await originalGet(key, defaultValue);
         requestCache.set(key, value);
-        return value;
+        return value as string | number | boolean | Record<string, unknown> | null;
       };
       req.config.get = cachedGet;
     }

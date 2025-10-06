@@ -1,42 +1,34 @@
-import { WebhookNotificationService } from "../services/webhookNotification.service";
+import { IWebhookNotificationService } from "../interfaces/IWebhookNotificationService";
 import { WebhookPayload } from "../interfaces/webhook.interfaces";
-import { MerchantAuthService } from "../services/merchant.service";
-import { WebhookService } from "../services/webhook.service";
+import { IMerchantAuthService } from "../interfaces/IMerchantAuthService";
+import { IWebhookService } from "../interfaces/IWebhookService";
 import { Request, Response } from "express";
-import { CryptoGeneratorService } from "../services/cryptoGenerator.service";
+import { validateAndNormalizeWebhookPayload } from "../validators/webhook.validators";
+import { ZodError } from "zod";
 
-// TODO: this initialization needs to be moved to dependency injection
-const defaultWebhookService = new WebhookService();
-const defaultMerchantAuthService = new MerchantAuthService();
-const defaultCryptoGeneratorService = new CryptoGeneratorService();
-const defaultWebhookNotificationService = new WebhookNotificationService(
-  defaultMerchantAuthService,
-  defaultCryptoGeneratorService,
-);
+// Dependencies are now injected manually from the application entry point
 
 export class WebhookController {
-  private webhookService: WebhookService;
-  private webhookNotificationService: WebhookNotificationService;
-  private merchantAuthService: MerchantAuthService;
+  private webhookService: IWebhookService;
+  private webhookNotificationService: IWebhookNotificationService;
+  private merchantAuthService: IMerchantAuthService;
 
   constructor(
-    webhookService?: WebhookService,
-    merchantAuthService?: MerchantAuthService,
-    webhookNotificationService?: WebhookNotificationService,
+    webhookService: IWebhookService,
+    merchantAuthService: IMerchantAuthService,
+    webhookNotificationService: IWebhookNotificationService,
   ) {
-    this.webhookService = webhookService || defaultWebhookService;
-    this.merchantAuthService =
-      merchantAuthService || defaultMerchantAuthService;
-    this.webhookNotificationService =
-      webhookNotificationService || defaultWebhookNotificationService;
+    this.webhookService = webhookService;
+    this.merchantAuthService = merchantAuthService;
+    this.webhookNotificationService = webhookNotificationService;
   }
 
   async handleWebhook(req: Request, res: Response): Promise<Response> {
     try {
-      const { signature } = req.headers;
+      const sig = req.headers?.signature;
       const merchantId = req.params.merchantId;
 
-      if (!signature || !merchantId) {
+      if (!sig || !merchantId) {
         return res.status(400).json({
           status: "error",
           code: "MISSING_PARAMETERS",
@@ -45,13 +37,20 @@ export class WebhookController {
       }
 
       // Get merchant and webhook
-      const merchant =
-        await this.merchantAuthService.getMerchantById(merchantId);
+      const merchant = await this.merchantAuthService.getMerchantById(merchantId);
       if (!merchant) {
         return res.status(404).json({
           status: "error",
           code: "MERCHANT_NOT_FOUND",
           message: "Merchant not found",
+        });
+      }
+
+      if (!merchant.isActive) {
+        return res.status(403).json({
+          status: "error",
+          code: "MERCHANT_INACTIVE",
+          message: "Merchant is inactive",
         });
       }
 
@@ -64,14 +63,31 @@ export class WebhookController {
         });
       }
 
-      // Verify signature
-      const payload = req.body as WebhookPayload;
-      const isValid =
-        await this.webhookNotificationService.sendWebhookNotification(
-          webhook.url,
-          payload,
-          merchantId,
-        );
+      // Validate and normalize the webhook payload
+      let validatedPayload: WebhookPayload;
+      try {
+        validatedPayload = validateAndNormalizeWebhookPayload(req.body);
+      } catch (validationError) {
+        if (validationError instanceof ZodError) {
+          return res.status(400).json({
+            status: "error",
+            code: "INVALID_PAYLOAD",
+            message: "Invalid webhook payload",
+            errors: validationError.errors.map((err) => ({
+              path: err.path.join("."),
+              message: err.message,
+            })),
+          });
+        }
+        throw validationError;
+      }
+
+      // Send webhook notification
+      const isValid = await this.webhookNotificationService.sendWebhookNotification(
+        webhook.url,
+        validatedPayload,
+        merchantId,
+      );
 
       if (!isValid) {
         return res.status(401).json({
@@ -107,8 +123,7 @@ export class WebhookController {
       }
 
       // Get merchant and webhook
-      const merchant =
-        await this.merchantAuthService.getMerchantById(merchantId);
+      const merchant = await this.merchantAuthService.getMerchantById(merchantId);
       if (!merchant) {
         return res.status(404).json({
           status: "error",
@@ -144,12 +159,11 @@ export class WebhookController {
       };
 
       // Send test webhook
-      const success =
-        await this.webhookNotificationService.sendWebhookNotification(
-          webhook.url,
-          testPayload,
-          merchantId,
-        );
+      const success = await this.webhookNotificationService.sendWebhookNotification(
+        webhook.url,
+        testPayload,
+        merchantId,
+      );
 
       if (!success) {
         return res.status(500).json({
