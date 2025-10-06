@@ -4,6 +4,12 @@ import logger from "../utils/logger";
 
 // Configuration middleware interfaces are now in src/types/express.d.ts
 
+// Explicit function type for Request.config.get to ensure correct inference
+type ConfigGet = (
+  key: string,
+  defaultValue?: string,
+) => Promise<string | number | boolean | Record<string, unknown> | null>;
+
 /**
  * Middleware to inject configuration service into request object
  */
@@ -15,9 +21,10 @@ export const configurationMiddleware = async (
   try {
     // Inject configuration service into request
     req.config = {
-      get: async (key: string, defaultValue?: string) => {
-        return await configurationService.getConfig(key, defaultValue);
-      },
+      // Bind directly to avoid losing `this` and ensure exact return type
+      get: configurationService.getConfig.bind(
+        configurationService,
+      ) as ConfigGet,
       isFeatureEnabled: async (
         flagName: string,
         context?: {
@@ -177,8 +184,8 @@ export const configCacheMiddleware = async (
 
     // Extend the config object with caching
     if (req.config) {
-      const originalGet = req.config.get;
-      req.config.get = async (
+      const originalGet: ConfigGet = req.config.get as ConfigGet;
+      const cachedGet: ConfigGet = async (
         key: string,
         defaultValue?: string,
       ): Promise<string | number | boolean | Record<string, unknown> | null> => {
@@ -193,6 +200,7 @@ export const configCacheMiddleware = async (
         requestCache.set(key, value);
         return value;
       };
+      req.config.get = cachedGet;
     }
 
     next();
