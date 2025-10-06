@@ -16,14 +16,14 @@ type ConfigGet = (
 export const configurationMiddleware = async (
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> => {
   try {
     // Inject configuration service into request
     req.config = {
       // Bind directly to avoid losing `this` and ensure exact return type
       get: configurationService.getConfig.bind(
-        configurationService,
+        configurationService
       ) as ConfigGet,
       isFeatureEnabled: async (
         flagName: string,
@@ -31,11 +31,11 @@ export const configurationMiddleware = async (
           userId?: string;
           merchantId?: string;
           userRole?: string;
-        },
+        }
       ) => {
         const evaluation = await configurationService.evaluateFeatureFlag(
           flagName,
-          context,
+          context
         );
         return evaluation.isEnabled;
       },
@@ -55,7 +55,7 @@ export const validateRequiredConfigMiddleware = (requiredConfigs: string[]) => {
   return async (
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
   ): Promise<void> => {
     try {
       const missingConfigs: string[] = [];
@@ -94,7 +94,7 @@ export const featureFlagMiddleware = (flagName: string) => {
   return async (
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
   ): Promise<void> => {
     try {
       const context = {
@@ -109,7 +109,7 @@ export const featureFlagMiddleware = (flagName: string) => {
           userId: context.userId?.toString(),
           merchantId: context.merchantId,
           userRole: context.userRole?.toString(),
-        },
+        }
       );
 
       if (!evaluation.isEnabled) {
@@ -138,7 +138,7 @@ export const featureFlagMiddleware = (flagName: string) => {
 export const environmentConfigMiddleware = async (
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> => {
   try {
     // Inject environment-specific configurations
@@ -173,7 +173,7 @@ export const environmentConfigMiddleware = async (
 export const configCacheMiddleware = async (
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> => {
   try {
     // Create a request-specific cache
@@ -187,7 +187,7 @@ export const configCacheMiddleware = async (
       const originalGet: ConfigGet = req.config.get as ConfigGet;
       const cachedGet: ConfigGet = async (
         key: string,
-        defaultValue?: string,
+        defaultValue?: string
       ): Promise<string | number | boolean | Record<string, unknown> | null> => {
         // Check request cache first
         const cached = requestCache.get(key);
