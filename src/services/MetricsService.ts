@@ -54,7 +54,15 @@ interface MetricsSnapshot {
   external: ExternalStatus;
   requests: {
     total: number;
-    byRoute: Record<RouteKey, { count: number; errorCount: number; avgLatencyMs: number; p95LatencyMs: number }>;
+    byRoute: Record<
+      RouteKey,
+      {
+        count: number;
+        errorCount: number;
+        avgLatencyMs: number;
+        p95LatencyMs: number;
+      }
+    >;
     throughputRps: number; // rolling 60s
   };
 }
@@ -71,7 +79,10 @@ class MetricsService {
   private static _instance: MetricsService;
 
   // Request metrics
-  private routeCounters: Map<RouteKey, { count: number; errorCount: number; latencies: number[] }> = new Map();
+  private routeCounters: Map<
+    RouteKey,
+    { count: number; errorCount: number; latencies: number[] }
+  > = new Map();
   private totalRequests = 0;
   private lastRequestsTimestamps: number[] = []; // for throughput
 
@@ -88,11 +99,12 @@ class MetricsService {
     redis: { status: "OK", latencyMs: 0 },
     stellar: { status: "OK", latencyMs: 0 },
   };
-  
+
   private constructor() {}
 
   static get instance(): MetricsService {
-    if (!MetricsService._instance) MetricsService._instance = new MetricsService();
+    if (!MetricsService._instance)
+      MetricsService._instance = new MetricsService();
     return MetricsService._instance;
   }
 
@@ -104,7 +116,11 @@ class MetricsService {
     const status = res.statusCode;
     const key: RouteKey = `${method} ${route}`;
 
-    const entry = this.routeCounters.get(key) || { count: 0, errorCount: 0, latencies: [] };
+    const entry = this.routeCounters.get(key) || {
+      count: 0,
+      errorCount: 0,
+      latencies: [],
+    };
     entry.count += 1;
     if (status >= 500) entry.errorCount += 1;
     entry.latencies.push(durationMs);
@@ -116,16 +132,27 @@ class MetricsService {
     this.lastRequestsTimestamps.push(now);
     // keep only last 60s
     const cutoff = now - 60_000;
-    while (this.lastRequestsTimestamps.length && this.lastRequestsTimestamps[0] < cutoff) {
+    while (
+      this.lastRequestsTimestamps.length &&
+      this.lastRequestsTimestamps[0] < cutoff
+    ) {
       this.lastRequestsTimestamps.shift();
     }
 
     // Alert for slow request
-    this.maybeAlert("api_latency", durationMs, async () => {
-      const rawLatency = await configurationService.getConfig("METRICS_API_LATENCY_THRESHOLD_MS", "1000");
-      const threshold = Number(rawLatency ?? 1000);
-      return durationMs > threshold;
-    }, `High API latency: ${durationMs.toFixed(2)}ms for ${method} ${route}`);
+    this.maybeAlert(
+      "api_latency",
+      durationMs,
+      async () => {
+        const rawLatency = await configurationService.getConfig(
+          "METRICS_API_LATENCY_THRESHOLD_MS",
+          "1000",
+        );
+        const threshold = Number(rawLatency ?? 1000);
+        return durationMs > threshold;
+      },
+      `High API latency: ${durationMs.toFixed(2)}ms for ${method} ${route}`,
+    );
   }
 
   async collectSystemResources(): Promise<SystemResources> {
@@ -133,7 +160,9 @@ class MetricsService {
     const uptimeSec = process.uptime();
     const cpuUsage = process.cpuUsage();
     const cores = os.cpus().length || 1;
-    const cpuPercent = (((cpuUsage.user + cpuUsage.system) / 1000) / (uptimeSec * 1000 * cores)) * 100;
+    const cpuPercent =
+      ((cpuUsage.user + cpuUsage.system) / 1000 / (uptimeSec * 1000 * cores)) *
+      100;
 
     const resources: SystemResources = {
       cpuPercent: Number(cpuPercent.toFixed(2)),
@@ -150,8 +179,12 @@ class MetricsService {
     // Optional disk metrics via dynamic import
     try {
       // Optional dependency: present in production, absent in some dev/CI envs
-      type CheckDiskSpaceModule = { default: (path: string) => Promise<{ free: number; size: number }> };
-      const { default: checkDiskSpace } = (await import("check-disk-space")) as CheckDiskSpaceModule;
+      type CheckDiskSpaceModule = {
+        default: (path: string) => Promise<{ free: number; size: number }>;
+      };
+      const { default: checkDiskSpace } = (await import(
+        "check-disk-space"
+      )) as CheckDiskSpaceModule;
       const mount = process.platform === "win32" ? "C:" : "/";
       const disk = await checkDiskSpace(mount);
       resources.disk = { free: disk.free, size: disk.size };
@@ -165,16 +198,29 @@ class MetricsService {
     this.pushSeries("memory_heap_used_bytes", resources.memory.heapUsed);
 
     // Alerts
-    const rawCpu = await configurationService.getConfig("METRICS_CPU_THRESHOLD", "85");
+    const rawCpu = await configurationService.getConfig(
+      "METRICS_CPU_THRESHOLD",
+      "85",
+    );
     const cpuThreshold = Number(rawCpu ?? 85);
     if (resources.cpuPercent > cpuThreshold) {
-      this.triggerAlert("cpu_threshold", `CPU usage high: ${resources.cpuPercent}%`);
+      this.triggerAlert(
+        "cpu_threshold",
+        `CPU usage high: ${resources.cpuPercent}%`,
+      );
     }
-    const rawMem = await configurationService.getConfig("METRICS_MEMORY_THRESHOLD", "85");
+    const rawMem = await configurationService.getConfig(
+      "METRICS_MEMORY_THRESHOLD",
+      "85",
+    );
     const memThreshold = Number(rawMem ?? 85);
-    const memPercent = (resources.memory.heapUsed / resources.memory.heapTotal) * 100;
+    const memPercent =
+      (resources.memory.heapUsed / resources.memory.heapTotal) * 100;
     if (!isNaN(memPercent) && memPercent > memThreshold) {
-      this.triggerAlert("memory_threshold", `Memory usage high: ${memPercent.toFixed(2)}%`);
+      this.triggerAlert(
+        "memory_threshold",
+        `Memory usage high: ${memPercent.toFixed(2)}%`,
+      );
     }
 
     return resources;
@@ -187,7 +233,10 @@ class MetricsService {
       stellar: { status: "OK", latencyMs: 0 },
     };
 
-    const deadline = (ms: number) => new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), ms));
+    const deadline = (ms: number) =>
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("timeout")), ms),
+      );
 
     // DB
     try {
@@ -196,24 +245,40 @@ class MetricsService {
       await Promise.race([AppDataSource.query("SELECT 1"), deadline(1500)]);
       status.database.latencyMs = Date.now() - dbStart;
       this.pushSeries("db_latency_ms", status.database.latencyMs);
-      const rawDb = await configurationService.getConfig("METRICS_DB_LATENCY_THRESHOLD_MS", "500");
+      const rawDb = await configurationService.getConfig(
+        "METRICS_DB_LATENCY_THRESHOLD_MS",
+        "500",
+      );
       const dbThreshold = Number(rawDb ?? 500);
-      if (status.database.latencyMs > dbThreshold) this.triggerAlert("db_latency", `DB latency high: ${status.database.latencyMs}ms`);
+      if (status.database.latencyMs > dbThreshold)
+        this.triggerAlert(
+          "db_latency",
+          `DB latency high: ${status.database.latencyMs}ms`,
+        );
     } catch (err) {
       status.database.status = "FAIL";
-      this.triggerAlert("db_down", `Database check failed: ${(err as Error)?.message}`);
+      this.triggerAlert(
+        "db_down",
+        `Database check failed: ${(err as Error)?.message}`,
+      );
     }
 
     // Redis
     try {
       const redisStart = Date.now();
-      const pingResult = await Promise.race([redisClient.ping(), deadline(800)]);
+      const pingResult = await Promise.race([
+        redisClient.ping(),
+        deadline(800),
+      ]);
       status.redis.latencyMs = Date.now() - redisStart;
       this.pushSeries("redis_latency_ms", status.redis.latencyMs);
       if (pingResult !== "PONG") throw new Error("Redis ping failed");
     } catch (err) {
       status.redis.status = "FAIL";
-      this.triggerAlert("redis_down", `Redis check failed: ${(err as Error)?.message}`);
+      this.triggerAlert(
+        "redis_down",
+        `Redis check failed: ${(err as Error)?.message}`,
+      );
     }
 
     // Stellar
@@ -221,13 +286,18 @@ class MetricsService {
       const stellarStart = Date.now();
       const controller = new AbortController();
       const t = setTimeout(() => controller.abort(), 1500);
-      const resp = await fetch(stellarConfig.STELLAR_HORIZON_URL, { signal: controller.signal }).finally(() => clearTimeout(t));
+      const resp = await fetch(stellarConfig.STELLAR_HORIZON_URL, {
+        signal: controller.signal,
+      }).finally(() => clearTimeout(t));
       status.stellar.latencyMs = Date.now() - stellarStart;
       this.pushSeries("stellar_latency_ms", status.stellar.latencyMs);
       if (!resp.ok) throw new Error(`Stellar ${resp.status}`);
     } catch (err) {
       status.stellar.status = "FAIL";
-      this.triggerAlert("stellar_down", `Stellar check failed: ${(err as Error)?.message}`);
+      this.triggerAlert(
+        "stellar_down",
+        `Stellar check failed: ${(err as Error)?.message}`,
+      );
     }
 
     this.lastExternalStatus = status;
@@ -237,14 +307,22 @@ class MetricsService {
   getSnapshot(): MetricsSnapshot {
     const byRoute: MetricsSnapshot["requests"]["byRoute"] = {};
     for (const [key, entry] of this.routeCounters.entries()) {
-      const avg = entry.latencies.length ? entry.latencies.reduce((a, b) => a + b, 0) / entry.latencies.length : 0;
+      const avg = entry.latencies.length
+        ? entry.latencies.reduce((a, b) => a + b, 0) / entry.latencies.length
+        : 0;
       const p95 = percentile(entry.latencies, 0.95);
-      byRoute[key] = { count: entry.count, errorCount: entry.errorCount, avgLatencyMs: Number(avg.toFixed(2)), p95LatencyMs: Number(p95.toFixed(2)) };
+      byRoute[key] = {
+        count: entry.count,
+        errorCount: entry.errorCount,
+        avgLatencyMs: Number(avg.toFixed(2)),
+        p95LatencyMs: Number(p95.toFixed(2)),
+      };
     }
 
     const now = Date.now();
     const cutoff = now - 60_000;
-    const throughputRps = this.lastRequestsTimestamps.filter((t) => t >= cutoff).length / 60;
+    const throughputRps =
+      this.lastRequestsTimestamps.filter((t) => t >= cutoff).length / 60;
 
     return {
       timestamp: now,
@@ -260,7 +338,11 @@ class MetricsService {
         uptimeSec: process.uptime(),
       },
       external: this.lastExternalStatus,
-      requests: { total: this.totalRequests, byRoute, throughputRps: Number(throughputRps.toFixed(2)) },
+      requests: {
+        total: this.totalRequests,
+        byRoute,
+        throughputRps: Number(throughputRps.toFixed(2)),
+      },
     };
   }
 
@@ -278,7 +360,11 @@ class MetricsService {
     return arr[arr.length - 1].value;
   }
 
-  getHistorical(name: string, windowMinutes = 60, aggregation: Aggregation = "avg"): { metric: string; points: TimeSeriesPoint[]; aggregated?: number } {
+  getHistorical(
+    name: string,
+    windowMinutes = 60,
+    aggregation: Aggregation = "avg",
+  ): { metric: string; points: TimeSeriesPoint[]; aggregated?: number } {
     const arr = this.timeSeries.get(name) || [];
     const cutoff = Date.now() - windowMinutes * 60_000;
     const points = arr.filter((p) => p.ts >= cutoff);
@@ -343,14 +429,20 @@ class MetricsService {
     push(`paystell_stellar_latency_ms ${snapshot.external.stellar.latencyMs}`);
 
     // Counters per route and latency p95
-    push(`# HELP paystell_api_request_total Total API requests by route/method`);
+    push(
+      `# HELP paystell_api_request_total Total API requests by route/method`,
+    );
     push(`# TYPE paystell_api_request_total counter`);
     // Additional metric families
     push(`# HELP paystell_api_error_total Total API errors by route/method`);
     push(`# TYPE paystell_api_error_total counter`);
-    push(`# HELP paystell_api_latency_ms_p95 95th percentile API latency in ms by route/method`);
+    push(
+      `# HELP paystell_api_latency_ms_p95 95th percentile API latency in ms by route/method`,
+    );
     push(`# TYPE paystell_api_latency_ms_p95 gauge`);
-    push(`# HELP paystell_api_latency_ms_avg Average API latency in ms by route/method`);
+    push(
+      `# HELP paystell_api_latency_ms_avg Average API latency in ms by route/method`,
+    );
     push(`# TYPE paystell_api_latency_ms_avg gauge`);
 
     for (const [key, data] of Object.entries(snapshot.requests.byRoute)) {
@@ -359,10 +451,18 @@ class MetricsService {
       const routeRaw = spaceIdx > -1 ? key.slice(spaceIdx + 1) : key;
       const method = esc(methodRaw);
       const route = esc(routeRaw);
-      push(`paystell_api_request_total{route="${route}",method="${method}"} ${data.count}`);
-      push(`paystell_api_error_total{route="${route}",method="${method}"} ${data.errorCount}`);
-      push(`paystell_api_latency_ms_p95{route="${route}",method="${method}"} ${data.p95LatencyMs}`);
-      push(`paystell_api_latency_ms_avg{route="${route}",method="${method}"} ${data.avgLatencyMs}`);
+      push(
+        `paystell_api_request_total{route="${route}",method="${method}"} ${data.count}`,
+      );
+      push(
+        `paystell_api_error_total{route="${route}",method="${method}"} ${data.errorCount}`,
+      );
+      push(
+        `paystell_api_latency_ms_p95{route="${route}",method="${method}"} ${data.p95LatencyMs}`,
+      );
+      push(
+        `paystell_api_latency_ms_avg{route="${route}",method="${method}"} ${data.avgLatencyMs}`,
+      );
     }
 
     push(`# HELP paystell_throughput_rps Requests per second (rolling 60s)`);
@@ -382,7 +482,12 @@ class MetricsService {
     logger.warn(`ALERT: ${message}`);
 
     try {
-      const recipients = ((await configurationService.getConfig("METRICS_ALERT_EMAILS", "")) as string)
+      const recipients = (
+        (await configurationService.getConfig(
+          "METRICS_ALERT_EMAILS",
+          "",
+        )) as string
+      )
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
@@ -394,15 +499,24 @@ class MetricsService {
         });
       }
     } catch (err) {
-      logger.error("Failed to send alert email", { error: (err as Error)?.message });
+      logger.error("Failed to send alert email", {
+        error: (err as Error)?.message,
+      });
     }
   }
 
-  private async maybeAlert(key: string, value: number, predicate: () => Promise<boolean>, message: string) {
+  private async maybeAlert(
+    key: string,
+    value: number,
+    predicate: () => Promise<boolean>,
+    message: string,
+  ) {
     try {
       if (await predicate()) this.triggerAlert(key, message);
     } catch (err) {
-      logger.error("Alert predicate failed", { error: (err as Error)?.message });
+      logger.error("Alert predicate failed", {
+        error: (err as Error)?.message,
+      });
     }
   }
 }
