@@ -1,7 +1,7 @@
 import { MultiAssetPaymentService } from "../../services/MultiAssetPaymentService";
 import { AssetConfigurationService } from "../../services/AssetConfigurationService";
 import { AssetPriceService } from "../../services/AssetPriceService";
-import { Horizon, Keypair } from "@stellar/stellar-sdk";
+import { Horizon, Keypair, TransactionBuilder } from "@stellar/stellar-sdk";
 
 jest.mock("@stellar/stellar-sdk");
 jest.mock("../../services/AssetConfigurationService");
@@ -26,6 +26,23 @@ describe("MultiAssetPaymentService", () => {
     (
       Horizon.Server as jest.MockedClass<typeof Horizon.Server>
     ).mockImplementation(() => mockHorizon as unknown as Horizon.Server);
+
+    // Mock TransactionBuilder with proper chaining
+    const mockTransaction = {
+      sign: jest.fn(),
+      fee: "100",
+    };
+
+    const mockBuilder = {
+      addOperation: jest.fn().mockReturnThis(),
+      addMemo: jest.fn().mockReturnThis(),
+      setTimeout: jest.fn().mockReturnThis(),
+      build: jest.fn().mockReturnValue(mockTransaction),
+    };
+
+    (
+      TransactionBuilder as jest.MockedClass<typeof TransactionBuilder>
+    ).mockImplementation(() => mockBuilder as unknown as TransactionBuilder);
 
     mockAssetConfigService =
       new AssetConfigurationService() as jest.Mocked<AssetConfigurationService>;

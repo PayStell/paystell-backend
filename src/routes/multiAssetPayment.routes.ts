@@ -1,5 +1,5 @@
 import express from "express";
-import { MultiAssetPaymentController } from "src/controllers/MultiAssetPaymentController";
+import { MultiAssetPaymentController } from "../controllers/MultiAssetPaymentController";
 import {
   authenticateMerchant,
   asyncHandler,
@@ -9,14 +9,6 @@ import { body, param } from "express-validator";
 
 const router = express.Router();
 const controller = new MultiAssetPaymentController();
-
-const validateAsset = [
-  body("code").isString().notEmpty().withMessage("Asset code is required"),
-  body("issuer")
-    .optional()
-    .isString()
-    .withMessage("Asset issuer must be a string"),
-];
 
 const validateCreateAssetConfig = [
   body("merchantId").isUUID().withMessage("Valid merchant ID is required"),

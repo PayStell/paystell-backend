@@ -13,7 +13,8 @@ import {
   NotificationType,
 } from "../entities/InAppNotification.entity";
 import { WebhookNotificationService } from "./webhookNotification.service";
-
+import { MerchantAuthService } from "./merchant.service";
+import { CryptoGeneratorService } from "./cryptoGenerator.service";
 interface QueueJobData {
   merchantWebhook: MerchantWebhook;
   webhookPayload: WebhookPayload;
@@ -61,6 +62,8 @@ export class MerchantWebhookQueueService {
         removeOnFail: false, // Keep failed jobs for manual retries
       },
     });
+    const merchantAuthService = new MerchantAuthService();
+    const cryptoGeneratorService = new CryptoGeneratorService();
 
     // Initialize repository for database operations
     this.merchantWebhookEventRepository = AppDataSource.getRepository(
@@ -68,7 +71,10 @@ export class MerchantWebhookQueueService {
     );
 
     // Create webhook notification service for sending webhooks
-    this.webhookNotificationService = new WebhookNotificationService();
+    this.webhookNotificationService = new WebhookNotificationService(
+      merchantAuthService,
+      cryptoGeneratorService,
+    );
 
     // Set up queue processing and event handling
     this.setupQueueProcessor();

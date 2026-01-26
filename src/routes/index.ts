@@ -8,6 +8,7 @@ import walletRoutes from "./wallet";
 import { subscriptionRouter } from "./subscriptionRoutes";
 import teamRoutes from "./teamRoutes";
 import rateLimitRoutes from "./rateLimitRoutes";
+import multiAssetPaymentRoutes from "./multiAssetPayment.routes";
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use("/subscriptions", subscriptionRouter);
 router.use("/audit", auditRoutes);
 router.use("/wallet", walletRoutes);
 router.use("/rate-limit", rateLimitRoutes);
+router.use("/api/multi-asset", multiAssetPaymentRoutes);
 
 export default router;
