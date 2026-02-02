@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import RateLimitMonitoringService from "../services/rateLimitMonitoring.service";
 import rateLimitConfigService from "../services/rateLimitConfigService";
 import whitelistBlacklistService from "../services/whitelistBlacklistService";
-import { WhitelistType } from "src/entities/RateLimitWhiteList";
+import { WhitelistType } from "../entities/RateLimitWhiteList";
 import { BlacklistType, BlacklistReason } from "../entities/RateLimitBlacklist";
 import logger from "../utils/logger";
 
