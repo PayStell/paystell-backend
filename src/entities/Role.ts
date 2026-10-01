@@ -1,50 +1,22 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  OneToMany,
-  JoinColumn,
-} from "typeorm";
-import { MerchantEntity } from "./Merchant.entity";
-import { UserRole } from "./UserRole";
-import { RolePermission } from "./RolePermission";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Merchant } from './Merchant';
+import { RolePermission } from './RolePermission';
+import { UserRole } from './UserRole';
 
-@Entity("roles")
+@Entity('roles')
 export class Role {
-  @PrimaryGeneratedColumn("uuid")
-  id!: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
-  name!: string;
+  name: string; // ex: 'Admin', 'Operator', 'Viewer'
 
-  @Column({ nullable: true })
-  description?: string;
+  @ManyToOne(() => Merchant)
+  merchant: Merchant;
 
-  @Column({ default: true })
-  isActive!: boolean;
+  @OneToMany(() => RolePermission, (rp) => rp.role)
+  permissions: RolePermission[];
 
-  @Column({ default: false })
-  isDefault!: boolean; // For default roles like Owner, Admin, etc.
-
-  @ManyToOne(() => MerchantEntity, { onDelete: "CASCADE" })
-  @JoinColumn({ name: "merchantId" })
-  merchant!: MerchantEntity;
-
-  @Column()
-  merchantId!: string;
-
-  @OneToMany(() => UserRole, (userRole) => userRole.role)
-  userRoles!: UserRole[];
-
-  @OneToMany(() => RolePermission, (rolePermission) => rolePermission.role)
-  rolePermissions!: RolePermission[];
-
-  @CreateDateColumn()
-  createdAt!: Date;
-
-  @UpdateDateColumn()
-  updatedAt!: Date;
+  @OneToMany(() => UserRole, (ur) => ur.role)
+  userRoles: UserRole[];
 }
