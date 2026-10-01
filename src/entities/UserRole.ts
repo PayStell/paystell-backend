@@ -1,50 +1,15 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from "typeorm";
-import { User } from "./User";
-import { Role } from "./Role";
-import { MerchantEntity } from "./Merchant.entity";
+import { Entity, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { User } from './User';
+import { Role } from './Role';
 
-@Entity("user_roles")
-@Index(["userId", "roleId", "merchantId"], { unique: true })
+@Entity('user_roles')
 export class UserRole {
-  @PrimaryGeneratedColumn("uuid")
-  id!: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @ManyToOne(() => User, { onDelete: "CASCADE" })
-  @JoinColumn({ name: "userId" })
-  user!: User;
+  @ManyToOne(() => User)
+  user: User;
 
-  @Column()
-  userId!: number;
-
-  @ManyToOne(() => Role, { onDelete: "CASCADE" })
-  @JoinColumn({ name: "roleId" })
-  role!: Role;
-
-  @Column()
-  roleId!: string;
-
-  @ManyToOne(() => MerchantEntity, { onDelete: "CASCADE" })
-  @JoinColumn({ name: "merchantId" })
-  merchant!: MerchantEntity;
-
-  @Column()
-  merchantId!: string;
-
-  @Column({ default: true })
-  isActive!: boolean;
-
-  @CreateDateColumn()
-  createdAt!: Date;
-
-  @UpdateDateColumn()
-  updatedAt!: Date;
+  @ManyToOne(() => Role, (role) => role.userRoles)
+  role: Role;
 }
